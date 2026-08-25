@@ -1,0 +1,49 @@
+---
+title: "API reference"
+description: "Twenty-four endpoints, grouped by what they act on."
+---
+
+Every endpoint sits under `/api/v1` on your FormBharo server. Set two shell variables and
+the examples on these pages run as they are:
+
+```bash
+export FORMBHARO_KEY=fb_live_0123456789ab_REPLACE_THIS_WITH_THE_KEY_YOU_COPIED
+export FORMBHARO_URL=https://YOUR-FORMBHARO-SERVER
+```
+
+Send the key on every request in the `Authorization` header, after the word `Bearer`.
+Three routes take no key: see [API keys](/getting-started/api-keys).
+
+## The groups
+
+<CardGroup cols={2}>
+  <Card title="Agents" icon="robot">
+    Create, read, replace, and delete agents, and say who can manage them.
+  </Card>
+  <Card title="Agent versions" icon="clock-rotate-left">
+    Every published save, what changed, and going back to an earlier one.
+  </Card>
+  <Card title="Calls" icon="phone">
+    One agent's calls, one call's answers, and one call's transcript.
+  </Card>
+  <Card title="Analytics" icon="chart-line">
+    Calls across every agent, and the completion and cost figures.
+  </Card>
+  <Card title="Workspaces" icon="users">
+    The groups agents live in, and who is in them.
+  </Card>
+</CardGroup>
+
+## Before you start
+
+- [Conventions](/reference/conventions) covers paging, timestamps, and the two shapes
+  some lists come back in.
+- [Errors](/reference/errors) covers the three error bodies and what each status code
+  means.
+- [Gotchas](/reference/gotchas) covers four things that will catch you out.
+
+## One endpoint that is not listed here
+
+`POST /offer` opens the audio connection that starts a call. It sits at the bare path
+rather than under `/api/v1`, so it is not in the schema behind these pages. See
+[Run a call from your own page](/guides/run-a-call).

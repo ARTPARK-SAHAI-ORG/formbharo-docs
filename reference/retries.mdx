@@ -1,0 +1,68 @@
+---
+title: "Retries"
+description: "How many times a question is re-asked, and what happens when it runs out."
+---
+
+Add a `retry_config` to a question to say how often the agent re-asks it when the answer
+does not come through:
+
+```json
+{
+  "name": "phone",
+  "question": "What is your phone number?",
+  "response_type": "string",
+  "required": false,
+  "retry_config": {
+    "allow_retries": true,
+    "until_answered": false,
+    "max_retries": 2,
+    "retry_messages": [
+      "Sorry, I did not catch that. What is your phone number?",
+      "One more time please, ten digits."
+    ],
+    "exhausted_action": "skip"
+  }
+}
+```
+
+Leave `retry_config` out and the defaults below apply.
+
+## Fields
+
+<ResponseField name="allow_retries" type="boolean" default="true">
+  Whether the question is ever re-asked. Set it to false and the first attempt that does
+  not produce an answer is the last one.
+</ResponseField>
+
+<ResponseField name="until_answered" type="boolean" default="false">
+  Set it to true and the question is re-asked for as long as it takes. `max_retries` is
+  then ignored.
+</ResponseField>
+
+<ResponseField name="max_retries" type="integer" default="2">
+  How many re-asks are allowed after the first attempt. With 2, the agent asks once, then
+  twice more, and then gives up.
+</ResponseField>
+
+<ResponseField name="retry_messages" type="string[]" default="[]">
+  What to say on each re-ask. The first entry is the first re-ask, the second is the
+  second, and so on. Leave an entry blank, or run out of entries, and the agent repeats
+  the question's `script` word for word.
+</ResponseField>
+
+<ResponseField name="exhausted_action" type="string" default="skip">
+  What to do once the re-asks run out, for an optional question. `skip` moves on to the
+  next question, saying the question's `skip_message`. `end_call` ends the call instead.
+</ResponseField>
+
+## When the re-asks run out
+
+A **required** question always ends the call. `exhausted_action` is not read.
+
+An **optional** question follows `exhausted_action`. With `skip`, the question is stored
+as `null` and its `form_status` becomes `skipped`, and the call carries on. With
+`end_call`, the call ends there.
+
+A call that ends this way is marked `failed`, unless the answer that stopped it was one
+of the question's `end_call_values`, which marks it `screened_out` instead. See
+[Calls](/concepts/calls).

@@ -1,0 +1,56 @@
+---
+title: "Agents"
+description: "A form plus the way it is asked."
+---
+
+An agent is a form plus the way it is asked. It holds:
+
+- **Questions**, in the order they are asked. Each one has a short name you read the
+  answer back by, the wording, and an answer type.
+- **Scripts**, the exact words the agent says at the start and the end of a call.
+- **Settings** such as the language, whether the agent speaks first, and how it behaves
+  when someone does not answer.
+
+Full field list: [Agent configuration](/reference/agent-configuration).
+
+## Draft and published
+
+An agent is either a draft or published.
+
+`POST /api/v1/agents` creates a draft. A draft is a work in progress and is not meant to
+be called yet.
+
+`PUT /api/v1/agents/{agent_id}` replaces the agent and publishes it. The response tells
+you the version number that save recorded:
+
+```json
+{"id": "a87c1556-79fa-4492-add9-a704c13466a3", "status": "updated", "version": 1}
+```
+
+`status` in a listing row is `draft` or `published`.
+
+## Versions
+
+Every published save records a version. Drafts are not versioned, so version 1 is always
+the first published save.
+
+- `GET /api/v1/agents/{agent_id}/versions` lists them, newest first.
+- `GET /api/v1/agents/{agent_id}/versions/{version}` returns one version with the whole
+  configuration it captured.
+- `POST /api/v1/agents/{agent_id}/versions/{version}/restore` makes an old version
+  current. The state you replaced stays in the history and can itself be restored.
+
+## Workspaces
+
+Every agent lives in one workspace. A workspace is a group of people who share a set of
+agents. Everyone gets a personal workspace of their own.
+
+Pass `workspace_id` when you create an agent to put it somewhere other than your
+personal workspace. You must administer that workspace. The field is only read on
+creation, so `PUT /api/v1/agents/{agent_id}` ignores it; move an agent with
+`PUT /api/v1/agents/{agent_id}/workspace` instead.
+
+## Deleting
+
+`DELETE /api/v1/agents/{agent_id}` marks the agent deleted and it stops appearing in
+lists. Its calls are not erased.

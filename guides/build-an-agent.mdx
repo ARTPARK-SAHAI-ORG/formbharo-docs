@@ -1,0 +1,206 @@
+---
+title: "Build an agent from a form"
+description: "Turn a paper or web form into an agent that asks it out loud."
+---
+
+Work through your form field by field. For each one you need three things: a short name
+to store the answer under, the wording of the question, and the answer type.
+
+## 1. Create the agent
+
+`POST /api/v1/agents` creates a draft.
+
+```bash
+curl -X POST "$FORMBHARO_URL/api/v1/agents" \
+  -H "Authorization: Bearer $FORMBHARO_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Clinic intake",
+    "questions": [
+      {"name": "full_name", "question": "What is your full name?", "response_type": "string", "required": true}
+    ]
+  }'
+```
+
+```json
+{
+  "id": "a87c1556-79fa-4492-add9-a704c13466a3",
+  "workspace_id": "personal-b3c9fe587b86d5a1"
+}
+```
+
+Keep the `id`. Everything else uses it.
+
+## 2. Write the questions
+
+Match each form field to a `response_type`:
+
+| Your field | `response_type` |
+| --- | --- |
+| Free text box | `string` |
+| Number box | `number`, with `number_format` set to `integer` or `decimal` |
+| Date picker | `date` |
+| Yes or no, a tick box | `boolean` |
+| Radio buttons, a drop-down | `single-select`, with `options` |
+| Tick boxes where more than one can be chosen | `multi-select`, with `options` |
+
+Then add whatever else the field needs:
+
+- **The exact wording to speak.** `script`. Without it the agent words the question
+  itself.
+- **A rule the answer has to satisfy.** `validation`, for example a ten-digit phone
+  number. See [Validation](/reference/validation).
+- **Extra guidance for one question.** `advanced_instructions`, for example
+  `If the user selects 'None', do not include any other options.`
+- **How often to re-ask.** `retry_config`. See [Retries](/reference/retries).
+
+Full field list: [Question types](/reference/question-types).
+
+## 3. Add the follow-up questions
+
+Questions that only apply to some people go in a branch. Declare the branch in
+`branches`, then put `branch_id` on each question that belongs to it. The question the
+branch depends on has to come first in the list.
+
+```json
+{
+  "questions": [
+    {"name": "has_fever", "question": "Do you have a fever?", "response_type": "boolean", "required": true},
+    {"name": "fever_started_on", "question": "What date did the fever start?", "response_type": "date", "required": true, "branch_id": "fever_details"}
+  ],
+  "branches": [
+    {"id": "fever_details", "condition": {"field": "has_fever", "equals": true}}
+  ]
+}
+```
+
+See [Branching](/reference/branching).
+
+## 4. Add the opening and closing lines
+
+```json
+{
+  "scripts": {
+    "intro": "Hello. I have a few questions before your appointment.",
+    "outro": "Thank you. That is everything.",
+    "outro_incomplete": "Thank you. We will not go any further today."
+  }
+}
+```
+
+`outro_incomplete` is said when the call ends early. Sending it without `outro` is
+refused.
+
+## 5. Stop the call early when someone does not qualify
+
+Put the disqualifying answers in `end_call_values` on the question that decides it. Write
+them as strings.
+
+```json
+{
+  "name": "consent",
+  "question": "May I ask you a few questions about your health?",
+  "response_type": "boolean",
+  "required": true,
+  "end_call_values": ["false"]
+}
+```
+
+Someone who says no gets `scripts.outro_incomplete` and the call is marked
+`screened_out`, not `failed`.
+
+## 6. Publish it
+
+`PUT /api/v1/agents/{agent_id}` replaces the agent and publishes it. Send the whole
+thing, not just what changed.
+
+```bash
+curl -X PUT "$FORMBHARO_URL/api/v1/agents/$AGENT_ID" \
+  -H "Authorization: Bearer $FORMBHARO_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Clinic intake",
+    "description": "Booking a patient in before they see a doctor.",
+    "language": "English",
+    "scripts": {
+      "intro": "Hello. I have a few questions before your appointment.",
+      "outro": "Thank you. That is everything.",
+      "outro_incomplete": "Thank you. We will not go any further today."
+    },
+    "questions": [
+      {
+        "name": "consent",
+        "question": "May I ask you a few questions about your health?",
+        "response_type": "boolean",
+        "required": true,
+        "end_call_values": ["false"]
+      },
+      {
+        "name": "full_name",
+        "question": "What is your full name?",
+        "response_type": "string",
+        "required": true,
+        "validation": {"type": "min_length", "rules": {"min_length": 2}}
+      },
+      {
+        "name": "phone",
+        "question": "What is your phone number?",
+        "response_type": "string",
+        "required": false,
+        "validation": {"type": "phone_number", "rules": {"digits": 10}},
+        "skip_message": "That is fine, we will move on."
+      },
+      {
+        "name": "has_fever",
+        "question": "Do you have a fever?",
+        "response_type": "boolean",
+        "required": true,
+        "boolean_labels": {"true": "Yes", "false": "No"}
+      },
+      {
+        "name": "fever_started_on",
+        "question": "What date did the fever start?",
+        "response_type": "date",
+        "required": true,
+        "validation": {"type": "date_today_or_past", "rules": {}},
+        "branch_id": "fever_details"
+      },
+      {
+        "name": "fever_symptoms",
+        "question": "Which of these do you also have?",
+        "response_type": "multi-select",
+        "options": ["Headache", "Cough", "Body ache", "None"],
+        "required": true,
+        "branch_id": "fever_details"
+      }
+    ],
+    "branches": [
+      {"id": "fever_details", "condition": {"field": "has_fever", "equals": true}}
+    ]
+  }'
+```
+
+```json
+{"id": "a87c1556-79fa-4492-add9-a704c13466a3", "status": "updated", "version": 1}
+```
+
+Every published save records a version you can go back to. See
+[Agents](/concepts/agents).
+
+## If the save is refused
+
+A 400 with `validation_issues` names each problem:
+
+```json
+{
+  "validation_issues": [
+    {
+      "field": "questions[0].branch_id",
+      "message": "Question references unknown branch 'nope'."
+    }
+  ]
+}
+```
+
+To see what a save would change before you make it, send the same body to
+`POST /api/v1/agents/{agent_id}/diff-preview`.

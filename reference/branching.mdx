@@ -1,0 +1,103 @@
+---
+title: "Branching"
+description: "Ask a group of questions only when an earlier answer calls for them."
+---
+
+A branch is a group of questions that is only asked when a condition holds. You declare
+the branch in `branches`, then point questions at it with `branch_id`.
+
+```json
+{
+  "title": "Clinic intake",
+  "questions": [
+    {
+      "name": "has_fever",
+      "question": "Do you have a fever?",
+      "response_type": "boolean",
+      "required": true
+    },
+    {
+      "name": "fever_started_on",
+      "question": "What date did the fever start?",
+      "response_type": "date",
+      "required": true,
+      "branch_id": "fever_details"
+    },
+    {
+      "name": "fever_symptoms",
+      "question": "Which of these do you also have?",
+      "response_type": "multi-select",
+      "options": ["Headache", "Cough", "Body ache", "None"],
+      "required": true,
+      "branch_id": "fever_details"
+    }
+  ],
+  "branches": [
+    {"id": "fever_details", "condition": {"field": "has_fever", "equals": true}}
+  ]
+}
+```
+
+Someone who says no to `has_fever` is never asked the two fever questions. Their call
+still finishes as `complete`, with those two left at `empty` in `form_status`.
+
+## The branch
+
+<ResponseField name="id" type="string" required>
+  The name you refer to from a question's `branch_id`.
+</ResponseField>
+
+<ResponseField name="condition" type="object" required>
+  When the branch's questions are asked. It has a `field` and exactly one of `equals` or
+  `present`.
+</ResponseField>
+
+## The condition
+
+<ResponseField name="condition.field" type="string" required>
+  The `name` of the question the branch depends on. It has to come before the branch's
+  questions in the `questions` list.
+</ResponseField>
+
+<ResponseField name="condition.equals" type="boolean">
+  Ask the branch when that question's answer is `true`, or when it is `false`. Only for a
+  `boolean` question.
+</ResponseField>
+
+<ResponseField name="condition.present" type="boolean">
+  Ask the branch based on whether that question was answered at all, whatever its type.
+  `true` means ask when it was answered, `false` means ask when it was skipped.
+</ResponseField>
+
+Set one of `equals` and `present`. Sending both is not refused, and `present` is the one
+that is used, so the `equals` you wrote is quietly dropped.
+
+## What gets rejected
+
+A save is refused with 400 and a `validation_issues` list when:
+
+- A question's `branch_id` names a branch that is not in `branches`.
+- A branch's `condition.field` names a question that does not exist.
+- The controlling question comes after the branch's questions in the list. The message is
+  `Branch condition field must appear before the branch's questions.`
+- `equals` is used on a question that is not a `boolean`. The message is
+  `Branch conditions are only supported for boolean questions.`
+- Two branches share the same `id`.
+- A branch has no `id`, no `condition`, or a `condition` with no `field`.
+
+```json
+{
+  "validation_issues": [
+    {
+      "field": "questions[0].branch_id",
+      "message": "Question references unknown branch 'nope'."
+    }
+  ]
+}
+```
+
+## Branches and completion
+
+A question inside a branch that never activated does not stop a call from being
+`complete`, whether or not it is `required`. A question inside a branch that did activate
+does, exactly like any other question.

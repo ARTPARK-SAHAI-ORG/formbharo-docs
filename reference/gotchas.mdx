@@ -1,0 +1,67 @@
+---
+title: "Gotchas"
+description: "Four things that will catch you out."
+---
+
+## A skipped answer is null, so read form_status
+
+A question that was put to someone and got no answer is stored as `null`. It is not left
+out.
+
+```json
+{
+  "form_data": {"phone": null},
+  "form_status": {"phone": "skipped"}
+}
+```
+
+A plain truthy check treats that the same as a question nobody has reached yet, and the
+two are different. Read `form_status` when the difference matters. The same catches the
+number `0`, an empty string, and `false`, which are all real answers.
+
+## Screened out counts as completed in the analytics
+
+A call ends as `screened_out` when an answer meant the person did not qualify, so the
+agent stopped early on purpose. The analytics treat that as a success, because the agent
+did the job it was asked to do.
+
+`completed` in the `stats` object is the number of `complete` calls plus the number of
+`screened_out` calls, and `completion_rate` is built from that sum. Three calls, one
+finished, one screened out, one still going, gives you:
+
+```json
+{
+  "attempted": 3,
+  "completed": 2,
+  "screened_out": 1,
+  "completion_rate": 0.6666666666666666
+}
+```
+
+`screened_out` is reported on its own, so subtract it when you want only the calls that
+went the whole way.
+
+## created_at is the last time the answers were written
+
+It is not when the call started. It moves every time an answer is saved, so during a live
+call it keeps advancing, and correcting an answer afterwards with
+`PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data` pushes it to
+the present.
+
+Two consequences:
+
+- Sorting by `created_at` sorts by last activity. There is no field holding the moment a
+  call began.
+- A date range is never final. A call from Monday that someone edits on Friday now sits
+  in Friday's window and is gone from Monday's. Asking for last week again next month can
+  give you a different set of calls, and an analytics figure for a past range can change.
+
+For polling this works in your favour: an edited call comes back to you again, which is
+what you want if you are keeping a copy in step. Match rows by `conversation_id` so a
+call that comes back a second time updates your copy instead of adding a duplicate.
+
+## A multi-select answer is a string, not a list
+
+`["Headache", "Cough"]` is what you might expect. What you get is `"Headache, Cough"`,
+one string with the chosen options separated by a comma and a space. Split on `", "` to
+get the list back.

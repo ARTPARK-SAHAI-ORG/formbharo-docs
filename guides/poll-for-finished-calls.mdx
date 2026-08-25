@@ -1,0 +1,118 @@
+---
+title: "Poll for finished calls"
+description: "Keep your own database in step with GET /conversations?since="
+---
+
+There is no push notification and no webhook. To keep your own system up to date, ask for
+the calls that have changed since you last looked.
+
+## The pattern
+
+1. Call `GET /api/v1/conversations?since=<the newest created_at you have seen>`.
+2. Save the largest `created_at` in the rows that came back.
+3. Wait, then repeat with that value as the new `since`.
+
+Start with `since` set to `0`, or to whatever moment you want your history to begin.
+
+<CodeGroup>
+
+```bash curl
+curl -H "Authorization: Bearer $FORMBHARO_KEY" \
+  "$FORMBHARO_URL/api/v1/conversations?since=0&limit=1"
+```
+
+```python python
+import os
+import requests
+
+url = f"{os.environ['FORMBHARO_URL']}/api/v1/conversations"
+headers = {"Authorization": f"Bearer {os.environ['FORMBHARO_KEY']}"}
+
+since = 0
+while True:
+    page = requests.get(
+        url, headers=headers, params={"since": since, "limit": 200}
+    ).json()
+    for row in page["data"]:
+        save(row)                      # your own code
+        since = max(since, row["created_at"])
+    if page["next_cursor"] is None:
+        break
+```
+
+</CodeGroup>
+
+```json Response
+{
+  "data": [
+    {
+      "conversation_id": "6f1f0a1c-1111-4b0c-9a3a-2b6f9c0d0001",
+      "agent_id": "a87c1556-79fa-4492-add9-a704c13466a3",
+      "agent_title": "Clinic intake",
+      "source": null,
+      "caller_number": null,
+      "form_data": {"consent": true, "full_name": "Asha Rao", "has_fever": "Yes", "phone": null},
+      "form_status": {
+        "consent": "answered",
+        "full_name": "answered",
+        "phone": "skipped",
+        "has_fever": "answered",
+        "fever_started_on": "empty",
+        "fever_symptoms": "empty"
+      },
+      "filled_fields": 4,
+      "total_fields": 6,
+      "status": "in_progress",
+      "created_at": 1787626888.006087,
+      "duration_secs": null,
+      "cost": null,
+      "has_recording": false,
+      "has_transcript": false,
+      "avg_ack_latency_secs": null,
+      "avg_ack_to_reply_secs": null
+    }
+  ],
+  "next_cursor": null
+}
+```
+
+`since` is inclusive, so the newest call you already have comes back again on the next
+round. Match rows by `conversation_id` and update your copy, rather than adding a
+duplicate.
+
+## Narrowing it down
+
+| Parameter | What it does |
+| --- | --- |
+| `agent_id` | Only this agent's calls. |
+| `workspace_id` | Only this workspace's calls. |
+| `status` | One of `complete`, `screened_out`, `failed`, `in_progress`. |
+| `source` | Where the call came in from, such as `twilio` or `exotel`. |
+| `since`, `until` | Unix seconds, both inclusive. |
+| `limit` | 1 to 200. Defaults to 50. |
+| `cursor` | Where to resume from: the `next_cursor` of the page before. |
+
+## Two things to know
+
+**A date range is never final.** `created_at` is the last time the call's answers were
+written, not when the call happened. A call from Monday that someone edits on Friday moves
+into Friday's window. For polling this is what you want, because an edited call comes back
+to you again. It does mean you cannot treat a past week as a fixed list of calls. See
+[Gotchas](/reference/gotchas).
+
+**Poll a few times a minute at most.** This endpoint gets slower as your call history
+grows. Narrow it with `agent_id`, `since`, and `until`, and do not ask more often than you
+need.
+
+## Getting more than the summary
+
+Each row already carries `form_data` and `form_status`, which is usually all you need.
+For what was actually said, fetch the transcript one call at a time:
+
+```bash
+curl -H "Authorization: Bearer $FORMBHARO_KEY" \
+  "$FORMBHARO_URL/api/v1/agents/$AGENT_ID/conversations/$CONVERSATION_ID/transcript"
+```
+
+Each entry has `role`, `content`, `timestamp`, and `duration_secs`. A call with no
+transcript answers 404 with `{"error": "Transcript not found"}`.

@@ -1,0 +1,130 @@
+---
+title: "Validation"
+description: "Rules an answer has to satisfy before it is saved."
+---
+
+Add a `validation` object to a question to put a rule on the answer:
+
+```json
+{
+  "name": "phone",
+  "question": "What is your phone number?",
+  "response_type": "string",
+  "validation": {"type": "phone_number", "rules": {"digits": 10}}
+}
+```
+
+`type` picks the rule. `rules` carries its settings, and is `{}` for rules that have
+none.
+
+The rule is checked both during the call and when you write an answer yourself with
+`PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data`. An answer
+that fails during a call is re-asked, following the question's
+[retry settings](/reference/retries). An answer that fails a `PATCH` comes back as 400
+with `invalid_fields`.
+
+## The rules
+
+<ResponseField name="phone_number" type="rules: digits">
+  A phone number with exactly `digits` digits. `digits` defaults to 10. A number where
+  every digit is the same is rejected. Only the digits are saved, so punctuation and
+  spaces are dropped, and when `digits` is 10 a leading `+91`, `91`, or `0` is dropped
+  too.
+
+  ```json
+  {"type": "phone_number", "rules": {"digits": 10}}
+  ```
+</ResponseField>
+
+<ResponseField name="min_length" type="rules: min_length">
+  At least `min_length` characters. Defaults to 1.
+
+  ```json
+  {"type": "min_length", "rules": {"min_length": 2}}
+  ```
+</ResponseField>
+
+<ResponseField name="exact_num_digits" type="rules: digits">
+  Exactly `digits` digits. Defaults to 1.
+
+  ```json
+  {"type": "exact_num_digits", "rules": {"digits": 6}}
+  ```
+</ResponseField>
+
+<ResponseField name="number_range" type="rules: min, max">
+  A number between `min` and `max`. Give one of them or both.
+
+  ```json
+  {"type": "number_range", "rules": {"min": 0, "max": 120}}
+  ```
+</ResponseField>
+
+<ResponseField name="date" type="rules: none">
+  A valid `DD-MM-YYYY` date. `date_format` is the same rule under another name.
+
+  ```json
+  {"type": "date", "rules": {}}
+  ```
+</ResponseField>
+
+<ResponseField name="date_today_or_past" type="rules: none">
+  A valid `DD-MM-YYYY` date that is today or earlier.
+
+  ```json
+  {"type": "date_today_or_past", "rules": {}}
+  ```
+</ResponseField>
+
+<ResponseField name="date_future" type="rules: none">
+  A valid `DD-MM-YYYY` date after today.
+
+  ```json
+  {"type": "date_future", "rules": {}}
+  ```
+</ResponseField>
+
+<ResponseField name="regex" type="rules: pattern, message">
+  The answer has to match `pattern`, which is a regular expression. `message` is what
+  the person is told when it does not.
+
+  ```json
+  {"type": "regex", "rules": {"pattern": "^[A-Z]{2}[0-9]{4}$", "message": "Two letters then four digits."}}
+  ```
+</ResponseField>
+
+<ResponseField name="free_text" type="rules: description">
+  A rule you write out in words in `description`, for anything the rules above do not
+  cover. The agent applies it during the call. Unlike every other rule here, it is not
+  applied when you write an answer yourself with `PATCH`, because there is nothing exact
+  to check against.
+
+  ```json
+  {"type": "free_text", "rules": {"description": "Must name a district in Karnataka."}}
+  ```
+</ResponseField>
+
+## What a failure looks like
+
+```json
+{
+  "error": "Deterministic validation failed for phone: Phone number must be exactly 10 digits (got 3). Parsed digits: 123 Captured value: 123",
+  "invalid_fields": {
+    "phone": {
+      "value": "123",
+      "normalized_value": "123",
+      "error": "Phone number must be exactly 10 digits (got 3). Parsed digits: 123",
+      "source": "deterministic_validation"
+    }
+  }
+}
+```
+
+`invalid_fields` names every field that failed and says why. Nothing is saved when any
+field fails, so fix the values and send the whole change again.
+
+## The type is checked too
+
+Each answer type has its own check that runs whether or not you set a `validation` rule.
+A `date` has to be `DD-MM-YYYY`, a `number` has to be a number, a `single-select` has to
+be one of the options. See [Question types](/reference/question-types).

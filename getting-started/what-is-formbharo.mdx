@@ -1,0 +1,36 @@
+---
+title: "What FormBharo is"
+description: "Voice agents that fill in a form by talking to someone."
+---
+
+FormBharo runs voice agents that fill in a form by talking to someone. You write the
+questions, the agent asks them out loud, listens to the answers, and saves them.
+
+The API does two jobs. One is building your own page that starts those calls and shows
+the answers as they arrive. The other is pulling finished calls into your own systems,
+such as a database, a spreadsheet, or a case management tool.
+
+## Where to start
+
+<CardGroup cols={2}>
+  <Card title="Get an API key" icon="key" href="/getting-started/api-keys">
+    Create a key in Settings and send it on every request.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/getting-started/quickstart">
+    List your agents with one curl command.
+  </Card>
+  <Card title="Build an agent" icon="list-check" href="/guides/build-an-agent">
+    Turn a form you already have into a set of questions.
+  </Card>
+  <Card title="Get the answers out" icon="download" href="/guides/poll-for-finished-calls">
+    Poll for calls that finished since you last looked.
+  </Card>
+</CardGroup>
+
+## The two things you work with
+
+An **agent** is a form plus the way it is asked: the questions, their order, and what
+the agent says at the start and the end. A **call** is one conversation with one person,
+and it holds the answers that conversation produced.
+
+Read [Agents](/concepts/agents) and [Calls](/concepts/calls) next.

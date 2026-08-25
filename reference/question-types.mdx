@@ -1,0 +1,177 @@
+---
+title: "Question types"
+description: "The six answer types and the fields each one uses."
+---
+
+Every question in the `questions` list looks like this:
+
+```json
+{
+  "name": "full_name",
+  "question": "What is your full name?",
+  "response_type": "string",
+  "required": true,
+  "script": "What is your full name?"
+}
+```
+
+## Fields on every question
+
+<ResponseField name="question" type="string" required>
+  The wording of the question. This is what you see in listings, and it is the key you
+  read the answer back by when you leave `name` out.
+</ResponseField>
+
+<ResponseField name="response_type" type="string" required>
+  One of `string`, `number`, `date`, `boolean`, `single-select`, `multi-select`.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The short key this answer is stored under in `form_data` and `form_status`. Leave it
+  out and FormBharo makes one from the wording: lower case, spaces turned into
+  underscores, question marks dropped. Set it yourself when the answers go into your own
+  database, so the key does not move when you reword the question.
+</ResponseField>
+
+<ResponseField name="required" type="boolean">
+  Whether the call can finish without this answer. A required question that never gets an
+  answer ends the call.
+</ResponseField>
+
+<ResponseField name="script" type="string">
+  The exact words to say. Without it, the agent words the question itself.
+</ResponseField>
+
+<ResponseField name="skip_message" type="string">
+  What the agent says as it moves past an optional question nobody answered.
+</ResponseField>
+
+<ResponseField name="advanced_instructions" type="string">
+  Extra instructions for this question alone, for example `Ask ONLY if fever_nature is
+  'Intermittent'.`
+</ResponseField>
+
+<ResponseField name="validation" type="Validation">
+  A rule the answer has to satisfy. See [Validation](/reference/validation).
+</ResponseField>
+
+<ResponseField name="retry_config" type="RetryConfig">
+  How many times to re-ask, and what to say. See [Retries](/reference/retries).
+</ResponseField>
+
+<ResponseField name="end_call_values" type="string[]">
+  Answers that end the call early on purpose. The call is then marked `screened_out`
+  rather than `failed`, and the agent says `scripts.outro_incomplete`. Write the values
+  as strings, so `["false"]` for a `boolean` question and `["None"]` for a select.
+</ResponseField>
+
+<ResponseField name="branch_id" type="string">
+  Puts the question inside a branch, so it is only asked when that branch's condition
+  holds. See [Branching](/reference/branching).
+</ResponseField>
+
+## string
+
+Free text. No extra fields.
+
+```json
+{"name": "full_name", "question": "What is your full name?", "response_type": "string", "required": true}
+```
+
+Stored as a string.
+
+## number
+
+<ResponseField name="number_format" type="string">
+  `integer` for whole numbers, `decimal` to allow a fractional part.
+</ResponseField>
+
+```json
+{"name": "age", "question": "How old are you?", "response_type": "number", "number_format": "integer", "required": true}
+```
+
+Stored as a number. A `decimal` answer with no fractional part is stored as a whole
+number.
+
+## date
+
+```json
+{"name": "fever_started_on", "question": "What date did the fever start?", "response_type": "date", "required": true}
+```
+
+Stored as a string in `DD-MM-YYYY` form, for example `"20-08-2026"`. Anything else is
+rejected. To also require that the date is in the past or the future, add a
+[validation rule](/reference/validation).
+
+## boolean
+
+<ResponseField name="boolean_labels" type="object">
+  Words to store instead of `true` and `false`, as `{"true": "Yes", "false": "No"}`.
+</ResponseField>
+
+```json
+{
+  "name": "has_fever",
+  "question": "Do you have a fever?",
+  "response_type": "boolean",
+  "required": true,
+  "boolean_labels": {"true": "Yes", "false": "No"}
+}
+```
+
+Stored as `true` or `false`. With `boolean_labels` set, the label is stored instead, so
+that question would hold `"Yes"`.
+
+When you write the answer yourself with
+`PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data`, send `true`
+or `false`. A question with `boolean_labels` also accepts either label as text, ignoring
+upper and lower case. The words `"yes"` and `"no"` are not accepted unless they are the
+labels.
+
+## single-select
+
+<ResponseField name="options" type="string[]">
+  The choices, in the order they are offered. A select question with no options accepts
+  any answer, so always give it options.
+</ResponseField>
+
+```json
+{
+  "name": "severity",
+  "question": "How severe is it?",
+  "response_type": "single-select",
+  "options": ["Low", "Moderate", "High"],
+  "required": true
+}
+```
+
+Stored as one of the option texts, for example `"Moderate"`.
+
+When you write the answer yourself, send either the option text, ignoring upper and lower
+case, or its position in `options` counting from zero. So `2` and `"High"` both store
+`"High"`. Anything else comes back as
+`Value must be one of: Low, Moderate, High.`
+
+## multi-select
+
+<ResponseField name="options" type="string[]">
+  The choices, in the order they are offered. A select question with no options accepts
+  any answer, so always give it options.
+</ResponseField>
+
+```json
+{
+  "name": "fever_symptoms",
+  "question": "Which of these do you also have?",
+  "response_type": "multi-select",
+  "options": ["Headache", "Cough", "Body ache", "None"],
+  "required": true
+}
+```
+
+Stored as one string holding the chosen options, joined by a comma and a space, for
+example `"Headache, Cough"`. It is not stored as a list.
+
+When you write the answer yourself, send either a list of positions counting from zero,
+such as `[0, 1]`, or one string of option texts separated by commas, such as
+`"Headache, Cough"`. A list of option texts is rejected.

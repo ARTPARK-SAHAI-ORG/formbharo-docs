@@ -1,0 +1,95 @@
+---
+title: "Answers"
+description: "form_data holds the values, form_status says how each one got there."
+---
+
+Every call carries two objects. Both are keyed by the question's `name`.
+
+```json
+{
+  "form_data": {
+    "consent": true,
+    "full_name": "Asha Rao",
+    "has_fever": "Yes",
+    "phone": null
+  },
+  "form_status": {
+    "consent": "answered",
+    "full_name": "answered",
+    "phone": "skipped",
+    "has_fever": "answered",
+    "fever_started_on": "empty",
+    "fever_symptoms": "empty"
+  }
+}
+```
+
+## form_data
+
+The values people gave. The type follows the question's `response_type`:
+
+| Response type | What you get |
+| --- | --- |
+| `string` | A string. |
+| `number` | A number. |
+| `date` | A string in `DD-MM-YYYY` form. |
+| `boolean` | `true` or `false`, unless the question sets `boolean_labels`. Then you get the label, such as `"Yes"`. |
+| `single-select` | One of the question's `options`, as a string. |
+| `multi-select` | The chosen options in one string, joined by a comma and a space, such as `"Headache, Cough"`. Not a list. |
+
+A question that was asked and turned down is stored as `null`. It is not left out.
+
+## form_status
+
+One of three words per question:
+
+<ResponseField name="answered" type="status">
+  The person gave an answer and it is in `form_data`.
+</ResponseField>
+
+<ResponseField name="skipped" type="status">
+  The question was put to the person and no answer was captured. `form_data` holds
+  `null`.
+</ResponseField>
+
+<ResponseField name="empty" type="status">
+  The question has not been reached yet, or its branch never activated.
+</ResponseField>
+
+<Warning>
+Read `form_status`, not the truthiness of `form_data`. A skipped question is `null`, and
+so is a question nobody has reached. The number `0`, an empty string, and `false` are
+all real answers that a plain truthy check would throw away.
+</Warning>
+
+## Before anything is saved
+
+`GET /api/v1/data/{agent_id}/{conversation_id}` returns `{}` until the first answer is
+written. There is no `form_data` key to read, so handle the empty object.
+
+## Correcting an answer
+
+`PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data` writes
+answers by hand. Send only the fields you are changing:
+
+```bash
+curl -X PATCH \
+  "$FORMBHARO_URL/api/v1/agents/$AGENT_ID/conversations/$CONVERSATION_ID/form_data" \
+  -H "Content-Type: application/json" \
+  -d '{"updates": {"full_name": "Asha Rao", "phone": null}}'
+```
+
+The reply is the whole `form_data` and `form_status` after the change. Sending `null`
+marks the field `skipped`.
+
+What each type accepts here is set out in
+[Question types](/reference/question-types). Two of them are easy to get wrong: a
+`single-select` takes the exact option text or its position in `options` counting from
+zero, and a `multi-select` takes either a list of those positions or one string of
+option texts separated by commas.
+
+Values are checked against the question's type and rules first. A value that fails comes
+back as 400 with an `invalid_fields` object naming each bad field. A name that is not one
+of the agent's questions comes back as 400 as well. See [Errors](/reference/errors).
+
+This route needs no key. See [API keys](/getting-started/api-keys).

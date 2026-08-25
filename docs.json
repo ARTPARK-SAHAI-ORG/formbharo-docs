@@ -1,0 +1,157 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "FormBharo",
+  "colors": {
+    "primary": "#2563EB",
+    "light": "#60A5FA",
+    "dark": "#1D4ED8"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting started",
+            "pages": [
+              "getting-started/what-is-formbharo",
+              "getting-started/api-keys",
+              "getting-started/quickstart"
+            ]
+          },
+          {
+            "group": "Core concepts",
+            "pages": [
+              "concepts/agents",
+              "concepts/calls",
+              "concepts/answers"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/build-an-agent",
+              "guides/run-a-call",
+              "guides/poll-for-finished-calls",
+              "guides/read-the-analytics"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/agent-configuration",
+              "reference/question-types",
+              "reference/validation",
+              "reference/retries",
+              "reference/branching",
+              "reference/conventions",
+              "reference/errors",
+              "reference/gotchas"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API reference",
+        "groups": [
+          {
+            "group": "Getting started",
+            "pages": [
+              "api-reference/introduction"
+            ]
+          },
+          {
+            "group": "Agents",
+            "openapi": "api-reference/openapi.json",
+            "pages": [
+              "GET /api/v1/agents",
+              "POST /api/v1/agents",
+              "GET /api/v1/agents/{agent_id}",
+              "PUT /api/v1/agents/{agent_id}",
+              "DELETE /api/v1/agents/{agent_id}",
+              "GET /api/v1/agents/{agent_id}/public",
+              "PUT /api/v1/agents/{agent_id}/config",
+              "POST /api/v1/agents/{agent_id}/duplicate",
+              "GET /api/v1/agents/{agent_id}/access",
+              "PUT /api/v1/agents/{agent_id}/access",
+              "PUT /api/v1/agents/{agent_id}/workspace"
+            ]
+          },
+          {
+            "group": "Agent versions",
+            "openapi": "api-reference/openapi.json",
+            "pages": [
+              "GET /api/v1/agents/{agent_id}/versions",
+              "GET /api/v1/agents/{agent_id}/versions/{version}",
+              "GET /api/v1/agents/{agent_id}/versions/{version}/diff",
+              "POST /api/v1/agents/{agent_id}/versions/{version}/restore",
+              "POST /api/v1/agents/{agent_id}/diff-preview",
+              "POST /api/v1/agents/{agent_id}/config/diff-preview"
+            ]
+          },
+          {
+            "group": "Calls",
+            "openapi": "api-reference/openapi.json",
+            "pages": [
+              "GET /api/v1/agents/{agent_id}/conversations",
+              "GET /api/v1/data/{agent_id}/{conversation_id}",
+              "PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data",
+              "GET /api/v1/agents/{agent_id}/conversations/{conversation_id}/transcript"
+            ]
+          },
+          {
+            "group": "Analytics",
+            "openapi": "api-reference/openapi.json",
+            "pages": [
+              "GET /api/v1/conversations",
+              "GET /api/v1/agents/{agent_id}/analytics",
+              "GET /api/v1/workspaces/{workspace_id}/analytics"
+            ]
+          },
+          {
+            "group": "Workspaces",
+            "openapi": "api-reference/openapi.json",
+            "pages": [
+              "GET /api/v1/workspaces",
+              "POST /api/v1/workspaces",
+              "GET /api/v1/workspaces/{workspace_id}",
+              "PUT /api/v1/workspaces/{workspace_id}",
+              "POST /api/v1/workspaces/{workspace_id}/members",
+              "DELETE /api/v1/workspaces/{workspace_id}/members/{email}"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "primary": {
+      "type": "button",
+      "label": "Open FormBharo",
+      "href": "https://formbharo.artpark.ai"
+    }
+  },
+  "api": {
+    "openapi": "api-reference/openapi.json",
+    "playground": {
+      "display": "interactive"
+    },
+    "examples": {
+      "languages": [
+        "curl",
+        "python"
+      ],
+      "defaults": "required",
+      "autogenerate": true
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude"
+    ]
+  }
+}

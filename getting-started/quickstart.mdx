@@ -1,0 +1,114 @@
+---
+title: "Quickstart"
+description: "List your agents, then create one."
+---
+
+## 1. Set the two variables
+
+```bash
+export FORMBHARO_KEY=fb_live_0123456789ab_REPLACE_THIS_WITH_THE_KEY_YOU_COPIED
+export FORMBHARO_URL=https://YOUR-FORMBHARO-SERVER
+```
+
+Use the key you copied from Settings, and your FormBharo server's address with no
+trailing slash. If you are running the server yourself, the address is
+`http://localhost:7860`.
+
+## 2. List the agents you can see
+
+<CodeGroup>
+
+```bash curl
+curl -H "Authorization: Bearer $FORMBHARO_KEY" \
+  "$FORMBHARO_URL/api/v1/agents"
+```
+
+```python python
+import os
+import requests
+
+response = requests.get(
+    f"{os.environ['FORMBHARO_URL']}/api/v1/agents",
+    headers={"Authorization": f"Bearer {os.environ['FORMBHARO_KEY']}"},
+)
+print(response.json())
+```
+
+</CodeGroup>
+
+```json Response
+[
+  {
+    "id": "a87c1556-79fa-4492-add9-a704c13466a3",
+    "title": "Clinic intake",
+    "question_count": 6,
+    "updated_at": 1787626873.7724512,
+    "conversation_count": 3,
+    "status": "published",
+    "workspace_id": "personal-b3c9fe587b86d5a1",
+    "workspace_role": "admin"
+  }
+]
+```
+
+An empty list means you have no agents yet. Create one in the next step.
+
+## 3. Create an agent
+
+<CodeGroup>
+
+```bash curl
+curl -X POST "$FORMBHARO_URL/api/v1/agents" \
+  -H "Authorization: Bearer $FORMBHARO_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Clinic intake",
+    "questions": [
+      {"name": "full_name", "question": "What is your full name?", "response_type": "string", "required": true},
+      {"name": "age", "question": "How old are you?", "response_type": "number", "number_format": "integer", "required": true},
+      {"name": "has_fever", "question": "Do you have a fever?", "response_type": "boolean", "required": true}
+    ]
+  }'
+```
+
+```python python
+import os
+import requests
+
+response = requests.post(
+    f"{os.environ['FORMBHARO_URL']}/api/v1/agents",
+    headers={"Authorization": f"Bearer {os.environ['FORMBHARO_KEY']}"},
+    json={
+        "title": "Clinic intake",
+        "questions": [
+            {"name": "full_name", "question": "What is your full name?", "response_type": "string", "required": True},
+            {"name": "age", "question": "How old are you?", "response_type": "number", "number_format": "integer", "required": True},
+            {"name": "has_fever", "question": "Do you have a fever?", "response_type": "boolean", "required": True},
+        ],
+    },
+)
+print(response.json())
+```
+
+</CodeGroup>
+
+```json Response
+{
+  "id": "a87c1556-79fa-4492-add9-a704c13466a3",
+  "workspace_id": "personal-b3c9fe587b86d5a1"
+}
+```
+
+A new agent starts as a draft. Sending the same body to
+`PUT /api/v1/agents/{agent_id}` publishes it, which is what makes it callable.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Build an agent from a form" icon="list-check" href="/guides/build-an-agent">
+    Every field a question can carry.
+  </Card>
+  <Card title="Run a call" icon="phone" href="/guides/run-a-call">
+    Start a call from your own page and read the answers.
+  </Card>
+</CardGroup>

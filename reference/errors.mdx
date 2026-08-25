@@ -1,0 +1,75 @@
+---
+title: "Errors"
+description: "The three error bodies, and what each status code means."
+---
+
+## Three error bodies
+
+Which one you get depends on where the request stopped.
+
+**The sign-in check** uses `detail`:
+
+```json
+{"detail": "Invalid API key"}
+```
+
+**An endpoint** uses `error`:
+
+```json
+{"error": "Agent not found"}
+```
+
+**A refused save** uses `validation_issues`, which names each problem:
+
+```json
+{
+  "validation_issues": [
+    {
+      "field": "questions[0].branch_id",
+      "message": "Question references unknown branch 'nope'."
+    }
+  ]
+}
+```
+
+A refused answer edit adds `invalid_fields` alongside `error`:
+
+```json
+{
+  "error": "Deterministic validation failed for phone: Phone number must be exactly 10 digits (got 3). Parsed digits: 123 Captured value: 123",
+  "invalid_fields": {
+    "phone": {
+      "value": "123",
+      "normalized_value": "123",
+      "error": "Phone number must be exactly 10 digits (got 3). Parsed digits: 123",
+      "source": "deterministic_validation"
+    }
+  }
+}
+```
+
+## Status codes
+
+| Status | What it means |
+| --- | --- |
+| 400 | Something in the body or a query parameter is wrong. The message says what. |
+| 401 | No key was sent, or the key is wrong, or it has been revoked. |
+| 403 | The key is valid but is not allowed to do this. A workspace you do not administer, or a key trying to manage keys. |
+| 404 | The agent, workspace, call, or version does not exist. It also means "it exists, but you cannot see it": the API does not tell you that something you have no access to is there. |
+| 422 | The body did not match the expected fields. `detail` is a list naming each bad field. |
+| 500 | Something on the server could not be read or written. |
+
+A 422 looks like this:
+
+```json
+{
+  "detail": [
+    {
+      "type": "missing",
+      "loc": ["body", "title"],
+      "msg": "Field required",
+      "input": {"questions": []}
+    }
+  ]
+}
+```

@@ -1,0 +1,67 @@
+---
+title: "API keys"
+description: "Create a key in Settings, then send it on every request."
+---
+
+Every request needs an API key, apart from the three routes listed at the bottom of
+this page.
+
+## Create a key
+
+1. Sign in to the FormBharo web app.
+2. Open **Settings**.
+3. Open the **API keys** tab.
+4. Click **Create API key** and give it a name.
+5. Copy the key straight away. It is shown once and never again. If you lose it, revoke
+   it and create another.
+
+A key looks like this:
+
+```
+fb_live_0123456789ab_REPLACE_THIS_WITH_THE_KEY_YOU_COPIED
+```
+
+## Send it on every request
+
+Put the key in the `Authorization` header, after the word `Bearer`.
+
+```bash
+curl -H "Authorization: Bearer $FORMBHARO_KEY" \
+  "$FORMBHARO_URL/api/v1/agents"
+```
+
+`FORMBHARO_URL` is the address of your FormBharo server, with no trailing slash. Every
+example on this site uses those two shell variables.
+
+## What a key can do
+
+A key can do everything the person who created it can do. It carries that person's
+identity. It sees the same agents and the same workspaces, and it has the same rights.
+Treat it like their password.
+
+There is one thing a key cannot do that the person can: a key cannot create or revoke
+other keys. That way a stolen key cannot be used to make another one.
+
+To turn a key off, revoke it in the same Settings tab. The next request made with it
+fails with 401.
+
+## The three routes that take no key
+
+These three accept requests with no key at all, because a browser running your own page
+calls them before anyone has signed in:
+
+- `POST /offer`, which opens the audio connection that starts a call.
+- `GET /api/v1/data/{agent_id}/{conversation_id}`, which reads a call's answers.
+- `PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data`, which
+  corrects a call's answers.
+
+`GET /api/v1/agents/{agent_id}/public` is open in the same way. It returns an agent's
+title and its list of questions, which is what a page needs to draw the form.
+
+<Warning>
+Anyone who knows an agent id can read a live call's answers through these routes, and
+can overwrite them. The agent id is a random identifier and is not published anywhere,
+so it is the only thing standing between a stranger and that call's answers. If your
+agents collect anything sensitive, put your own check in front of these routes before
+you open your server to the internet.
+</Warning>

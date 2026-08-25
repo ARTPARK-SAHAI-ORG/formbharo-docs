@@ -1,0 +1,146 @@
+---
+title: "Read the analytics"
+description: "Completion, duration, response speed, and cost for an agent or a workspace."
+---
+
+Two endpoints give you the same set of figures:
+
+- `GET /api/v1/agents/{agent_id}/analytics` for one agent.
+- `GET /api/v1/workspaces/{workspace_id}/analytics` for a whole workspace, plus a
+  breakdown per agent. Workspace admins only.
+
+Both take `status`, `source`, `since`, and `until` to narrow what is counted.
+
+<CodeGroup>
+
+```bash curl
+curl -H "Authorization: Bearer $FORMBHARO_KEY" \
+  "$FORMBHARO_URL/api/v1/agents/$AGENT_ID/analytics"
+```
+
+```python python
+import os
+import requests
+
+response = requests.get(
+    f"{os.environ['FORMBHARO_URL']}/api/v1/agents/{os.environ['AGENT_ID']}/analytics",
+    headers={"Authorization": f"Bearer {os.environ['FORMBHARO_KEY']}"},
+)
+print(response.json()["stats"])
+```
+
+</CodeGroup>
+
+```json Response
+{
+  "agent_id": "a87c1556-79fa-4492-add9-a704c13466a3",
+  "agent_title": "Clinic intake",
+  "stats": {
+    "attempted": 3,
+    "completed": 2,
+    "screened_out": 1,
+    "completion_rate": 0.6666666666666666,
+    "avg_duration_secs": null,
+    "avg_duration_ci95": null,
+    "avg_ack_latency_secs": null,
+    "avg_ack_latency_ci95": null,
+    "avg_ack_to_reply_secs": null,
+    "avg_ack_to_reply_ci95": null,
+    "duration_sample_count": 0,
+    "ack_latency_sample_count": 0,
+    "ack_to_reply_sample_count": 0,
+    "cost": {
+      "call_count": 0,
+      "total": {"per_call": null, "per_turn": null},
+      "llm": {"per_call": null, "per_turn": null},
+      "stt": {"per_call": null, "per_turn": null},
+      "tts": {"per_call": null, "per_turn": null}
+    }
+  }
+}
+```
+
+## Completion
+
+| Field | What it is |
+| --- | --- |
+| `attempted` | How many calls were counted. |
+| `completed` | Calls that finished the job: `complete` plus `screened_out`. |
+| `screened_out` | Calls that ended early because an answer meant the person did not qualify. |
+| `completion_rate` | `completed` divided by `attempted`. `0` when nothing was counted. |
+
+<Warning>
+`completed` includes `screened_out`. In the example above one call actually finished the
+form and one was screened out, which is why `completed` is 2 out of 3. Subtract
+`screened_out` when you want only the calls that went the whole way.
+</Warning>
+
+## Duration and response speed
+
+| Field | What it is |
+| --- | --- |
+| `avg_duration_secs` | How long a call lasted, on average. |
+| `avg_ack_latency_secs` | How long the agent took to respond after the person stopped speaking, on average. |
+| `avg_ack_to_reply_secs` | How long the agent then took to get to its actual reply, on average. |
+
+Each average comes with two companions:
+
+- `..._sample_count`, how many calls the average was worked out from.
+- `..._ci95`, the 95 per cent confidence interval half-width. The true average is very
+  likely within this much either side of the figure you got. A wide one means you do not
+  have enough calls yet to trust the number.
+
+An average is `null` when there were no usable calls. A confidence interval is `null` when
+there were fewer than two.
+
+## Cost
+
+`cost` holds averages in US dollars.
+
+| Field | What it is |
+| --- | --- |
+| `call_count` | How many calls had a cost recorded. |
+| `total` | Everything added together. |
+| `llm` | The part spent on the language model. |
+| `stt` | The part spent turning speech into text. |
+| `tts` | The part spent turning text into speech. |
+
+Each of those four has `per_call` and `per_turn`. `per_turn` divides that part's total by
+the number of turns where it actually ran, so turns it sat out do not drag the average
+down.
+
+## A workspace
+
+The workspace reply wraps the same `stats` object and adds one per agent:
+
+```bash
+curl -H "Authorization: Bearer $FORMBHARO_KEY" \
+  "$FORMBHARO_URL/api/v1/workspaces/$WORKSPACE_ID/analytics"
+```
+
+```json
+{
+  "workspace_id": "personal-b3c9fe587b86d5a1",
+  "workspace_name": "aman.dalmia's workspace",
+  "stats": { "...": "the same fields as above, over every agent" },
+  "agents": [
+    {
+      "agent_id": "a87c1556-79fa-4492-add9-a704c13466a3",
+      "agent_title": "Clinic intake",
+      "stats": { "...": "the same fields as above, for this agent" }
+    }
+  ]
+}
+```
+
+A workspace you do not administer answers 403 with
+`{"error": "Workspace admin access required"}`.
+
+## Figures for a past range can change
+
+`since` and `until` filter on `created_at`, which is the last time a call's answers were
+written. Correcting an answer moves the call into today's window, so an agent's figures
+for last month can be different when you ask again. See [Gotchas](/reference/gotchas).
+
+These endpoints get slower as your call history grows. Narrow them with `since` and
+`until`, and do not ask more often than you need.

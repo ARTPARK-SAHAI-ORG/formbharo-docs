@@ -1,0 +1,75 @@
+---
+title: "Conventions"
+description: "Paths, paging, timestamps, and the two shapes some lists come back in."
+---
+
+## Paths
+
+Every endpoint sits under `/api/v1` on your FormBharo server. Running the server
+yourself, that is `http://localhost:7860/api/v1`.
+
+The one exception is `POST /offer`, which starts a call. It sits at the bare path,
+`http://localhost:7860/offer`, not under `/api/v1`.
+
+## Paging
+
+Lists take `limit`, meaning how many rows, and `cursor`, meaning where to start.
+
+A cursor is a position in the list, counted from the top. `cursor=20` means skip the
+first twenty rows. It is not tied to a particular row. So if a call is recorded while you
+are working through the pages, every row below it moves down by one, and you can see the
+same row twice or miss one. For a list that is not changing under you, paging is exact.
+
+`next_cursor` in the reply is what to send as `cursor` next time. It is `null` on the
+last page, and it is always a number.
+
+## Two shapes on the same list
+
+`GET /api/v1/agents/{agent_id}/conversations` replies in one of two shapes, and which one
+you get depends only on whether you asked for paging.
+
+Send neither `limit` nor `cursor`, and you get a plain list of every matching call:
+
+```json
+[
+  {"conversation_id": "6f1f0a1c-1111-4b0c-9a3a-2b6f9c0d0001", "status": "in_progress"}
+]
+```
+
+Send either `limit` or `cursor`, and you get an object instead:
+
+```json
+{
+  "data": [
+    {"conversation_id": "6f1f0a1c-1111-4b0c-9a3a-2b6f9c0d0001", "status": "in_progress"}
+  ],
+  "next_cursor": null
+}
+```
+
+Filters on their own do not change the shape. `?status=complete` still gives you a plain
+list, just a shorter one.
+
+`GET /api/v1/agents` and `GET /api/v1/workspaces` behave the same way.
+`GET /api/v1/conversations`, the list across every agent, always gives you the object.
+
+## Timestamps
+
+Every time value is unix seconds, written as a number with a fractional part. For example
+`1787626873.7724512` is 25 August 2026 at 03:01 UTC. There are no date strings and no
+time zones anywhere in the API.
+
+## Filtering by date
+
+`since` and `until` are unix seconds and both are inclusive. They filter on `created_at`,
+which is the last time the call's answers were written, not when the call happened. See
+[Gotchas](/reference/gotchas).
+
+## Leaving out the transcript
+
+`GET /api/v1/agents/{agent_id}/conversations` includes each call's transcript by default.
+Pass `include_transcript=false` to leave it out, which makes the reply much smaller. The
+`transcript` key is then missing, not empty.
+
+`GET /api/v1/conversations` never includes transcripts. Fetch one with
+`GET /api/v1/agents/{agent_id}/conversations/{conversation_id}/transcript`.

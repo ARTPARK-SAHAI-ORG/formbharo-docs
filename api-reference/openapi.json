@@ -1,0 +1,4048 @@
+{
+  "components": {
+    "schemas": {
+      "AddWorkspaceMemberRequest": {
+        "description": "Email of a user to add as a workspace member (admin).",
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "AddWorkspaceMemberRequest",
+        "type": "object"
+      },
+      "AgentAccess": {
+        "properties": {
+          "access_emails": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Access Emails",
+            "type": "array"
+          },
+          "owner_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Email"
+          }
+        },
+        "required": [
+          "access_emails"
+        ],
+        "title": "AgentAccess",
+        "type": "object"
+      },
+      "AgentAnalytics": {
+        "properties": {
+          "agent_id": {
+            "title": "Agent Id",
+            "type": "string"
+          },
+          "agent_title": {
+            "title": "Agent Title",
+            "type": "string"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/AnalyticsStats"
+          }
+        },
+        "required": [
+          "agent_id",
+          "agent_title",
+          "stats"
+        ],
+        "title": "AgentAnalytics",
+        "type": "object"
+      },
+      "AgentConfig": {
+        "additionalProperties": true,
+        "description": "A stored agent config as returned by ``sanitize_agent_config``.\n\nOpen on purpose: config keys are added over time and the endpoint returns the\nfile as saved.",
+        "properties": {
+          "questions": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Questions"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "AgentConfig",
+        "type": "object"
+      },
+      "AgentListItem": {
+        "description": "One row of ``GET /agents``.",
+        "properties": {
+          "conversation_count": {
+            "title": "Conversation Count",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "question_count": {
+            "title": "Question Count",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "number"
+          },
+          "workspace_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workspace Id"
+          },
+          "workspace_role": {
+            "enum": [
+              "admin",
+              "limited"
+            ],
+            "title": "Workspace Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "question_count",
+          "updated_at",
+          "conversation_count",
+          "status",
+          "workspace_role"
+        ],
+        "title": "AgentListItem",
+        "type": "object"
+      },
+      "AgentListPage": {
+        "description": "Paged agent list, returned only when ``limit`` or ``cursor`` is sent.",
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AgentListItem"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "AgentListPage",
+        "type": "object"
+      },
+      "AgentVersionDiff": {
+        "description": "``from_version`` is ``None`` when the target is diffed against nothing.",
+        "properties": {
+          "from_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Version"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/DiffLine"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "to_version": {
+            "title": "To Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "to_version",
+          "lines"
+        ],
+        "title": "AgentVersionDiff",
+        "type": "object"
+      },
+      "AgentVersionSnapshot": {
+        "description": "A saved version including the full config it captured.",
+        "properties": {
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "config": {
+            "additionalProperties": true,
+            "title": "Config",
+            "type": "object"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "config"
+        ],
+        "title": "AgentVersionSnapshot",
+        "type": "object"
+      },
+      "AgentVersionSummary": {
+        "description": "Version metadata without the config body.",
+        "properties": {
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "AgentVersionSummary",
+        "type": "object"
+      },
+      "AnalyticsStats": {
+        "properties": {
+          "ack_latency_sample_count": {
+            "title": "Ack Latency Sample Count",
+            "type": "integer"
+          },
+          "ack_to_reply_sample_count": {
+            "title": "Ack To Reply Sample Count",
+            "type": "integer"
+          },
+          "attempted": {
+            "title": "Attempted",
+            "type": "integer"
+          },
+          "avg_ack_latency_ci95": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Ack Latency Ci95"
+          },
+          "avg_ack_latency_secs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Ack Latency Secs"
+          },
+          "avg_ack_to_reply_ci95": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Ack To Reply Ci95"
+          },
+          "avg_ack_to_reply_secs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Ack To Reply Secs"
+          },
+          "avg_duration_ci95": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Duration Ci95"
+          },
+          "avg_duration_secs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Duration Secs"
+          },
+          "completed": {
+            "title": "Completed",
+            "type": "integer"
+          },
+          "completion_rate": {
+            "title": "Completion Rate",
+            "type": "number"
+          },
+          "cost": {
+            "$ref": "#/components/schemas/CostStats"
+          },
+          "duration_sample_count": {
+            "title": "Duration Sample Count",
+            "type": "integer"
+          },
+          "screened_out": {
+            "title": "Screened Out",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "attempted",
+          "completed",
+          "screened_out",
+          "completion_rate",
+          "avg_duration_secs",
+          "avg_duration_ci95",
+          "avg_ack_latency_secs",
+          "avg_ack_latency_ci95",
+          "avg_ack_to_reply_secs",
+          "avg_ack_to_reply_ci95",
+          "duration_sample_count",
+          "ack_latency_sample_count",
+          "ack_to_reply_sample_count",
+          "cost"
+        ],
+        "title": "AnalyticsStats",
+        "type": "object"
+      },
+      "BooleanLabels": {
+        "properties": {
+          "false": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "False"
+          },
+          "true": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "True"
+          }
+        },
+        "title": "BooleanLabels",
+        "type": "object"
+      },
+      "Branch": {
+        "description": "A conditional group (\"box\") of questions in the form builder.\n\nQuestions reference a branch via ``Question.branch_id``. The branch's questions\nare only asked when ``condition`` evaluates true against the collected answers.",
+        "properties": {
+          "condition": {
+            "$ref": "#/components/schemas/BranchCondition"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "condition"
+        ],
+        "title": "Branch",
+        "type": "object"
+      },
+      "BranchCondition": {
+        "description": "Condition that gates a branch.\n\n``field`` is the ``name`` of the controlling question. Exactly one of ``equals``\nor ``present`` is set, selecting the condition mode:\n\n- Value-match mode (``equals``): boolean controllers only. The branch activates\n  when the controller's boolean answer matches ``equals`` (\"is True\" / \"is False\").\n- Presence mode (``present``): any controller type (string/number/date/boolean/\n  single-select/multi-select). The branch keys off whether the controller was\n  answered vs skipped — ``present=True`` activates when the controller was\n  answered (not present = skipped), ``present=False`` activates when it was\n  skipped.",
+        "properties": {
+          "equals": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equals"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "present": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Present"
+          }
+        },
+        "required": [
+          "field"
+        ],
+        "title": "BranchCondition",
+        "type": "object"
+      },
+      "ConfigDiffPreview": {
+        "properties": {
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/DiffLine"
+            },
+            "title": "Lines",
+            "type": "array"
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "title": "ConfigDiffPreview",
+        "type": "object"
+      },
+      "ConversationCost": {
+        "description": "Per-call cost totals and per-component run counts.",
+        "properties": {
+          "llm_turns": {
+            "title": "Llm Turns",
+            "type": "integer"
+          },
+          "llm_usd": {
+            "title": "Llm Usd",
+            "type": "number"
+          },
+          "stt_turns": {
+            "title": "Stt Turns",
+            "type": "integer"
+          },
+          "stt_usd": {
+            "title": "Stt Usd",
+            "type": "number"
+          },
+          "total_usd": {
+            "title": "Total Usd",
+            "type": "number"
+          },
+          "tts_turns": {
+            "title": "Tts Turns",
+            "type": "integer"
+          },
+          "tts_usd": {
+            "title": "Tts Usd",
+            "type": "number"
+          },
+          "turns": {
+            "title": "Turns",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_usd",
+          "llm_usd",
+          "stt_usd",
+          "tts_usd",
+          "turns",
+          "llm_turns",
+          "stt_turns",
+          "tts_turns"
+        ],
+        "title": "ConversationCost",
+        "type": "object"
+      },
+      "ConversationEvent": {
+        "additionalProperties": true,
+        "description": "One entry of ``events.json``. Shape varies by event type.",
+        "properties": {},
+        "title": "ConversationEvent",
+        "type": "object"
+      },
+      "ConversationFormData": {
+        "additionalProperties": true,
+        "description": "``data.json`` for one conversation, as stored (``GET /data/{a}/{c}``).\n\nEmpty ``{}`` when the conversation has no ``data.json`` yet.",
+        "properties": {
+          "form_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Form Data"
+          },
+          "form_status": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Form Status"
+          }
+        },
+        "title": "ConversationFormData",
+        "type": "object"
+      },
+      "ConversationMetrics": {
+        "additionalProperties": true,
+        "description": "``metrics.json`` for a conversation: per-turn latency, usage and cost.",
+        "properties": {
+          "cost_summary": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Summary"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "turns": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turns"
+          }
+        },
+        "title": "ConversationMetrics",
+        "type": "object"
+      },
+      "ConversationSummary": {
+        "description": "One row of the conversation list (``build_conversation_summary``).\n\n``transcript`` is absent entirely when the request passed\n``include_transcript=false``.",
+        "properties": {
+          "avg_ack_latency_secs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Ack Latency Secs"
+          },
+          "avg_ack_to_reply_secs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Ack To Reply Secs"
+          },
+          "caller_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caller Number"
+          },
+          "conversation_id": {
+            "title": "Conversation Id",
+            "type": "string"
+          },
+          "cost": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConversationCost"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "duration_secs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Secs"
+          },
+          "filled_fields": {
+            "title": "Filled Fields",
+            "type": "integer"
+          },
+          "form_data": {
+            "additionalProperties": true,
+            "title": "Form Data",
+            "type": "object"
+          },
+          "form_status": {
+            "additionalProperties": true,
+            "title": "Form Status",
+            "type": "object"
+          },
+          "has_events": {
+            "title": "Has Events",
+            "type": "boolean"
+          },
+          "has_metrics": {
+            "title": "Has Metrics",
+            "type": "boolean"
+          },
+          "has_recording": {
+            "title": "Has Recording",
+            "type": "boolean"
+          },
+          "has_transcript": {
+            "title": "Has Transcript",
+            "type": "boolean"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "status": {
+            "enum": [
+              "complete",
+              "screened_out",
+              "failed",
+              "in_progress"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "total_fields": {
+            "title": "Total Fields",
+            "type": "integer"
+          },
+          "transcript": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transcript"
+          }
+        },
+        "required": [
+          "conversation_id",
+          "form_data",
+          "form_status",
+          "has_recording",
+          "has_transcript",
+          "has_events",
+          "has_metrics",
+          "filled_fields",
+          "total_fields",
+          "status"
+        ],
+        "title": "ConversationSummary",
+        "type": "object"
+      },
+      "CostComponentAverages": {
+        "description": "Averages for one cost component (USD), per call and per turn.",
+        "properties": {
+          "per_call": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Per Call"
+          },
+          "per_turn": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Per Turn"
+          }
+        },
+        "required": [
+          "per_call",
+          "per_turn"
+        ],
+        "title": "CostComponentAverages",
+        "type": "object"
+      },
+      "CostStats": {
+        "properties": {
+          "call_count": {
+            "title": "Call Count",
+            "type": "integer"
+          },
+          "llm": {
+            "$ref": "#/components/schemas/CostComponentAverages"
+          },
+          "stt": {
+            "$ref": "#/components/schemas/CostComponentAverages"
+          },
+          "total": {
+            "$ref": "#/components/schemas/CostComponentAverages"
+          },
+          "tts": {
+            "$ref": "#/components/schemas/CostComponentAverages"
+          }
+        },
+        "required": [
+          "call_count",
+          "total",
+          "llm",
+          "stt",
+          "tts"
+        ],
+        "title": "CostStats",
+        "type": "object"
+      },
+      "CreateAgentRequest": {
+        "properties": {
+          "agent_persona": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Persona"
+          },
+          "agent_speaks_first": {
+            "default": true,
+            "title": "Agent Speaks First",
+            "type": "boolean"
+          },
+          "ai_instructions": {
+            "default": "",
+            "title": "Ai Instructions",
+            "type": "string"
+          },
+          "ask_questions_one_by_one": {
+            "default": true,
+            "title": "Ask Questions One By One",
+            "type": "boolean"
+          },
+          "branches": {
+            "items": {
+              "$ref": "#/components/schemas/Branch"
+            },
+            "title": "Branches",
+            "type": "array"
+          },
+          "calibrate_base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calibrate Base Url"
+          },
+          "calibrate_extract_agent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calibrate Extract Agent Id"
+          },
+          "calibrate_reply_agent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calibrate Reply Agent Id"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "hearing_acknowledgement_mode": {
+            "default": "fixed",
+            "enum": [
+              "fixed",
+              "llm"
+            ],
+            "title": "Hearing Acknowledgement Mode",
+            "type": "string"
+          },
+          "hearing_acknowledgement_phrases": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hearing Acknowledgement Phrases"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "mute_user_while_agent_speaking": {
+            "default": false,
+            "title": "Mute User While Agent Speaking",
+            "type": "boolean"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/Question"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "scripts": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScriptsConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "send_hearing_acknowledgements": {
+            "default": true,
+            "title": "Send Hearing Acknowledgements",
+            "type": "boolean"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "user_persona": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Persona"
+          },
+          "workspace_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workspace Id"
+          }
+        },
+        "required": [
+          "title",
+          "questions"
+        ],
+        "title": "CreateAgentRequest",
+        "type": "object"
+      },
+      "CreateAgentResponse": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id"
+        ],
+        "title": "CreateAgentResponse",
+        "type": "object"
+      },
+      "CreateWorkspaceRequest": {
+        "description": "Name of a new workspace to create.",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "CreateWorkspaceRequest",
+        "type": "object"
+      },
+      "DeleteAgentResponse": {
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "DeleteAgentResponse",
+        "type": "object"
+      },
+      "DiffLine": {
+        "description": "One rendered line of a unified diff.",
+        "properties": {
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "add",
+              "remove",
+              "hunk",
+              "meta",
+              "context"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "text"
+        ],
+        "title": "DiffLine",
+        "type": "object"
+      },
+      "DuplicateAgentResponse": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "DuplicateAgentResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "MoveAgentWorkspaceRequest": {
+        "description": "Destination workspace an agent should be moved to.",
+        "properties": {
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id"
+        ],
+        "title": "MoveAgentWorkspaceRequest",
+        "type": "object"
+      },
+      "MoveAgentWorkspaceResponse": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id"
+        ],
+        "title": "MoveAgentWorkspaceResponse",
+        "type": "object"
+      },
+      "PublicAgent": {
+        "description": "The minimum an unauthenticated caller needs to start a conversation.",
+        "properties": {
+          "agent_speaks_first": {
+            "title": "Agent Speaks First",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "questions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "questions",
+          "agent_speaks_first"
+        ],
+        "title": "PublicAgent",
+        "type": "object"
+      },
+      "Question": {
+        "properties": {
+          "advanced_instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Advanced Instructions"
+          },
+          "boolean_labels": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BooleanLabels"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "branch_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Branch Id"
+          },
+          "end_call_values": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Call Values"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "number_format": {
+            "anyOf": [
+              {
+                "enum": [
+                  "integer",
+                  "decimal"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number Format"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Options"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "required": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required"
+          },
+          "response_type": {
+            "enum": [
+              "string",
+              "number",
+              "date",
+              "boolean",
+              "single-select",
+              "multi-select"
+            ],
+            "title": "Response Type",
+            "type": "string"
+          },
+          "retry_config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RetryConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "script": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script"
+          },
+          "skip_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skip Message"
+          },
+          "validation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ValidationConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "question",
+          "response_type"
+        ],
+        "title": "Question",
+        "type": "object"
+      },
+      "RenameWorkspaceRequest": {
+        "description": "New name for an existing workspace.",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "RenameWorkspaceRequest",
+        "type": "object"
+      },
+      "RestoreAgentVersionResponse": {
+        "description": "``version`` is ``None`` when the restored config matched the current one.",
+        "properties": {
+          "config": {
+            "additionalProperties": true,
+            "title": "Config",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "restored_from": {
+            "title": "Restored From",
+            "type": "integer"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "required": [
+          "id",
+          "restored_from",
+          "config"
+        ],
+        "title": "RestoreAgentVersionResponse",
+        "type": "object"
+      },
+      "RetryConfig": {
+        "description": "Per-question retry behaviour driven deterministically by the backend.\n\n- ``allow_retries``: when False, the question is never re-asked; the first failed\n  attempt immediately exhausts retries.\n- ``until_answered``: when True, the question is re-asked indefinitely until a valid\n  answer is captured (``max_retries`` is ignored).\n- ``max_retries``: number of re-asks allowed after the initial ask (e.g. 2 = ask once,\n  then two retries, then exhausted).\n- ``retry_messages``: exact text to speak on each retry. ``retry_messages[0]`` is the\n  first retry, ``[1]`` the second, and so on. An empty/missing entry re-asks the\n  question's Script verbatim.\n\nThe action taken once retries are exhausted: required questions always end the call.\nOptional questions follow ``exhausted_action`` — ``\"skip\"`` (default) moves on to the\nnext question (speaking ``skip_message``), ``\"end_call\"`` ends the call instead.",
+        "properties": {
+          "allow_retries": {
+            "default": true,
+            "title": "Allow Retries",
+            "type": "boolean"
+          },
+          "exhausted_action": {
+            "default": "skip",
+            "enum": [
+              "skip",
+              "end_call"
+            ],
+            "title": "Exhausted Action",
+            "type": "string"
+          },
+          "max_retries": {
+            "default": 2,
+            "title": "Max Retries",
+            "type": "integer"
+          },
+          "retry_messages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Retry Messages",
+            "type": "array"
+          },
+          "until_answered": {
+            "default": false,
+            "title": "Until Answered",
+            "type": "boolean"
+          }
+        },
+        "title": "RetryConfig",
+        "type": "object"
+      },
+      "ScriptsConfig": {
+        "properties": {
+          "intro": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intro"
+          },
+          "outro": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outro"
+          },
+          "outro_incomplete": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outro Incomplete"
+          }
+        },
+        "title": "ScriptsConfig",
+        "type": "object"
+      },
+      "TranscriptEntry": {
+        "additionalProperties": true,
+        "description": "One line of ``transcript.json``.",
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "duration_secs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Secs"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          }
+        },
+        "title": "TranscriptEntry",
+        "type": "object"
+      },
+      "TurnAudioClip": {
+        "description": "One per-turn audio clip recorded under ``<conversation>/turns``.",
+        "properties": {
+          "duration_secs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Secs"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "speaker": {
+            "enum": [
+              "user",
+              "bot"
+            ],
+            "title": "Speaker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "speaker",
+          "filename"
+        ],
+        "title": "TurnAudioClip",
+        "type": "object"
+      },
+      "UpdateAgentAccessRequest": {
+        "description": "Admin emails that can manage an agent in addition to the owner.",
+        "properties": {
+          "access_emails": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Access Emails",
+            "type": "array"
+          }
+        },
+        "title": "UpdateAgentAccessRequest",
+        "type": "object"
+      },
+      "UpdateAgentConfigResponse": {
+        "properties": {
+          "config": {
+            "additionalProperties": true,
+            "title": "Config",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "config"
+        ],
+        "title": "UpdateAgentConfigResponse",
+        "type": "object"
+      },
+      "UpdateAgentResponse": {
+        "description": "``version`` is ``None`` when the save did not record a new version.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ],
+        "title": "UpdateAgentResponse",
+        "type": "object"
+      },
+      "UpdateFormDataRequest": {
+        "description": "Manual form field updates for a conversation.",
+        "properties": {
+          "updates": {
+            "additionalProperties": true,
+            "title": "Updates",
+            "type": "object"
+          }
+        },
+        "title": "UpdateFormDataRequest",
+        "type": "object"
+      },
+      "UpdateFormDataResponse": {
+        "description": "Result of a manual form edit: the conversation's saved values + statuses.",
+        "properties": {
+          "form_data": {
+            "additionalProperties": true,
+            "title": "Form Data",
+            "type": "object"
+          },
+          "form_status": {
+            "additionalProperties": true,
+            "title": "Form Status",
+            "type": "object"
+          }
+        },
+        "required": [
+          "form_data",
+          "form_status"
+        ],
+        "title": "UpdateFormDataResponse",
+        "type": "object"
+      },
+      "ValidationConfig": {
+        "properties": {
+          "rules": {
+            "additionalProperties": true,
+            "title": "Rules",
+            "type": "object"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "ValidationConfig",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "WorkspaceAnalytics": {
+        "properties": {
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/AgentAnalytics"
+            },
+            "title": "Agents",
+            "type": "array"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/AnalyticsStats"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          },
+          "workspace_name": {
+            "title": "Workspace Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "workspace_name",
+          "stats",
+          "agents"
+        ],
+        "title": "WorkspaceAnalytics",
+        "type": "object"
+      },
+      "WorkspaceDetail": {
+        "description": "Workspace details + membership, for workspace admins.",
+        "properties": {
+          "admin_emails": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Admin Emails",
+            "type": "array"
+          },
+          "current_user_email": {
+            "title": "Current User Email",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_owner": {
+            "title": "Is Owner",
+            "type": "boolean"
+          },
+          "is_personal": {
+            "title": "Is Personal",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "owner_email": {
+            "title": "Owner Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "owner_email",
+          "admin_emails",
+          "is_personal",
+          "is_owner",
+          "current_user_email"
+        ],
+        "title": "WorkspaceDetail",
+        "type": "object"
+      },
+      "WorkspaceListItem": {
+        "description": "One row of ``GET /workspaces`` (also the shape returned when creating one).",
+        "properties": {
+          "agent_count": {
+            "title": "Agent Count",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "is_personal": {
+            "title": "Is Personal",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "owner_email": {
+            "title": "Owner Email",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "limited"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "owner_email",
+          "is_personal",
+          "role",
+          "agent_count"
+        ],
+        "title": "WorkspaceListItem",
+        "type": "object"
+      },
+      "WorkspaceListPage": {
+        "description": "Paged workspace list, returned only when ``limit`` or ``cursor`` is sent.",
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceListItem"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "WorkspaceListPage",
+        "type": "object"
+      },
+      "models__ConversationPage": {
+        "description": "Paged conversation list, returned only when ``limit`` or ``cursor`` is sent.",
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ConversationSummary"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ConversationPage",
+        "type": "object"
+      },
+      "routes_analytics__ConversationPage": {
+        "properties": {
+          "data": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "data",
+          "next_cursor"
+        ],
+        "title": "ConversationPage",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "apiKey": {
+        "bearerFormat": "fb_live_...",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "Create and run form-filling voice agents, and read back the conversations they had.\n\nSend your API key on every request as `Authorization: Bearer fb_live_...`.\nA key does whatever the person who created it can do. Create and revoke keys\nfrom Settings in the web app; keys cannot manage other keys.\n",
+    "title": "FormBharo API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/agents": {
+      "get": {
+        "description": "Return every agent the user can see, newest save first.\n\nEach row carries id, title, question_count, updated_at, conversation_count,\nstatus, workspace_id and workspace_role.\n\n**Two response shapes.** With no ``limit`` and no ``cursor`` this returns a bare\nJSON array — the shape the app has always returned. Sending either one instead\nreturns ``{\"data\": [...], \"next_cursor\": ...}``, where ``next_cursor`` is\n``None`` on the last page.",
+        "operationId": "get_agents_api_v1_agents_get",
+        "parameters": [
+          {
+            "description": "Maximum agents to return. Sending this switches the response to the paged object shape.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum agents to return. Sending this switches the response to the paged object shape.",
+              "title": "Limit"
+            }
+          },
+          {
+            "description": "Where to resume from: the ``next_cursor`` of the previous page. Sending this switches the response to the paged object shape.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Where to resume from: the ``next_cursor`` of the previous page. Sending this switches the response to the paged object shape.",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "$ref": "#/components/schemas/AgentListItem"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AgentListPage"
+                    }
+                  ],
+                  "title": "Response 200 Get Agents Api V1 Agents Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Agents",
+        "tags": [
+          "Agents"
+        ]
+      },
+      "post": {
+        "description": "Create a new agent with the given title and questions.",
+        "operationId": "create_agent_api_v1_agents_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAgentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateAgentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Agent",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}": {
+      "delete": {
+        "description": "Soft delete an agent by setting deleted = true in config.",
+        "operationId": "delete_agent_api_v1_agents__agent_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteAgentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Agent",
+        "tags": [
+          "Agents"
+        ]
+      },
+      "get": {
+        "description": "Return the config for a specific agent.",
+        "operationId": "get_agent_api_v1_agents__agent_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentConfig"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Agent",
+        "tags": [
+          "Agents"
+        ]
+      },
+      "put": {
+        "description": "Update an existing agent with the given data.",
+        "operationId": "update_agent_api_v1_agents__agent_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAgentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateAgentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Agent",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/access": {
+      "get": {
+        "operationId": "get_agent_access_api_v1_agents__agent_id__access_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentAccess"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Agent Access",
+        "tags": [
+          "Agents"
+        ]
+      },
+      "put": {
+        "description": "Replace the list of admin emails that can manage an agent.",
+        "operationId": "update_agent_access_api_v1_agents__agent_id__access_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAgentAccessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentAccess"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Agent Access",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/analytics": {
+      "get": {
+        "description": "The Overview tab numbers for one agent, computed on the server.",
+        "operationId": "get_agent_analytics_api_v1_agents__agent_id__analytics_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "complete",
+                    "screened_out",
+                    "failed",
+                    "in_progress"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          },
+          {
+            "description": "Unix seconds; created_at >= since. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Unix seconds; created_at >= since. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+              "title": "Since"
+            }
+          },
+          {
+            "description": "Unix seconds; created_at <= until. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Unix seconds; created_at <= until. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+              "title": "Until"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentAnalytics"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Agent Analytics",
+        "tags": [
+          "Analytics"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/config": {
+      "put": {
+        "description": "Update an existing agent by replacing config.json directly.",
+        "operationId": "update_agent_config_json_api_v1_agents__agent_id__config_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Config",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateAgentConfigResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Agent Config Json",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/config/diff-preview": {
+      "post": {
+        "description": "Diff a pending raw-JSON save against the current config (read-only preview).",
+        "operationId": "preview_agent_config_diff_api_v1_agents__agent_id__config_diff_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Candidate",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigDiffPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Preview Agent Config Diff",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/conversations": {
+      "get": {
+        "description": "Return an agent's conversations with their form data and recording availability.\n\n**Two response shapes.** With no ``limit`` and no ``cursor`` this returns a bare\nJSON array of every conversation, newest first — the shape the app has always\nreturned, and what the UI reads. Sending either ``limit`` or ``cursor`` instead\nreturns an object::\n\n    {\"data\": [ ...same rows... ], \"next_cursor\": 20}\n\n``next_cursor`` is ``None`` on the last page; pass it back as ``cursor`` to get\nthe next one. The two shapes exist so paging can be added without changing a\nsingle line of the existing frontend.\n\nEvery other query parameter is optional and defaults to the old behavior: no\nfiltering, and the transcript included in each row.",
+        "operationId": "list_conversations_api_v1_agents__agent_id__conversations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Maximum conversations to return. Sending this switches the response to the paged object shape.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum conversations to return. Sending this switches the response to the paged object shape.",
+              "title": "Limit"
+            }
+          },
+          {
+            "description": "Where to resume from: the ``next_cursor`` of the previous page. Sending this switches the response to the paged object shape.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Where to resume from: the ``next_cursor`` of the previous page. Sending this switches the response to the paged object shape.",
+              "title": "Cursor"
+            }
+          },
+          {
+            "description": "Only conversations created at or after this unix timestamp. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only conversations created at or after this unix timestamp. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+              "title": "Since"
+            }
+          },
+          {
+            "description": "Only conversations created at or before this unix timestamp. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only conversations created at or before this unix timestamp. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+              "title": "Until"
+            }
+          },
+          {
+            "description": "Only conversations with this status: complete, screened_out, failed, or in_progress.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only conversations with this status: complete, screened_out, failed, or in_progress.",
+              "title": "Status"
+            }
+          },
+          {
+            "description": "Only conversations from this source (e.g. twilio, exotel).",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only conversations from this source (e.g. twilio, exotel).",
+              "title": "Source"
+            }
+          },
+          {
+            "description": "Set false to leave the transcript out of every row. The ``transcript`` key is then absent, not empty.",
+            "in": "query",
+            "name": "include_transcript",
+            "required": false,
+            "schema": {
+              "default": true,
+              "description": "Set false to leave the transcript out of every row. The ``transcript`` key is then absent, not empty.",
+              "title": "Include Transcript",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "$ref": "#/components/schemas/ConversationSummary"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "$ref": "#/components/schemas/models__ConversationPage"
+                    }
+                  ],
+                  "title": "Response 200 List Conversations Api V1 Agents  Agent Id  Conversations Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Conversations",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data": {
+      "patch": {
+        "description": "Validate and persist manual edits to conversation form_data.",
+        "operationId": "update_conversation_form_data_api_v1_agents__agent_id__conversations__conversation_id__form_data_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFormDataRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateFormDataResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [],
+        "summary": "Update Conversation Form Data",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/conversations/{conversation_id}/transcript": {
+      "get": {
+        "description": "Return the transcript for a conversation.",
+        "operationId": "get_transcript_api_v1_agents__agent_id__conversations__conversation_id__transcript_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TranscriptEntry"
+                  },
+                  "title": "Response 200 Get Transcript Api V1 Agents  Agent Id  Conversations  Conversation Id  Transcript Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Transcript",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/diff-preview": {
+      "post": {
+        "description": "Diff a pending typed (UI-builder) save against the current config.\n\nRead-only: builds the config the save *would* write and returns the git-style\ndiff so the UI can show it for confirmation before actually saving. Mirrors the\n``build_agent_config_from_request`` transform used by ``PUT /agents/{id}``.",
+        "operationId": "preview_agent_update_diff_api_v1_agents__agent_id__diff_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAgentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigDiffPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Preview Agent Update Diff",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/duplicate": {
+      "post": {
+        "description": "Create a draft copy of an existing agent.",
+        "operationId": "duplicate_agent_api_v1_agents__agent_id__duplicate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DuplicateAgentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Duplicate Agent",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/public": {
+      "get": {
+        "description": "Return the public config needed to start a conversation.",
+        "operationId": "get_public_agent_api_v1_agents__agent_id__public_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicAgent"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Public Agent",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/versions": {
+      "get": {
+        "description": "List the agent's saved config versions (metadata only), newest first.",
+        "operationId": "get_agent_versions_api_v1_agents__agent_id__versions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AgentVersionSummary"
+                  },
+                  "title": "Response 200 Get Agent Versions Api V1 Agents  Agent Id  Versions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Agent Versions",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/versions/{version}": {
+      "get": {
+        "description": "Return a single version snapshot, including its full config.",
+        "operationId": "get_agent_version_api_v1_agents__agent_id__versions__version__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentVersionSnapshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Agent Version",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/versions/{version}/diff": {
+      "get": {
+        "description": "Return a git-style unified diff of ``version`` against the previous version.",
+        "operationId": "get_agent_version_diff_api_v1_agents__agent_id__versions__version__diff_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentVersionDiff"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Agent Version Diff",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/versions/{version}/restore": {
+      "post": {
+        "description": "Restore a past version as the current config.\n\nWrites the chosen version's config back to ``config.json`` and appends it as a\nNEW version on top of the history, so the pre-restore state remains in the log\nand is itself restorable. ``version`` is ``None`` in the response when the\nrestored config was already identical to the current one (nothing to append).",
+        "operationId": "restore_agent_version_api_v1_agents__agent_id__versions__version__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestoreAgentVersionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Restore Agent Version",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/workspace": {
+      "put": {
+        "description": "Move an agent into a different workspace.\n\nRequires the caller to be an admin of both the agent's current workspace and the\ndestination workspace.",
+        "operationId": "move_agent_workspace_api_v1_agents__agent_id__workspace_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveAgentWorkspaceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoveAgentWorkspaceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Move Agent Workspace",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/conversations": {
+      "get": {
+        "description": "Conversations across every agent the caller can see, newest first.\n\n``cursor`` is the offset into the sorted result set. It is honest about what it\nis: calls recorded between two page requests shift later rows, so a row can\nrepeat or be missed while paging through a live agent.",
+        "operationId": "list_all_conversations_api_v1_conversations_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "agent_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Agent Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "complete",
+                    "screened_out",
+                    "failed",
+                    "in_progress"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          },
+          {
+            "description": "Unix seconds; created_at >= since. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Unix seconds; created_at >= since. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+              "title": "Since"
+            }
+          },
+          {
+            "description": "Unix seconds; created_at <= until. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Unix seconds; created_at <= until. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+              "title": "Until"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/routes_analytics__ConversationPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List All Conversations",
+        "tags": [
+          "Analytics"
+        ]
+      }
+    },
+    "/api/v1/data/{agent_id}/{conversation_id}": {
+      "get": {
+        "description": "Get form data for a specific conversation.",
+        "operationId": "get_data_api_v1_data__agent_id___conversation_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationFormData"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [],
+        "summary": "Get Data",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
+    "/api/v1/workspaces": {
+      "get": {
+        "description": "List workspaces visible to the user.\n\nA workspace is visible if the user administers it (owner/member/superadmin) or has\nlimited per-form access to at least one agent inside it.\n\n**Two response shapes.** With no ``limit`` and no ``cursor`` this returns a bare\nJSON array — the shape the app has always returned. Sending either one instead\nreturns ``{\"data\": [...], \"next_cursor\": ...}``, where ``next_cursor`` is\n``None`` on the last page.",
+        "operationId": "get_workspaces_api_v1_workspaces_get",
+        "parameters": [
+          {
+            "description": "Maximum workspaces to return. Sending this switches the response to the paged object shape.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum workspaces to return. Sending this switches the response to the paged object shape.",
+              "title": "Limit"
+            }
+          },
+          {
+            "description": "Where to resume from: the ``next_cursor`` of the previous page. Sending this switches the response to the paged object shape.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Where to resume from: the ``next_cursor`` of the previous page. Sending this switches the response to the paged object shape.",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "$ref": "#/components/schemas/WorkspaceListItem"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "$ref": "#/components/schemas/WorkspaceListPage"
+                    }
+                  ],
+                  "title": "Response 200 Get Workspaces Api V1 Workspaces Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Workspaces",
+        "tags": [
+          "Workspaces"
+        ]
+      },
+      "post": {
+        "description": "Create a new workspace owned by the current user.",
+        "operationId": "create_workspace_endpoint_api_v1_workspaces_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkspaceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceListItem"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Workspace Endpoint",
+        "tags": [
+          "Workspaces"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}": {
+      "get": {
+        "description": "Return workspace details and members. Workspace admins only.",
+        "operationId": "get_workspace_endpoint_api_v1_workspaces__workspace_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Workspace Endpoint",
+        "tags": [
+          "Workspaces"
+        ]
+      },
+      "put": {
+        "description": "Rename a workspace. Workspace admins only.",
+        "operationId": "rename_workspace_endpoint_api_v1_workspaces__workspace_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameWorkspaceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Rename Workspace Endpoint",
+        "tags": [
+          "Workspaces"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/analytics": {
+      "get": {
+        "description": "The same numbers rolled up over a workspace, plus a per-agent breakdown.",
+        "operationId": "get_workspace_analytics_api_v1_workspaces__workspace_id__analytics_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "complete",
+                    "screened_out",
+                    "failed",
+                    "in_progress"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          },
+          {
+            "description": "Unix seconds; created_at >= since. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Unix seconds; created_at >= since. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+              "title": "Since"
+            }
+          },
+          {
+            "description": "Unix seconds; created_at <= until. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Unix seconds; created_at <= until. Note: created_at is the last time the call's answers were written, not when the call happened, so a call edited later moves.",
+              "title": "Until"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceAnalytics"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Workspace Analytics",
+        "tags": [
+          "Analytics"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/members": {
+      "post": {
+        "description": "Add a member (admin) to a workspace. Workspace admins only.",
+        "operationId": "add_workspace_member_endpoint_api_v1_workspaces__workspace_id__members_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddWorkspaceMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Add Workspace Member Endpoint",
+        "tags": [
+          "Workspaces"
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/members/{email}": {
+      "delete": {
+        "description": "Remove a member from a workspace.\n\nThe owner can never be removed. Admins may remove other members; any member may\nremove themselves (leave the workspace).",
+        "operationId": "remove_workspace_member_endpoint_api_v1_workspaces__workspace_id__members__email__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "email",
+            "required": true,
+            "schema": {
+              "title": "Email",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Remove Workspace Member Endpoint",
+        "tags": [
+          "Workspaces"
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "apiKey": []
+    }
+  ]
+}
