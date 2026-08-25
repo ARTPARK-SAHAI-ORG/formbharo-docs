@@ -1,5 +1,5 @@
 ---
-title: "Calls: Conversations That Collect Your Form Data"
+title: "Calls: Voice Conversations That Collect Form Answers"
 sidebarTitle: "Calls"
 description: "A call is one conversation between your agent and one person. It holds the answers collected, a status, timing, cost, and an optional transcript."
 ---
@@ -104,28 +104,28 @@ FormBharo exposes four endpoints for reading call data:
 
 <CardGroup cols={2}>
   <Card title="All calls for one agent" icon="list">
-    ```
+    ```http
     GET /api/v1/agents/{agent_id}/conversations
     ```
     Returns every call made against a specific agent, sorted newest first. Use this when you want results scoped to a single form.
   </Card>
 
   <Card title="Calls across all agents" icon="layer-group">
-    ```
+    ```http
     GET /api/v1/conversations
     ```
     Returns calls from every agent in your workspace. Use this endpoint for polling — it lets you process new answers without looping over each agent separately.
   </Card>
 
-  <Card title="Just the answers (no key required)" icon="database">
-    ```
+  <Card title="Just the answers (no key required)" icon="lock-open">
+    ```http
     GET /api/v1/data/{agent_id}/{conversation_id}
     ```
     Returns only the `form_data` object for one call. This route requires no API key, making it safe to embed in client-side or webhook contexts.
   </Card>
 
   <Card title="Transcript" icon="file-lines">
-    ```
+    ```http
     GET /api/v1/agents/{agent_id}/conversations/{conversation_id}/transcript
     ```
     Returns the full text of everything said during the call, turn by turn. Only available when `has_transcript` is `true`.

@@ -1,7 +1,7 @@
 ---
 title: "GET /api/v1/agents/{agent_id}/access — Get Access List"
 sidebarTitle: "Get Access"
-description: "GET /api/v1/agents/{agent_id}/access returns the list of email addresses with explicit access to this agent."
+description: "GET /api/v1/agents/{agent_id}/access returns the explicit access list for an agent — email addresses and roles of users granted direct access."
 ---
 
 `GET /api/v1/agents/{agent_id}/access` returns the current access list for an agent — the emails of users who have been explicitly granted access. Use this to audit who can view or operate an agent before making changes with the corresponding `PUT` endpoint.

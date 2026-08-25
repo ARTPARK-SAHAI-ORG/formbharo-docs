@@ -1,7 +1,7 @@
 ---
-title: "POST /api/v1/agents — Create a New Agent"
+title: "POST /api/v1/agents — Create and Configure a New Agent"
 sidebarTitle: "Create Agent"
-description: "POST /api/v1/agents creates a new draft agent. Send title and questions at minimum. Returns the new agent's id and workspace_id."
+description: "POST /api/v1/agents creates a new draft agent. Provide title and questions at minimum. Returns the new agent id and workspace_id on success."
 ---
 
 `POST /api/v1/agents` creates a new agent as a draft. Send the full configuration in the request body — at minimum a `title` and a `questions` array. The agent will not be callable until you publish it with `PUT /api/v1/agents/{agent_id}`.

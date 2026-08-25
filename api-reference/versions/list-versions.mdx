@@ -1,7 +1,7 @@
 ---
-title: "GET /api/v1/agents/{agent_id}/versions — List Agent Versions"
+title: "Agent Versions List — Published Snapshots Endpoint"
 sidebarTitle: "List Versions"
-description: "GET /api/v1/agents/{agent_id}/versions returns all published version summaries for an agent, newest first."
+description: "Returns all published version summaries for an agent, newest first. Version 1 is the first published save; drafts are never versioned."
 ---
 
 `GET /api/v1/agents/{agent_id}/versions` returns a list of all published versions of an agent, ordered newest first. Drafts are not versioned; version 1 is the first published save. Each item in the response is a summary — use [Get Version](/api-reference/versions/get-version) to retrieve the full configuration for a specific version.

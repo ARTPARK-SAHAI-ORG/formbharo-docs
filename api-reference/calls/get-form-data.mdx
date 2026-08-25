@@ -1,7 +1,7 @@
 ---
-title: "GET /api/v1/data/{agent_id}/{conversation_id} — Get Form Data"
+title: "Retrieve Form Data for a Conversation — Public API"
 sidebarTitle: "Get Form Data"
-description: "GET /api/v1/data/{agent_id}/{conversation_id} returns just the form_data and form_status for one call. Requires no API key — safe to call from the browser."
+description: "Returns the form_data and form_status for one call without requiring an API key. Returns {} before the first answer. Safe for browser polling."
 ---
 
 `GET /api/v1/data/{agent_id}/{conversation_id}` returns the `form_data` and `form_status` for a single call. It requires no API key, making it suitable for polling from browser JavaScript during a live call — for example, to display answers as they are collected in a real-time UI. Before the agent has written any answers, the endpoint returns an empty object `{}`.

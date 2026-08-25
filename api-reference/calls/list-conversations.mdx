@@ -1,7 +1,7 @@
 ---
 title: "GET /api/v1/agents/{agent_id}/conversations — List Calls"
 sidebarTitle: "List Calls"
-description: "GET /api/v1/agents/{agent_id}/conversations returns all calls for one agent, newest first. Includes transcripts by default; use include_transcript=false to skip."
+description: "Returns calls for an agent, newest first. Supports pagination, date range, status and source filters. Transcripts included by default."
 ---
 
 `GET /api/v1/agents/{agent_id}/conversations` returns all calls for a specific agent, newest first. By default, each record includes the full transcript — pass `include_transcript=false` to exclude it for faster responses when you only need form data or status information.
@@ -47,7 +47,7 @@ Authorization: Bearer <api-key>
 </ParamField>
 
 <ParamField query="include_transcript" type="boolean" default="true">
-  Set to `false` to exclude transcript data from each record. Omitting transcripts significantly reduces response size when you only need form data or metadata.
+  Set to `false` to exclude transcript data from each record. Omitting transcripts significantly reduces response size when you only need form data or metadata. When `include_transcript=false`, the `transcript` key is absent from each record entirely — it is not present with an empty value.
 </ParamField>
 
 ## Response
@@ -120,7 +120,30 @@ print(f"Fetched {len(calls)} calls. Next cursor: {next_cursor}")
 ```
 </CodeGroup>
 
-### Sample Response (paginated)
+### Sample Response (no `limit` — plain array)
+
+```json
+[
+  {
+    "conversation_id": "conv_xyz789",
+    "status": "completed",
+    "form_data": {
+      "full_name": "Jane Smith",
+      "date_of_birth": "1985-04-12"
+    },
+    "form_status": {
+      "full_name": "filled",
+      "date_of_birth": "filled"
+    },
+    "filled_fields": 2,
+    "total_fields": 2,
+    "created_at": 1718250000,
+    "duration_secs": 87
+  }
+]
+```
+
+### Sample Response (with `limit` — paginated envelope)
 
 ```json
 {

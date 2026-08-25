@@ -1,7 +1,7 @@
 ---
 title: "PUT /api/v1/agents/{agent_id}/workspace — Move Agent"
 sidebarTitle: "Move Agent"
-description: "PUT /api/v1/agents/{agent_id}/workspace moves an agent to a different workspace. You must be an admin in the target workspace."
+description: "PUT /api/v1/agents/{agent_id}/workspace moves an agent to a different workspace. You must be an admin in the destination workspace to perform the move."
 ---
 
 `PUT /api/v1/agents/{agent_id}/workspace` moves an agent from its current workspace to another. You must have admin rights in the target workspace. The agent retains its configuration, version history, and call records after the move. Access lists tied to the old workspace may change — review them after moving.

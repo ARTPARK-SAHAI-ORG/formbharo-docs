@@ -1,7 +1,7 @@
 ---
-title: "GET /api/v1/agents/{agent_id}/versions/{version} — Get One Version"
+title: "Get One Agent Version — Full Configuration Snapshot"
 sidebarTitle: "Get Version"
-description: "GET /api/v1/agents/{agent_id}/versions/{version} returns the full saved configuration for a specific version of an agent."
+description: "Returns the complete configuration snapshot of an agent at a specific version, including questions, scripts, and settings exactly as they were saved."
 ---
 
 `GET /api/v1/agents/{agent_id}/versions/{version}` returns a complete snapshot of an agent at a specific version, including the full question list, scripts, and settings as they were at save time. Use this to inspect historical configuration or to feed a restore decision before calling [Restore Version](/api-reference/versions/restore-version).

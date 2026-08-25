@@ -1,7 +1,7 @@
 ---
 title: "PUT /api/v1/workspaces/{workspace_id} — Rename a Workspace"
 sidebarTitle: "Rename Workspace"
-description: "PUT /api/v1/workspaces/{workspace_id} renames a workspace. Requires workspace admin role."
+description: "PUT /api/v1/workspaces/{workspace_id} renames a workspace. Only workspace admins can rename. Non-admins receive a 403 Forbidden response."
 ---
 
 `PUT /api/v1/workspaces/{workspace_id}` renames a workspace. Only workspace admins can rename a workspace.
@@ -28,9 +28,19 @@ Authorization: Bearer <api-key>
 
 ## Response
 
-Returns the updated workspace object with the new name.
+Returns the updated workspace object with the new name applied.
+
+<ResponseField name="id" type="string">
+  The workspace's unique identifier.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The updated display name of the workspace.
+</ResponseField>
 
 ## Example
+
+<CodeGroup>
 
 ```bash curl
 curl -X PUT https://YOUR-FORMBHARO-SERVER/api/v1/workspaces/ws_xyz789 \
@@ -38,6 +48,26 @@ curl -X PUT https://YOUR-FORMBHARO-SERVER/api/v1/workspaces/ws_xyz789 \
   -H "Content-Type: application/json" \
   -d '{"name": "Acme Growth Team"}'
 ```
+
+```python python
+import requests
+
+BASE_URL     = "https://YOUR-FORMBHARO-SERVER"
+API_KEY      = "fb_live_0123456789ab_..."
+WORKSPACE_ID = "ws_xyz789"
+
+resp = requests.put(
+    f"{BASE_URL}/api/v1/workspaces/{WORKSPACE_ID}",
+    json={"name": "Acme Growth Team"},
+    headers={"Authorization": f"Bearer {API_KEY}"},
+)
+resp.raise_for_status()
+workspace = resp.json()
+
+print(f"Renamed workspace to: {workspace['name']}")
+```
+
+</CodeGroup>
 
 <Warning>
   Renaming a workspace is immediately visible to all members. Verify the new name before sending the request — there is no confirmation step.

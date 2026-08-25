@@ -1,7 +1,7 @@
 ---
-title: "GET /api/v1/workspaces/{workspace_id}/analytics — Workspace Analytics"
+title: "Workspace Analytics — GET /api/v1/workspaces/{ws_id}"
 sidebarTitle: "Workspace Analytics"
-description: "GET workspace analytics returns aggregated stats for all agents in a workspace, plus a per-agent breakdown. Requires workspace admin role."
+description: "GET /api/v1/workspaces/{workspace_id}/analytics returns aggregated stats for every agent in a workspace plus a per-agent breakdown. Admin only."
 ---
 
 `GET /api/v1/workspaces/{workspace_id}/analytics` returns the same statistics as the agent analytics endpoint, but aggregated across all agents in a workspace. It also includes a per-agent breakdown. Only workspace admins can call this endpoint.
@@ -113,6 +113,8 @@ The response is a WorkspaceAnalytics object. The top-level fields are identical 
 
 ## Example
 
+<CodeGroup>
+
 ```bash curl
 curl -G https://YOUR-FORMBHARO-SERVER/api/v1/workspaces/ws_xyz789/analytics \
   --data-urlencode "since=1700000000" \
@@ -120,6 +122,35 @@ curl -G https://YOUR-FORMBHARO-SERVER/api/v1/workspaces/ws_xyz789/analytics \
   -H "Authorization: Bearer fb_live_0123456789ab_..."
 ```
 
-<Note>
+```python python
+import requests
+
+BASE_URL     = "https://YOUR-FORMBHARO-SERVER"
+API_KEY      = "fb_live_0123456789ab_..."
+WORKSPACE_ID = "ws_xyz789"
+
+resp = requests.get(
+    f"{BASE_URL}/api/v1/workspaces/{WORKSPACE_ID}/analytics",
+    params={
+        "since": 1700000000,
+        "until": 1700086400,
+    },
+    headers={"Authorization": f"Bearer {API_KEY}"},
+)
+resp.raise_for_status()
+data = resp.json()
+
+print(f"Workspace attempted:    {data['attempted']}")
+print(f"Workspace completed:    {data['completed']}")
+print(f"Workspace screened out: {data['screened_out']}")
+print(f"Completion rate:        {data['completion_rate']:.1%}")
+
+for agent in data["agents"]:
+    print(f"  Agent {agent['title']}: {agent['attempted']} calls")
+```
+
+</CodeGroup>
+
+<Warning>
   The `completed` field in both the top-level response and each agent item includes `screened_out` calls. Subtract `screened_out` from `completed` to get the count of calls that went all the way through.
-</Note>
+</Warning>

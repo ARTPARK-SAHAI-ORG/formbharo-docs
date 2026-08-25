@@ -1,5 +1,5 @@
 ---
-title: "Build a Voice Agent from Your Form"
+title: "Build a FormBharo Voice Agent from Your Form Fields"
 sidebarTitle: "Build an Agent"
 description: "Turn a paper or web form into a FormBharo voice agent: map fields to question types, add scripts, configure branching, and publish with the API."
 ---
@@ -106,10 +106,26 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
   <Step title="Add conditional branches">
     Branches let you skip or show groups of questions based on a caller's earlier answer. The flow works in two parts:
 
-    1. **Declare the branch** — add an entry to the top-level `branches` array. Give it a unique `id` and a `condition` that references a question `id` and a rule (for example, `equals` a specific value, or `present` meaning any non-empty answer).
+    1. **Declare the branch** — add an entry to the top-level `branches` array. Give it a unique `id` and a `condition` that references a question `id` and a rule.
     2. **Tag questions** — set `branch_id` on every question that belongs to the branch. Those questions are only asked if the condition evaluates to `true` at runtime.
 
-    ```json
+    A condition supports three fields:
+
+    | Field | Type | Meaning |
+    |---|---|---|
+    | `field` | string | The `id` of the question whose answer is evaluated |
+    | `equals` | string | Branch is active when the answer exactly matches this value |
+    | `present` | boolean | Branch is active when the answer is any non-empty value |
+
+    <Note>
+      `present` takes priority over `equals`. If both are set on the same condition, `present` is evaluated and `equals` is ignored.
+    </Note>
+
+    Use `equals` to branch on a specific value (for example, only proceed if the caller answered "yes"). Use `present` to branch whenever the caller gave any answer at all, regardless of what it was.
+
+    <CodeGroup>
+
+    ```json Equals condition
     {
       "branches": [
         {
@@ -141,6 +157,35 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
       ]
     }
     ```
+
+    ```json Present condition
+    {
+      "branches": [
+        {
+          "id": "has_referral",
+          "condition": {
+            "field": "referral_source",
+            "present": true
+          }
+        }
+      ],
+      "questions": [
+        {
+          "id": "referral_source",
+          "label": "Were you referred by someone?",
+          "response_type": "string"
+        },
+        {
+          "id": "referral_name",
+          "label": "What is the name of the person who referred you?",
+          "response_type": "string",
+          "branch_id": "has_referral"
+        }
+      ]
+    }
+    ```
+
+    </CodeGroup>
   </Step>
 
   <Step title="Configure screening">

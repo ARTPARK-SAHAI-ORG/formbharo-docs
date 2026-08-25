@@ -1,7 +1,7 @@
 ---
-title: "GET /api/v1/agents/{agent_id}/conversations/{conversation_id}/transcript"
+title: "Retrieve a Call Transcript With Speaker Attribution"
 sidebarTitle: "Get Transcript"
-description: "GET the transcript returns a time-ordered list of what was said during a call, attributed to either the agent or the caller."
+description: "Returns a time-ordered list of speaker-attributed turns for a completed call. Returns 404 with an error message if no transcript is recorded."
 ---
 
 `GET /api/v1/agents/{agent_id}/conversations/{conversation_id}/transcript` returns a structured transcript of a call — a list of turns with speaker attribution and text. Turns are ordered chronologically from the start of the call. If no transcript has been recorded for this call, the endpoint returns `404`.
