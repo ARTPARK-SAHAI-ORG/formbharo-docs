@@ -73,12 +73,14 @@ You need an API key. See [API Keys](/getting-started/api-keys).
     ```
   </Step>
 
-  <Step title="Confirm it can take calls">
-    ```bash
-    curl "{FORMBHARO_URL}/api/v1/agents/AGENT_ID/public"
+  <Step title="Call it">
+    Open the agent's call page and talk to it.
+
+    ```
+    https://formbharo.artpark.ai/agents/AGENT_ID
     ```
 
-    Returns the agent's title and questions once it's live.
+    Anyone with the link can fill the form by voice, no account needed. To run the call inside your own page instead, see [Run a Call](/guides/run-a-call).
   </Step>
 
   <Step title="Read its analytics">
@@ -86,6 +88,8 @@ You need an API key. See [API Keys](/getting-started/api-keys).
     curl "{FORMBHARO_URL}/api/v1/agents/AGENT_ID/analytics" \
       -H "Authorization: Bearer $FORMBHARO_KEY"
     ```
+
+    Completion rate, call duration, and cost.
   </Step>
 </Steps>
 
