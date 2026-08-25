@@ -4,6 +4,8 @@ sidebarTitle: "API Keys"
 description: "Create an API key in the FormBharo Settings tab and send it in the Authorization header on every request. Keys inherit the permissions of their creator."
 ---
 
+import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
+
 Every FormBharo API request requires an API key in the `Authorization: Bearer` header. Keys are tied to your account and carry the same permissions you have — if your account can read a workspace, your key can read it too. Keep your keys secure and rotate them regularly.
 
 ## Create a key
@@ -38,7 +40,7 @@ Pass the key in the `Authorization` header on every authenticated request. The e
 
 <CodeGroup>
 ```bash curl
-curl https://form-fill-agent-backend.artpark.ai/api/v1/agents \
+curl {FORMBHARO_URL}/api/v1/agents \
   -H "Authorization: Bearer $FORMBHARO_KEY"
 ```
 
@@ -47,7 +49,7 @@ import os
 import requests
 
 response = requests.get(
-    "https://form-fill-agent-backend.artpark.ai/api/v1/agents",
+    "{FORMBHARO_URL}/api/v1/agents",
     headers={"Authorization": f"Bearer {os.environ['FORMBHARO_KEY']}"},
 )
 response.raise_for_status()

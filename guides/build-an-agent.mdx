@@ -4,6 +4,8 @@ sidebarTitle: "Build an Agent"
 description: "Turn a paper or web form into a FormBharo voice agent: map fields to question types, add scripts, configure branching, and publish with the API."
 ---
 
+import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
+
 FormBharo lets you turn any form — paper intake sheets, web surveys, clinical questionnaires — into a voice agent that asks questions out loud and saves the answers. This guide walks through the full process: mapping fields, adding a script, configuring conditional branches, and publishing.
 
 <Steps>
@@ -14,7 +16,7 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
     <CodeGroup>
 
     ```bash curl
-    curl -X POST https://form-fill-agent-backend.artpark.ai/api/v1/agents \
+    curl -X POST {FORMBHARO_URL}/api/v1/agents \
       -H "Authorization: Bearer <api-key>" \
       -H "Content-Type: application/json" \
       -d '{
@@ -38,7 +40,7 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
     import requests
 
     response = requests.post(
-        "https://form-fill-agent-backend.artpark.ai/api/v1/agents",
+        "{FORMBHARO_URL}/api/v1/agents",
         headers={"Authorization": "Bearer <api-key>"},
         json={
             "title": "Clinic intake",
@@ -206,7 +208,7 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
     <CodeGroup>
 
     ```bash curl
-    curl -X PUT https://form-fill-agent-backend.artpark.ai/api/v1/agents/AGENT_ID \
+    curl -X PUT {FORMBHARO_URL}/api/v1/agents/AGENT_ID \
       -H "Authorization: Bearer <api-key>" \
       -H "Content-Type: application/json" \
       -d '{
@@ -228,7 +230,7 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
     }
 
     response = requests.put(
-        f"https://form-fill-agent-backend.artpark.ai/api/v1/agents/{agent_id}",
+        f"{FORMBHARO_URL}/api/v1/agents/{agent_id}",
         headers={"Authorization": "Bearer <api-key>"},
         json=agent_body,
     )
@@ -263,7 +265,7 @@ Before you publish a new version, you can review exactly what will change by cal
 Use this endpoint in CI pipelines or review tools to catch unintended changes before they reach a live agent.
 
 ```bash curl
-curl -X POST https://form-fill-agent-backend.artpark.ai/api/v1/agents/AGENT_ID/diff-preview \
+curl -X POST {FORMBHARO_URL}/api/v1/agents/AGENT_ID/diff-preview \
   -H "Authorization: Bearer <api-key>" \
   -H "Content-Type: application/json" \
   -d '{ "title": "Clinic intake", "questions": [ ... ] }'

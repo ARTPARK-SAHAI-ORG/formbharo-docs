@@ -4,14 +4,16 @@ sidebarTitle: "Conventions"
 description: "FormBharo API conventions: base path, pagination with cursor and limit, unix timestamp format, and the two list response shapes you'll encounter."
 ---
 
+import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
+
 FormBharo's API follows a consistent set of conventions for paths, pagination, and timestamps. Understanding these upfront prevents common integration mistakes.
 
 ## Base path
 
-All endpoints sit under `/api/v1` on your FormBharo server. For example, to list agents on a server at `https://form-fill-agent-backend.artpark.ai`, the full URL is `https://form-fill-agent-backend.artpark.ai/api/v1/agents`.
+All endpoints sit under `/api/v1` on your FormBharo server. For example, to list agents on a server at {FORMBHARO_URL}, the full URL is {FORMBHARO_URL}/api/v1/agents.
 
 <Note>
-  **Exception:** `POST /offer` (the WebRTC signalling endpoint) is at the bare path — `https://form-fill-agent-backend.artpark.ai/offer` — with no `/api/v1` prefix.
+  **Exception:** `POST /offer` (the WebRTC signalling endpoint) is at the bare path — {FORMBHARO_URL}/offer — with no `/api/v1` prefix.
 </Note>
 
 ---

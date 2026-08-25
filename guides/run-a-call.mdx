@@ -4,6 +4,8 @@ sidebarTitle: "Run a Call"
 description: "Embed FormBharo voice calls in your own page using WebRTC: generate a conversation ID, open the audio connection, and poll for answers as they arrive."
 ---
 
+import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
+
 You can embed a FormBharo voice call directly in your web page using WebRTC. The call opens an audio connection to the agent, which asks questions out loud. You poll a key-less endpoint to read the answers as they come in.
 
 ## Before you start
@@ -13,7 +15,7 @@ You need two things: the **agent ID** for the agent you want to run, and the **U
 Before the call begins, fetch the agent's public profile with `GET /api/v1/agents/{agent_id}/public`. This route requires no API key, so you can call it safely from the browser. It returns the agent's `title`, its `questions` list, and an `agent_speaks_first` flag — enough to render a form UI or a progress indicator before the audio connection is open.
 
 ```bash curl
-curl https://form-fill-agent-backend.artpark.ai/api/v1/agents/AGENT_ID/public
+curl {FORMBHARO_URL}/api/v1/agents/AGENT_ID/public
 ```
 
 Use `agent_speaks_first` to decide whether to show a "waiting for agent" state or a push-to-talk prompt when the call first connects.
@@ -71,7 +73,7 @@ Use `agent_speaks_first` to decide whether to show a "waiting for agent" state o
 
     // Step 3: Send the offer to FormBharo
     const offerResponse = await fetch(
-      "https://form-fill-agent-backend.artpark.ai/offer",
+      "{FORMBHARO_URL}/offer",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -108,7 +110,7 @@ Use `agent_speaks_first` to decide whether to show a "waiting for agent" state o
 
     ```javascript javascript
     async function pollAnswers(agentId, conversationId) {
-      const url = `https://form-fill-agent-backend.artpark.ai/api/v1/data/${agentId}/${conversationId}`;
+      const url = `{FORMBHARO_URL}/api/v1/data/${agentId}/${conversationId}`;
 
       const interval = setInterval(async () => {
         const res = await fetch(url);

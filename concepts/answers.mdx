@@ -4,6 +4,8 @@ sidebarTitle: "Answers"
 description: "Answers live in form_data keyed by question name. form_status tells you whether each field was answered, skipped, or not yet reached."
 ---
 
+import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
+
 When a call completes, FormBharo stores answers in two companion objects: `form_data` holds the raw values, and `form_status` records whether each question was answered, skipped, or never reached. Always read `form_status` alongside `form_data` — never rely on truthiness alone.
 
 ## form_data: the values
@@ -56,7 +58,7 @@ Send an `updates` object containing only the fields you want to change:
 <CodeGroup>
 ```bash curl
 curl -X PATCH \
-  https://form-fill-agent-backend.artpark.ai/api/v1/agents/agt_abc123/conversations/conv_xyz789/form_data \
+  {FORMBHARO_URL}/api/v1/agents/agt_abc123/conversations/conv_xyz789/form_data \
   -H "Content-Type: application/json" \
   -d '{
     "updates": {
@@ -70,7 +72,7 @@ curl -X PATCH \
 import httpx
 
 response = httpx.patch(
-    "https://form-fill-agent-backend.artpark.ai/api/v1/agents/agt_abc123/conversations/conv_xyz789/form_data",
+    "{FORMBHARO_URL}/api/v1/agents/agt_abc123/conversations/conv_xyz789/form_data",
     json={
         "updates": {
             "full_name": "Jane Smith",
