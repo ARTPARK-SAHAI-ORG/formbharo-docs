@@ -1942,7 +1942,7 @@
   "paths": {
     "/api/v1/agents": {
       "get": {
-        "description": "Return every agent the user can see, newest save first.\n\nEach row carries id, title, question_count, updated_at, conversation_count,\nstatus, workspace_id and workspace_role.\n\n**Two response shapes.** With no ``limit`` and no ``cursor`` this returns a bare\nJSON array — the shape the app has always returned. Sending either one instead\nreturns ``{\"data\": [...], \"next_cursor\": ...}``, where ``next_cursor`` is\n``None`` on the last page.",
+        "description": "Return every agent the user can see, newest first. Add ``limit`` or\n``cursor`` to page results.",
         "operationId": "get_agents_api_v1_agents_get",
         "parameters": [
           {
@@ -2225,6 +2225,7 @@
     },
     "/api/v1/agents/{agent_id}/access": {
       "get": {
+        "description": "Return an agent's owner and the emails with access to it.",
         "operationId": "get_agent_access_api_v1_agents__agent_id__access_get",
         "parameters": [
           {
@@ -2510,7 +2511,7 @@
     },
     "/api/v1/agents/{agent_id}/conversations": {
       "get": {
-        "description": "Return an agent's conversations with their form data and recording availability.\n\nConversations are discovered by walking the agent's local conversation\ndirectories. There is no S3 \"list\" endpoint — a client's bucket only\nsupports fetching one file by exact name — so an S3-backed conversation\nstill gets an empty, content-free marker directory here (created at call\nstart, see ``run_bot``) purely so it shows up in this walk at all. A row\nis local when its marker directory actually has ``data.json`` in it;\notherwise it's read through the agent's workspace S3 config instead,\nresolved once per agent, not once per row.\n\nEach row reads only ``data.json`` and ``metadata.json`` — the two files the\nsummary row actually needs. ``transcript.json``, ``metrics.json``,\n``events.json``, ``recording.wav`` and ``conversation.log`` are not fetched\nor checked for every conversation here; those are only read when a specific\nconversation is opened, via the dedicated routes. Passing\n``include_transcript=true`` opts back into the transcript read.\n\n**Two response shapes.** With no ``limit`` and no ``cursor`` this returns a bare\nJSON array of every conversation, newest first — the shape the app has always\nreturned, and what the UI reads. Sending either ``limit`` or ``cursor`` instead\nreturns an object::\n\n    {\"data\": [ ...same rows... ], \"next_cursor\": 20}\n\n``next_cursor`` is ``None`` on the last page; pass it back as ``cursor`` to get\nthe next one. The two shapes exist so paging can be added without changing a\nsingle line of the existing frontend.\n\nEvery other query parameter is optional and defaults to the old behavior: no\nfiltering, and no transcript in the rows.",
+        "description": "Return an agent's conversations: form data and recording availability,\nnewest first.\n\nAdd ``limit`` or ``cursor`` to page. Set ``include_transcript=true`` to\ninclude each row's transcript (off by default); when off, ``transcript``\nand ``has_transcript`` are absent from the row, not empty.",
         "operationId": "list_conversations_api_v1_agents__agent_id__conversations_get",
         "parameters": [
           {
@@ -2633,13 +2634,13 @@
             }
           },
           {
-            "description": "Set true to include each call's transcript in its row. Off by default, because reading a transcript file for every call is what made this list slow; the ``transcript`` and ``has_transcript`` keys are then absent, not empty.",
+            "description": "Include each call's transcript in its row. Off by default; then ``transcript`` and ``has_transcript`` are absent, not empty.",
             "in": "query",
             "name": "include_transcript",
             "required": false,
             "schema": {
               "default": false,
-              "description": "Set true to include each call's transcript in its row. Off by default, because reading a transcript file for every call is what made this list slow; the ``transcript`` and ``has_transcript`` keys are then absent, not empty.",
+              "description": "Include each call's transcript in its row. Off by default; then ``transcript`` and ``has_transcript`` are absent, not empty.",
               "title": "Include Transcript",
               "type": "boolean"
             }
@@ -3131,7 +3132,7 @@
     },
     "/api/v1/workspaces": {
       "get": {
-        "description": "List workspaces visible to the user.\n\nA workspace is visible if the user administers it (owner/member/superadmin) or has\nlimited per-form access to at least one agent inside it.\n\n**Two response shapes.** With no ``limit`` and no ``cursor`` this returns a bare\nJSON array — the shape the app has always returned. Sending either one instead\nreturns ``{\"data\": [...], \"next_cursor\": ...}``, where ``next_cursor`` is\n``None`` on the last page.",
+        "description": "List workspaces visible to the user: ones they administer, or have\nper-form access to at least one agent inside. Add ``limit`` or ``cursor`` to\npage results.",
         "operationId": "get_workspaces_api_v1_workspaces_get",
         "parameters": [
           {
