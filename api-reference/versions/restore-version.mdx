@@ -49,7 +49,7 @@ Returns a confirmation object with the newly assigned version number.
 <CodeGroup>
 ```bash curl
 curl -X POST \
-  https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/versions/2/restore \
+  https://form-fill-agent-backend.artpark.ai/api/v1/agents/agt_abc123/versions/2/restore \
   -H "Authorization: Bearer fb_live_0123456789ab_..."
 ```
 
@@ -57,7 +57,7 @@ curl -X POST \
 import requests
 
 response = requests.post(
-    "https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/versions/2/restore",
+    "https://form-fill-agent-backend.artpark.ai/api/v1/agents/agt_abc123/versions/2/restore",
     headers={"Authorization": "Bearer fb_live_0123456789ab_..."},
 )
 result = response.json()

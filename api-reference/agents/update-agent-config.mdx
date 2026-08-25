@@ -78,7 +78,7 @@ Use the stored field names throughout — the same names returned by `GET /api/v
 <CodeGroup>
   ```bash curl
   # Read config from agent A, write it to agent B
-  curl -X PUT https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_def456/config \
+  curl -X PUT https://form-fill-agent-backend.artpark.ai/api/v1/agents/agt_def456/config \
     -H "Authorization: Bearer fb_live_0123456789ab_..." \
     -H "Content-Type: application/json" \
     -d '{
@@ -107,7 +107,7 @@ Use the stored field names throughout — the same names returned by `GET /api/v
   ```python Python
   import requests
 
-  BASE = "https://YOUR-FORMBHARO-SERVER"
+  BASE = "https://form-fill-agent-backend.artpark.ai"
   HEADERS = {
       "Authorization": "Bearer fb_live_0123456789ab_...",
       "Content-Type": "application/json",

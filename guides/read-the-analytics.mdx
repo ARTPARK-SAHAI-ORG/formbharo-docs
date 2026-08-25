@@ -11,7 +11,7 @@ FormBharo exposes analytics endpoints for both individual agents and entire work
 Fetch performance stats for a single agent with `GET /api/v1/agents/{agent_id}/analytics`.
 
 ```bash curl
-curl -G "https://YOUR-FORMBHARO-SERVER/api/v1/agents/AGENT_ID/analytics" \
+curl -G "https://form-fill-agent-backend.artpark.ai/api/v1/agents/AGENT_ID/analytics" \
   -H "Authorization: Bearer <api-key>" \
   --data-urlencode "since=1700000000" \
   --data-urlencode "until=1700086400" \
@@ -31,7 +31,7 @@ curl -G "https://YOUR-FORMBHARO-SERVER/api/v1/agents/AGENT_ID/analytics" \
 Fetch aggregated stats across all agents in a workspace with `GET /api/v1/workspaces/{workspace_id}/analytics`. This endpoint is restricted to **workspace admins**.
 
 ```bash curl
-curl -G "https://YOUR-FORMBHARO-SERVER/api/v1/workspaces/WORKSPACE_ID/analytics" \
+curl -G "https://form-fill-agent-backend.artpark.ai/api/v1/workspaces/WORKSPACE_ID/analytics" \
   -H "Authorization: Bearer <api-key>" \
   --data-urlencode "since=1700000000"
 ```

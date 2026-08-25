@@ -135,7 +135,7 @@ Authorization: Bearer <api-key>
 <CodeGroup>
 
 ```bash curl
-curl -G https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/analytics \
+curl -G https://form-fill-agent-backend.artpark.ai/api/v1/agents/agt_abc123/analytics \
   --data-urlencode "since=1700000000" \
   --data-urlencode "until=1700086400" \
   -H "Authorization: Bearer fb_live_0123456789ab_..."
@@ -144,7 +144,7 @@ curl -G https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/analytics \
 ```python python
 import requests
 
-BASE_URL = "https://YOUR-FORMBHARO-SERVER"
+BASE_URL = "https://form-fill-agent-backend.artpark.ai"
 API_KEY  = "fb_live_0123456789ab_..."
 AGENT_ID = "agt_abc123"
 

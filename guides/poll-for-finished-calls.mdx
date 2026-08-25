@@ -14,7 +14,7 @@ FormBharo's cross-agent conversations endpoint lets you pull finished calls into
     On your very first run, call `GET /api/v1/conversations?since=0` to retrieve all calls. Process each record and insert it into your database. After processing, find the **largest `created_at` value** in the response and save it — this becomes your cursor for the next poll.
 
     ```bash curl
-    curl "https://YOUR-FORMBHARO-SERVER/api/v1/conversations?since=0" \
+    curl "https://form-fill-agent-backend.artpark.ai/api/v1/conversations?since=0" \
       -H "Authorization: Bearer <api-key>"
     ```
   </Step>
@@ -36,7 +36,7 @@ FormBharo's cross-agent conversations endpoint lets you pull finished calls into
 <CodeGroup>
 
 ```bash curl
-curl -G "https://YOUR-FORMBHARO-SERVER/api/v1/conversations" \
+curl -G "https://form-fill-agent-backend.artpark.ai/api/v1/conversations" \
   -H "Authorization: Bearer <api-key>" \
   --data-urlencode "since=0" \
   --data-urlencode "status=complete" \
@@ -46,7 +46,7 @@ curl -G "https://YOUR-FORMBHARO-SERVER/api/v1/conversations" \
 ```python python
 import requests
 
-BASE_URL = "https://YOUR-FORMBHARO-SERVER"
+BASE_URL = "https://form-fill-agent-backend.artpark.ai"
 HEADERS = {"Authorization": "Bearer <api-key>"}
 
 def poll_conversations(since: int = 0) -> list[dict]:
@@ -142,7 +142,7 @@ Use query parameters to narrow the result set before it reaches your system.
 Transcripts are **not** included in the cross-agent conversations list. Fetch them one call at a time once you have the identifiers you need.
 
 ```bash curl
-curl "https://YOUR-FORMBHARO-SERVER/api/v1/agents/AGENT_ID/conversations/CONVERSATION_ID/transcript" \
+curl "https://form-fill-agent-backend.artpark.ai/api/v1/agents/AGENT_ID/conversations/CONVERSATION_ID/transcript" \
   -H "Authorization: Bearer <api-key>"
 ```
 

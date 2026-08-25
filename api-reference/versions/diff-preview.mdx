@@ -60,7 +60,7 @@ Send the full agent configuration using the same field names as `PUT /api/v1/age
 <CodeGroup>
 ```bash curl
 curl -X POST \
-  https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/diff-preview \
+  https://form-fill-agent-backend.artpark.ai/api/v1/agents/agt_abc123/diff-preview \
   -H "Authorization: Bearer fb_live_0123456789ab_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -128,7 +128,7 @@ payload = {
 }
 
 response = requests.post(
-    "https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/diff-preview",
+    "https://form-fill-agent-backend.artpark.ai/api/v1/agents/agt_abc123/diff-preview",
     headers={
         "Authorization": "Bearer fb_live_0123456789ab_...",
         "Content-Type": "application/json",

@@ -111,22 +111,22 @@ description: "GET /api/v1/agents returns all agents visible to your API key. Pas
 <CodeGroup>
   ```bash curl
   # Fetch all agents (no pagination)
-  curl https://YOUR-FORMBHARO-SERVER/api/v1/agents \
+  curl https://form-fill-agent-backend.artpark.ai/api/v1/agents \
     -H "Authorization: Bearer fb_live_0123456789ab_..."
 
   # Fetch the first page of 20 agents
-  curl "https://YOUR-FORMBHARO-SERVER/api/v1/agents?limit=20" \
+  curl "https://form-fill-agent-backend.artpark.ai/api/v1/agents?limit=20" \
     -H "Authorization: Bearer fb_live_0123456789ab_..."
 
   # Fetch the next page using a cursor
-  curl "https://YOUR-FORMBHARO-SERVER/api/v1/agents?limit=20&cursor=20" \
+  curl "https://form-fill-agent-backend.artpark.ai/api/v1/agents?limit=20&cursor=20" \
     -H "Authorization: Bearer fb_live_0123456789ab_..."
   ```
 
   ```python Python
   import requests
 
-  BASE = "https://YOUR-FORMBHARO-SERVER"
+  BASE = "https://form-fill-agent-backend.artpark.ai"
   HEADERS = {"Authorization": "Bearer fb_live_0123456789ab_..."}
 
   # Fetch all agents (no pagination)

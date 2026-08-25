@@ -43,7 +43,7 @@ Returns the updated workspace object with the new name applied.
 <CodeGroup>
 
 ```bash curl
-curl -X PUT https://YOUR-FORMBHARO-SERVER/api/v1/workspaces/ws_xyz789 \
+curl -X PUT https://form-fill-agent-backend.artpark.ai/api/v1/workspaces/ws_xyz789 \
   -H "Authorization: Bearer fb_live_0123456789ab_..." \
   -H "Content-Type: application/json" \
   -d '{"name": "Acme Growth Team"}'
@@ -52,7 +52,7 @@ curl -X PUT https://YOUR-FORMBHARO-SERVER/api/v1/workspaces/ws_xyz789 \
 ```python python
 import requests
 
-BASE_URL     = "https://YOUR-FORMBHARO-SERVER"
+BASE_URL     = "https://form-fill-agent-backend.artpark.ai"
 API_KEY      = "fb_live_0123456789ab_..."
 WORKSPACE_ID = "ws_xyz789"
 

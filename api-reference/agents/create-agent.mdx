@@ -64,7 +64,7 @@ If the request body fails validation, the API returns `400 Bad Request` with a `
 
 <CodeGroup>
   ```bash curl
-  curl -X POST https://YOUR-FORMBHARO-SERVER/api/v1/agents \
+  curl -X POST https://form-fill-agent-backend.artpark.ai/api/v1/agents \
     -H "Authorization: Bearer fb_live_0123456789ab_..." \
     -H "Content-Type: application/json" \
     -d '{
@@ -90,7 +90,7 @@ If the request body fails validation, the API returns `400 Bad Request` with a `
   ```python Python
   import requests
 
-  BASE = "https://YOUR-FORMBHARO-SERVER"
+  BASE = "https://form-fill-agent-backend.artpark.ai"
   HEADERS = {
       "Authorization": "Bearer fb_live_0123456789ab_...",
       "Content-Type": "application/json",

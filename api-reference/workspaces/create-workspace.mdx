@@ -37,7 +37,7 @@ Returns the newly created workspace object.
 <CodeGroup>
 
 ```bash curl
-curl -X POST https://YOUR-FORMBHARO-SERVER/api/v1/workspaces \
+curl -X POST https://form-fill-agent-backend.artpark.ai/api/v1/workspaces \
   -H "Authorization: Bearer fb_live_0123456789ab_..." \
   -H "Content-Type: application/json" \
   -d '{"name": "Acme Sales Team"}'
@@ -46,7 +46,7 @@ curl -X POST https://YOUR-FORMBHARO-SERVER/api/v1/workspaces \
 ```python python
 import requests
 
-BASE_URL = "https://YOUR-FORMBHARO-SERVER"
+BASE_URL = "https://form-fill-agent-backend.artpark.ai"
 API_KEY  = "fb_live_0123456789ab_..."
 
 resp = requests.post(

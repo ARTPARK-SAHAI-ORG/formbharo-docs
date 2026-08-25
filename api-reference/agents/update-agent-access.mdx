@@ -42,7 +42,7 @@ description: "PUT /api/v1/agents/{agent_id}/access replaces the agent's access l
 
 <CodeGroup>
   ```bash curl
-  curl -X PUT https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/access \
+  curl -X PUT https://form-fill-agent-backend.artpark.ai/api/v1/agents/agt_abc123/access \
     -H "Authorization: Bearer fb_live_0123456789ab_..." \
     -H "Content-Type: application/json" \
     -d '{
@@ -57,7 +57,7 @@ description: "PUT /api/v1/agents/{agent_id}/access replaces the agent's access l
   ```python Python
   import requests
 
-  BASE = "https://YOUR-FORMBHARO-SERVER"
+  BASE = "https://form-fill-agent-backend.artpark.ai"
   HEADERS = {
       "Authorization": "Bearer fb_live_0123456789ab_...",
       "Content-Type": "application/json",

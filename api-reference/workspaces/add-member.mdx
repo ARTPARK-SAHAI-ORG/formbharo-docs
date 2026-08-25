@@ -39,7 +39,7 @@ Returns the updated member object on success.
 <CodeGroup>
 
 ```bash curl
-curl -X POST https://YOUR-FORMBHARO-SERVER/api/v1/workspaces/ws_xyz789/members \
+curl -X POST https://form-fill-agent-backend.artpark.ai/api/v1/workspaces/ws_xyz789/members \
   -H "Authorization: Bearer fb_live_0123456789ab_..." \
   -H "Content-Type: application/json" \
   -d '{"email": "carol@acme.com", "role": "member"}'
@@ -48,7 +48,7 @@ curl -X POST https://YOUR-FORMBHARO-SERVER/api/v1/workspaces/ws_xyz789/members \
 ```python python
 import requests
 
-BASE_URL    = "https://YOUR-FORMBHARO-SERVER"
+BASE_URL    = "https://form-fill-agent-backend.artpark.ai"
 API_KEY     = "fb_live_0123456789ab_..."
 WORKSPACE_ID = "ws_xyz789"
 

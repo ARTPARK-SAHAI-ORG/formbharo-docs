@@ -51,12 +51,12 @@ description: "GET /api/v1/agents/{agent_id}/public returns the agent title, ques
 
 <CodeGroup>
   ```bash curl
-  curl https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/public
+  curl https://form-fill-agent-backend.artpark.ai/api/v1/agents/agt_abc123/public
   ```
 
   ```javascript JavaScript
   const agentId = "agt_abc123";
-  const base = "https://YOUR-FORMBHARO-SERVER";
+  const base = "https://form-fill-agent-backend.artpark.ai";
 
   const response = await fetch(`${base}/api/v1/agents/${agentId}/public`);
   const agent = await response.json();

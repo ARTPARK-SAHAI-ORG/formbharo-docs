@@ -101,7 +101,7 @@ Use the `since` parameter to fetch only conversations updated after your last sy
 # First poll — fetch all conversations in the last hour
 SINCE=$(date -d '1 hour ago' +%s)
 
-curl -G https://YOUR-FORMBHARO-SERVER/api/v1/conversations \
+curl -G https://form-fill-agent-backend.artpark.ai/api/v1/conversations \
   --data-urlencode "since=$SINCE" \
   --data-urlencode "limit=200" \
   -H "Authorization: Bearer fb_live_0123456789ab_..."
@@ -111,7 +111,7 @@ curl -G https://YOUR-FORMBHARO-SERVER/api/v1/conversations \
 import time
 import requests
 
-BASE_URL = "https://YOUR-FORMBHARO-SERVER"
+BASE_URL = "https://form-fill-agent-backend.artpark.ai"
 API_KEY  = "fb_live_0123456789ab_..."
 
 def poll_conversations(since: float) -> list[dict]:
