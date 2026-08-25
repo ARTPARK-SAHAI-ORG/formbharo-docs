@@ -2857,6 +2857,52 @@
         ]
       }
     },
+    "/api/v1/agents/{agent_id}/setup_calibrate": {
+      "post": {
+        "description": "Backfill whichever Calibrate agent ids an existing agent is missing.\n\nNo-op (200) if both ids are already set. Otherwise calls Calibrate for the\nmissing ones, persists whatever it succeeds in creating, and returns 502 if\nsomething is still missing afterward (partial success is still persisted).",
+        "operationId": "setup_calibrate_api_v1_agents__agent_id__setup_calibrate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Setup Calibrate",
+        "tags": [
+          "Agents"
+        ]
+      }
+    },
     "/api/v1/conversations": {
       "get": {
         "description": "Conversations across every agent the caller can see, newest first.\n\n``cursor`` is the offset into the sorted result set. It is honest about what it\nis: calls recorded between two page requests shift later rows, so a row can\nrepeat or be missed while paging through a live agent.",
