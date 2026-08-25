@@ -524,55 +524,6 @@
         "title": "ConfigDiffPreview",
         "type": "object"
       },
-      "ConversationCost": {
-        "description": "Per-call cost totals and per-component run counts.",
-        "properties": {
-          "llm_turns": {
-            "title": "Llm Turns",
-            "type": "integer"
-          },
-          "llm_usd": {
-            "title": "Llm Usd",
-            "type": "number"
-          },
-          "stt_turns": {
-            "title": "Stt Turns",
-            "type": "integer"
-          },
-          "stt_usd": {
-            "title": "Stt Usd",
-            "type": "number"
-          },
-          "total_usd": {
-            "title": "Total Usd",
-            "type": "number"
-          },
-          "tts_turns": {
-            "title": "Tts Turns",
-            "type": "integer"
-          },
-          "tts_usd": {
-            "title": "Tts Usd",
-            "type": "number"
-          },
-          "turns": {
-            "title": "Turns",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "total_usd",
-          "llm_usd",
-          "stt_usd",
-          "tts_usd",
-          "turns",
-          "llm_turns",
-          "stt_turns",
-          "tts_turns"
-        ],
-        "title": "ConversationCost",
-        "type": "object"
-      },
       "ConversationEvent": {
         "additionalProperties": true,
         "description": "One entry of ``events.json``. Shape varies by event type.",
@@ -660,30 +611,8 @@
         "type": "object"
       },
       "ConversationSummary": {
-        "description": "One row of the conversation list (``build_conversation_summary``).\n\n``transcript`` is absent entirely when the request passed\n``include_transcript=false``.",
+        "description": "One row of the per-agent conversation list.\n\n``transcript`` and ``has_transcript`` are both absent unless the request\npassed ``include_transcript=true``.\n\n``has_recording``, ``has_events``, ``has_log`` and ``has_metrics`` say\nwhether the call has ended rather than checking for each file: those files\nare only finalized at the end of a call, and checking every one of them for\nevery call is what made this list slow. The per-conversation routes still\nanswer 404 when a specific file genuinely is not there.\n\nThe cost, duration and latency figures are deliberately not here for the\nsame reason. They are on the cross-agent ``GET /conversations`` listing and\nin the analytics numbers.",
         "properties": {
-          "avg_ack_latency_secs": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Avg Ack Latency Secs"
-          },
-          "avg_ack_to_reply_secs": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Avg Ack To Reply Secs"
-          },
           "caller_number": {
             "anyOf": [
               {
@@ -699,16 +628,6 @@
             "title": "Conversation Id",
             "type": "string"
           },
-          "cost": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ConversationCost"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "created_at": {
             "anyOf": [
               {
@@ -719,17 +638,6 @@
               }
             ],
             "title": "Created At"
-          },
-          "duration_secs": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Duration Secs"
           },
           "filled_fields": {
             "title": "Filled Fields",
@@ -749,6 +657,10 @@
             "title": "Has Events",
             "type": "boolean"
           },
+          "has_log": {
+            "title": "Has Log",
+            "type": "boolean"
+          },
           "has_metrics": {
             "title": "Has Metrics",
             "type": "boolean"
@@ -758,7 +670,18 @@
             "type": "boolean"
           },
           "has_transcript": {
-            "title": "Has Transcript",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Has Transcript"
+          },
+          "is_ended": {
+            "title": "Is Ended",
             "type": "boolean"
           },
           "source": {
@@ -807,8 +730,9 @@
           "form_data",
           "form_status",
           "has_recording",
-          "has_transcript",
           "has_events",
+          "is_ended",
+          "has_log",
           "has_metrics",
           "filled_fields",
           "total_fields",
@@ -1903,6 +1827,46 @@
         "title": "WorkspaceListPage",
         "type": "object"
       },
+      "WorkspaceS3ConfigRequest": {
+        "description": "S3 signed-URL endpoints and API key for a workspace.",
+        "properties": {
+          "s3_api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "S3 Api Key"
+          },
+          "s3_download_url_endpoint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "S3 Download Url Endpoint"
+          },
+          "s3_upload_url_endpoint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "S3 Upload Url Endpoint"
+          }
+        },
+        "title": "WorkspaceS3ConfigRequest",
+        "type": "object"
+      },
       "models__ConversationPage": {
         "description": "Paged conversation list, returned only when ``limit`` or ``cursor`` is sent.",
         "properties": {
@@ -1970,7 +1934,7 @@
     }
   },
   "info": {
-    "description": "Create and run form-filling voice agents, and read back the conversations they had.\n\nSend your API key on every request as `Authorization: Bearer fb_live_...`.\nA key does whatever the person who created it can do. Create and revoke keys\nfrom Settings in the web app; keys cannot manage other keys.\n",
+    "description": "Create and run form-filling voice agents, and read back the conversations they had.\n\nSend your API key on every request as `Authorization: Bearer fb_live_...`.\nA key belongs to one workspace and only reaches that workspace's agents. Create\nand revoke keys from Settings in the web app; keys cannot manage other keys.\n",
     "title": "FormBharo API",
     "version": "1.0.0"
   },
@@ -2606,7 +2570,7 @@
     },
     "/api/v1/agents/{agent_id}/conversations": {
       "get": {
-        "description": "Return an agent's conversations with their form data and recording availability.\n\n**Two response shapes.** With no ``limit`` and no ``cursor`` this returns a bare\nJSON array of every conversation, newest first — the shape the app has always\nreturned, and what the UI reads. Sending either ``limit`` or ``cursor`` instead\nreturns an object::\n\n    {\"data\": [ ...same rows... ], \"next_cursor\": 20}\n\n``next_cursor`` is ``None`` on the last page; pass it back as ``cursor`` to get\nthe next one. The two shapes exist so paging can be added without changing a\nsingle line of the existing frontend.\n\nEvery other query parameter is optional and defaults to the old behavior: no\nfiltering, and the transcript included in each row.",
+        "description": "Return an agent's conversations with their form data and recording availability.\n\nConversations are discovered by walking the agent's local conversation\ndirectories. There is no S3 \"list\" endpoint — a client's bucket only\nsupports fetching one file by exact name — so an S3-backed conversation\nstill gets an empty, content-free marker directory here (created at call\nstart, see ``run_bot``) purely so it shows up in this walk at all. A row\nis local when its marker directory actually has ``data.json`` in it;\notherwise it's read through the agent's workspace S3 config instead,\nresolved once per agent, not once per row.\n\nEach row reads only ``data.json`` and ``metadata.json`` — the two files the\nsummary row actually needs. ``transcript.json``, ``metrics.json``,\n``events.json``, ``recording.wav`` and ``conversation.log`` are not fetched\nor checked for every conversation here; those are only read when a specific\nconversation is opened, via the dedicated routes. Passing\n``include_transcript=true`` opts back into the transcript read.\n\n**Two response shapes.** With no ``limit`` and no ``cursor`` this returns a bare\nJSON array of every conversation, newest first — the shape the app has always\nreturned, and what the UI reads. Sending either ``limit`` or ``cursor`` instead\nreturns an object::\n\n    {\"data\": [ ...same rows... ], \"next_cursor\": 20}\n\n``next_cursor`` is ``None`` on the last page; pass it back as ``cursor`` to get\nthe next one. The two shapes exist so paging can be added without changing a\nsingle line of the existing frontend.\n\nEvery other query parameter is optional and defaults to the old behavior: no\nfiltering, and no transcript in the rows.",
         "operationId": "list_conversations_api_v1_agents__agent_id__conversations_get",
         "parameters": [
           {
@@ -2729,13 +2693,13 @@
             }
           },
           {
-            "description": "Set false to leave the transcript out of every row. The ``transcript`` key is then absent, not empty.",
+            "description": "Set true to include each call's transcript in its row. Off by default, because reading a transcript file for every call is what made this list slow; the ``transcript`` and ``has_transcript`` keys are then absent, not empty.",
             "in": "query",
             "name": "include_transcript",
             "required": false,
             "schema": {
-              "default": true,
-              "description": "Set false to leave the transcript out of every row. The ``transcript`` key is then absent, not empty.",
+              "default": false,
+              "description": "Set true to include each call's transcript in its row. Off by default, because reading a transcript file for every call is what made this list slow; the ``transcript`` and ``has_transcript`` keys are then absent, not empty.",
               "title": "Include Transcript",
               "type": "boolean"
             }
@@ -3954,9 +3918,7 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkspaceDetail"
-                }
+                "schema": {}
               }
             },
             "description": "Successful Response"
