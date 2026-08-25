@@ -3,10 +3,10 @@
   "name": "FormBharo",
   "theme": "luma",
   "logo": {
-    "light": "https://media.brand.dev/f9149ec8-8f45-4efb-9d85-58460ee4fee4.svg",
-    "dark": "https://media.brand.dev/f9149ec8-8f45-4efb-9d85-58460ee4fee4.svg"
+    "light": "/logo/formbharo.svg",
+    "dark": "/logo/formbharo.svg"
   },
-  "favicon": "https://media.brand.dev/f2193d93-22ba-4573-9126-b052b325f01b.png",
+  "favicon": "/favicon.svg",
   "colors": {
     "primary": "#1be39b",
     "light": "#0c8c5c",
@@ -70,7 +70,9 @@
         "groups": [
           {
             "group": "Overview",
-            "pages": ["api-reference/introduction"]
+            "pages": [
+              "api-reference/introduction"
+            ]
           },
           {
             "group": "Agents",
@@ -133,14 +135,24 @@
   },
   "api": {
     "openapi": "api-reference/openapi.json",
-    "playground": { "display": "interactive" },
+    "playground": {
+      "display": "interactive"
+    },
     "examples": {
-      "languages": ["curl", "python"],
+      "languages": [
+        "curl",
+        "python"
+      ],
       "defaults": "required",
       "autogenerate": true
     }
   },
   "contextual": {
-    "options": ["copy", "view", "chatgpt", "claude"]
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude"
+    ]
   }
 }
