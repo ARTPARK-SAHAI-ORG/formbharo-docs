@@ -1,21 +1,19 @@
 ---
 title: "Run a FormBharo Voice Call Directly from Your Web Page"
 sidebarTitle: "Run a Call"
-description: "Embed FormBharo voice calls in your own page using WebRTC: generate a conversation ID, open the audio connection, and poll for answers as they arrive."
+description: "Embed a voice call in your own page with WebRTC and read answers as they arrive."
 ---
 
-import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
-
-`POST /offer` and `GET /api/v1/data/{agent_id}/{conversation_id}` are the two routes you call without an API key. Every other route needs one.
+No API key is needed to run a call. `POST /api/v1/conversations` gives you a conversation id and a token; the token authorizes the audio connection and the answer poll for that one conversation.
 
 ## Before you start
 
-You need the **agent ID** of the agent you want to run and the **URL of your FormBharo server**.
+You need the **agent ID** of a published agent.
 
-`GET /api/v1/agents/{agent_id}/public` returns the agent's `title`, `questions` list, and `agent_speaks_first` flag. Use it to render your form UI before the audio connection opens. It needs no API key.
+`GET /api/v1/agents/{agent_id}/public` returns the agent's `title`, `questions` list, and `agent_speaks_first` flag. Use it to render your form UI before the call starts.
 
 ```bash curl
-curl {FORMBHARO_URL}/api/v1/agents/AGENT_ID/public
+curl https://api.formbharo.artpark.ai/api/v1/agents/AGENT_ID/public
 ```
 
 `agent_speaks_first` tells you whether to show a "waiting for agent" state or a push-to-talk prompt on connect.
@@ -24,14 +22,19 @@ curl {FORMBHARO_URL}/api/v1/agents/AGENT_ID/public
 
 <Steps>
 
-  <Step title="Generate a conversation ID">
-    FormBharo uses the ID you provide. It does not generate one for you.
+  <Step title="Create the conversation">
+    The server generates the conversation id and returns the token with it.
 
     ```javascript javascript
-    const conversationId = crypto.randomUUID();
+    const res = await fetch("https://api.formbharo.artpark.ai/api/v1/conversations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ agent_id: "AGENT_ID" }),
+    });
+    const { conversation_id, token } = await res.json();
     ```
 
-    You pass this to the WebRTC offer and use it later to poll for answers.
+    The token expires after 12 hours and works only for this conversation.
   </Step>
 
   <Step title="Open the audio connection">
@@ -43,13 +46,11 @@ curl {FORMBHARO_URL}/api/v1/agents/AGENT_ID/public
     |---|---|
     | `sdp` | Your browser's WebRTC SDP offer string |
     | `type` | Always `"offer"` |
-    | `request_data` | Object with `agentId` and `conversation_id` |
+    | `request_data` | Object with `agentId`, `conversation_id`, and `conversation_token` |
 
     The response is a WebRTC SDP answer. To exchange ICE candidates after the initial handshake, send them with `PATCH /offer`.
 
     ```javascript javascript
-    const conversationId = crypto.randomUUID();
-
     const pc = new RTCPeerConnection();
 
     pc.addTransceiver("audio", { direction: "sendrecv" });
@@ -67,21 +68,19 @@ curl {FORMBHARO_URL}/api/v1/agents/AGENT_ID/public
       }
     });
 
-    const offerResponse = await fetch(
-      "{FORMBHARO_URL}/offer",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sdp: pc.localDescription.sdp,
-          type: "offer",
-          request_data: {
-            agentId: "AGENT_ID",
-            conversation_id: conversationId,
-          },
-        }),
-      }
-    );
+    const offerResponse = await fetch("https://api.formbharo.artpark.ai/offer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sdp: pc.localDescription.sdp,
+        type: "offer",
+        request_data: {
+          agentId: "AGENT_ID",
+          conversation_id,
+          conversation_token: token,
+        },
+      }),
+    });
 
     const answer = await offerResponse.json();
 
@@ -97,24 +96,25 @@ curl {FORMBHARO_URL}/api/v1/agents/AGENT_ID/public
   </Step>
 
   <Step title="Read answers as they arrive">
-    Poll `GET /api/v1/data/{agent_id}/{conversation_id}` every two seconds or so.
+    Poll `GET /api/v1/data/{agent_id}/{conversation_id}` every two seconds or so, sending the token as `X-Conversation-Token`.
 
-    - Before the first answer is written, it returns an empty object `{}`.
-    - Once the call is underway, it returns a `form_data` object keyed by question ID and a `form_status` string.
+    The response has `form_data` (answers keyed by question `name`) and `form_status` (per-question: `empty`, `skipped`, or `answered`). When the call ends, `ended_at` appears.
 
     ```javascript javascript
-    async function pollAnswers(agentId, conversationId) {
-      const url = `{FORMBHARO_URL}/api/v1/data/${agentId}/${conversationId}`;
+    function pollAnswers(agentId, conversationId, token) {
+      const url = `https://api.formbharo.artpark.ai/api/v1/data/${agentId}/${conversationId}`;
 
       const interval = setInterval(async () => {
-        const res = await fetch(url);
+        const res = await fetch(url, {
+          headers: { "X-Conversation-Token": token },
+        });
         const data = await res.json();
 
-        if (data.form_status === "complete" || data.form_status === "screened_out") {
+        console.log("Current answers:", data.form_data);
+
+        if (data.ended_at) {
           clearInterval(interval);
         }
-
-        console.log("Current answers:", data.form_data);
       }, 2000);
     }
     ```

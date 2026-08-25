@@ -4,8 +4,6 @@ sidebarTitle: "Poll for Calls"
 description: "Use GET /api/v1/conversations?since= to continuously pull completed calls into your database, spreadsheet, or case management system."
 ---
 
-import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
-
 `GET /api/v1/conversations` returns finished calls across every agent. Filter on `since` to fetch only what changed since your last poll.
 
 ## The polling pattern
@@ -16,7 +14,7 @@ import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
     Call the endpoint with `since=0` to retrieve all calls, then save the largest `created_at` in the response as your cursor.
 
     ```bash curl
-    curl "{FORMBHARO_URL}/api/v1/conversations?since=0" \
+    curl "https://api.formbharo.artpark.ai/api/v1/conversations?since=0" \
       -H "Authorization: Bearer <api-key>"
     ```
   </Step>
@@ -26,12 +24,12 @@ import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
   </Step>
 
   <Step title="Repeat">
-    Poll at most a few times per minute. Each request scans history, so response time grows with your total call count.
+    Poll at most a few times per minute.
   </Step>
 
 </Steps>
 
-## Two things to know
+## Things to know
 
 - `since` is inclusive, so the call at the boundary comes back in the next poll.
 - `created_at` is the last-write time, not the call start time. Editing an answer on an old call moves it into the current window. Match on `conversation_id` and update the existing row instead of inserting a new one.
@@ -41,7 +39,7 @@ import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
 <CodeGroup>
 
 ```bash curl
-curl -G "{FORMBHARO_URL}/api/v1/conversations" \
+curl -G "https://api.formbharo.artpark.ai/api/v1/conversations" \
   -H "Authorization: Bearer <api-key>" \
   --data-urlencode "since=0" \
   --data-urlencode "status=complete" \
@@ -51,7 +49,7 @@ curl -G "{FORMBHARO_URL}/api/v1/conversations" \
 ```python python
 import requests
 
-BASE_URL = "{FORMBHARO_URL}"
+BASE_URL = "https://api.formbharo.artpark.ai"
 HEADERS = {"Authorization": "Bearer <api-key>"}
 
 def poll_conversations(since: int = 0) -> list[dict]:
@@ -76,7 +74,7 @@ def poll_conversations(since: int = 0) -> list[dict]:
         response.raise_for_status()
         data = response.json()
 
-        all_conversations.extend(data.get("conversations", []))
+        all_conversations.extend(data.get("data", []))
 
         cursor = data.get("next_cursor")
         if not cursor:
@@ -111,7 +109,7 @@ if results:
 Transcripts are not in the cross-agent list. Fetch them one call at a time.
 
 ```bash curl
-curl "{FORMBHARO_URL}/api/v1/agents/AGENT_ID/conversations/CONVERSATION_ID/transcript" \
+curl "https://api.formbharo.artpark.ai/api/v1/agents/AGENT_ID/conversations/CONVERSATION_ID/transcript" \
   -H "Authorization: Bearer <api-key>"
 ```
 

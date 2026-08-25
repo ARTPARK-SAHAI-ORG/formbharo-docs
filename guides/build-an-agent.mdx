@@ -4,17 +4,15 @@ sidebarTitle: "Build an Agent"
 description: "Turn a form into a FormBharo voice agent: map fields to question types, add scripts, configure branching, and publish with the API."
 ---
 
-import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
-
 <Steps>
 
   <Step title="Create a draft agent">
-    `POST /api/v1/agents` always creates a draft. Send a `title` and a `questions` array. The response contains the `agent_id`.
+    `POST /api/v1/agents` always creates a draft. Send a `title` and a `questions` array. The response contains the `id`.
 
     <CodeGroup>
 
     ```bash curl
-    curl -X POST {FORMBHARO_URL}/api/v1/agents \
+    curl -X POST https://api.formbharo.artpark.ai/api/v1/agents \
       -H "Authorization: Bearer <api-key>" \
       -H "Content-Type: application/json" \
       -d '{
@@ -36,7 +34,7 @@ import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
     import requests
 
     response = requests.post(
-        "{FORMBHARO_URL}/api/v1/agents",
+        "https://api.formbharo.artpark.ai/api/v1/agents",
         headers={"Authorization": "Bearer <api-key>"},
         json={
             "title": "Clinic intake",
@@ -53,8 +51,7 @@ import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
         },
     )
 
-    agent = response.json()
-    agent_id = agent["agent_id"]
+    agent_id = response.json()["id"]
     ```
 
     </CodeGroup>
@@ -113,7 +110,7 @@ import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
     | `equals` | boolean | Matches the answer to a `boolean` question |
     | `present` | boolean | `true` asks the branch when the question was answered, `false` asks it when the question was skipped |
 
-    `present` takes priority over `equals`. If both are set, `equals` is ignored.
+    Set exactly one of `equals` or `present`.
 
     <CodeGroup>
 
@@ -178,11 +175,13 @@ import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
   </Step>
 
   <Step title="Configure screening">
-    `end_call_values` is an array of strings. When the agent records any of those exact values, it ends the call and marks the conversation `screened_out`. Screened-out calls count as successes, not failures, and appear separately in analytics.
+    `end_call_values` is an array of strings set on a question. When the answer to that question matches one of the values, the agent ends the call and marks the conversation `screened_out`. Screened-out calls count as successes, not failures, and appear separately in analytics.
 
     ```json
     {
-      "end_call_values": ["no", "not interested", "already completed"]
+      "question": "Are you interested in scheduling an appointment?",
+      "response_type": "boolean",
+      "end_call_values": ["no"]
     }
     ```
   </Step>
@@ -193,7 +192,7 @@ import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
     <CodeGroup>
 
     ```bash curl
-    curl -X PUT {FORMBHARO_URL}/api/v1/agents/AGENT_ID \
+    curl -X PUT https://api.formbharo.artpark.ai/api/v1/agents/AGENT_ID \
       -H "Authorization: Bearer <api-key>" \
       -H "Content-Type: application/json" \
       -d '{
@@ -215,7 +214,7 @@ import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
     }
 
     response = requests.put(
-        f"{FORMBHARO_URL}/api/v1/agents/{agent_id}",
+        f"https://api.formbharo.artpark.ai/api/v1/agents/{agent_id}",
         headers={"Authorization": "Bearer <api-key>"},
         json=agent_body,
     )
@@ -234,25 +233,6 @@ import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
   </Step>
 
 </Steps>
-
-## Preview changes before saving
-
-`POST /api/v1/agents/{agent_id}/diff-preview` takes a proposed agent body and returns an array of diff lines, each with a `type` field.
-
-| Type | Meaning |
-|---|---|
-| `add` | Line present in the new version but not the current one |
-| `remove` | Line present in the current version but not the new one |
-| `context` | Unchanged line shown for context |
-| `hunk` | Separator between diff sections |
-| `meta` | Header information about the diff |
-
-```bash curl
-curl -X POST {FORMBHARO_URL}/api/v1/agents/AGENT_ID/diff-preview \
-  -H "Authorization: Bearer <api-key>" \
-  -H "Content-Type: application/json" \
-  -d '{ "title": "Clinic intake", "questions": [ ... ] }'
-```
 
 <Tip>
   See [Agent config schema](/reference/agent-config-schema) for every field.

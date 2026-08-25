@@ -4,8 +4,6 @@ sidebarTitle: "Quickstart"
 description: "Create an agent, publish it, and read its analytics."
 ---
 
-import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
-
 You need an API key. See [API Keys](/getting-started/api-keys).
 
 <Steps>
@@ -20,7 +18,7 @@ You need an API key. See [API Keys](/getting-started/api-keys).
 
     <CodeGroup>
     ```bash curl
-    curl -X POST "{FORMBHARO_URL}/api/v1/agents" \
+    curl -X POST "https://api.formbharo.artpark.ai/api/v1/agents" \
       -H "Authorization: Bearer $FORMBHARO_KEY" \
       -H "Content-Type: application/json" \
       -d '{
@@ -44,7 +42,7 @@ You need an API key. See [API Keys](/getting-started/api-keys).
         ],
     }
     response = requests.post(
-        "{FORMBHARO_URL}/api/v1/agents",
+        "https://api.formbharo.artpark.ai/api/v1/agents",
         headers={"Authorization": f"Bearer {os.environ['FORMBHARO_KEY']}"},
         json=body,
     )
@@ -60,7 +58,7 @@ You need an API key. See [API Keys](/getting-started/api-keys).
     `PUT` always publishes. Send the same body again.
 
     ```bash curl
-    curl -X PUT "{FORMBHARO_URL}/api/v1/agents/AGENT_ID" \
+    curl -X PUT "https://api.formbharo.artpark.ai/api/v1/agents/AGENT_ID" \
       -H "Authorization: Bearer $FORMBHARO_KEY" \
       -H "Content-Type: application/json" \
       -d '{
@@ -85,7 +83,7 @@ You need an API key. See [API Keys](/getting-started/api-keys).
 
   <Step title="Read its analytics">
     ```bash
-    curl "{FORMBHARO_URL}/api/v1/agents/AGENT_ID/analytics" \
+    curl "https://api.formbharo.artpark.ai/api/v1/agents/AGENT_ID/analytics" \
       -H "Authorization: Bearer $FORMBHARO_KEY"
     ```
 
@@ -97,15 +95,15 @@ You need an API key. See [API Keys](/getting-started/api-keys).
 
 <CardGroup cols={2}>
   <Card title="Build an Agent" icon="hammer" href="/guides/build-an-agent">
-    Question types, scripts, branching, validation.
+    Question types, scripts, branching, validation
   </Card>
   <Card title="Run a Call" icon="phone" href="/guides/run-a-call">
-    Embed a live call on your own page.
+    Embed a live call on your own page
   </Card>
   <Card title="Poll for Calls" icon="database" href="/guides/poll-for-finished-calls">
-    Sync finished calls into your systems.
+    Sync finished calls into your systems
   </Card>
   <Card title="Analytics" icon="chart-bar" href="/guides/read-the-analytics">
-    Completion rates, latency, cost.
+    Completion rates, latency, cost
   </Card>
 </CardGroup>
