@@ -75,59 +75,8 @@
             ]
           },
           {
-            "group": "Agents",
-            "pages": [
-              "api-reference/agents/list-agents",
-              "api-reference/agents/create-agent",
-              "api-reference/agents/get-agent",
-              "api-reference/agents/update-agent",
-              "api-reference/agents/delete-agent",
-              "api-reference/agents/duplicate-agent",
-              "api-reference/agents/get-agent-public",
-              "api-reference/agents/update-agent-config",
-              "api-reference/agents/get-agent-access",
-              "api-reference/agents/update-agent-access",
-              "api-reference/agents/move-agent-workspace"
-            ]
-          },
-          {
-            "group": "Agent Versions",
-            "pages": [
-              "api-reference/versions/list-versions",
-              "api-reference/versions/get-version",
-              "api-reference/versions/get-version-diff",
-              "api-reference/versions/restore-version",
-              "api-reference/versions/diff-preview",
-              "api-reference/versions/config-diff-preview"
-            ]
-          },
-          {
-            "group": "Calls",
-            "pages": [
-              "api-reference/calls/list-conversations",
-              "api-reference/calls/get-form-data",
-              "api-reference/calls/update-form-data",
-              "api-reference/calls/get-transcript"
-            ]
-          },
-          {
-            "group": "Analytics",
-            "pages": [
-              "api-reference/analytics/list-all-conversations",
-              "api-reference/analytics/agent-analytics",
-              "api-reference/analytics/workspace-analytics"
-            ]
-          },
-          {
-            "group": "Workspaces",
-            "pages": [
-              "api-reference/workspaces/list-workspaces",
-              "api-reference/workspaces/create-workspace",
-              "api-reference/workspaces/get-workspace",
-              "api-reference/workspaces/rename-workspace",
-              "api-reference/workspaces/add-member",
-              "api-reference/workspaces/remove-member"
-            ]
+            "group": "Endpoints",
+            "openapi": "api-reference/openapi.json"
           }
         ]
       }
