@@ -1,64 +1,22 @@
 ---
-title: "Quickstart: Your First FormBharo API Call in Minutes"
+title: "Quickstart"
 sidebarTitle: "Quickstart"
-description: "Set your API key and server URL, list your existing agents, and create your first voice agent in under five minutes using curl or Python."
+description: "Create an agent, publish it, and read its analytics."
 ---
 
 import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
 
-This guide walks you through the two most fundamental FormBharo API calls: listing existing agents and creating a new one. You need an API key (see [API Keys](/getting-started/api-keys)). Both steps work in curl and Python — pick whichever you prefer.
+You need an API key. See [API Keys](/getting-started/api-keys).
 
 <Steps>
   <Step title="Set your API key">
-    Store your API key as an environment variable so you don't hard-code it into every command.
-
     ```bash
     export FORMBHARO_KEY="fb_live_0123456789ab_REPLACE_THIS_WITH_YOUR_KEY"
     ```
   </Step>
 
-  <Step title="List your agents">
-    Fetch all agents visible to your account. A successful response confirms your key is correct.
-
-    <CodeGroup>
-    ```bash curl
-    curl "{FORMBHARO_URL}/api/v1/agents" \
-      -H "Authorization: Bearer $FORMBHARO_KEY"
-    ```
-
-    ```python Python
-    import os
-    import requests
-
-    response = requests.get(
-        "{FORMBHARO_URL}/api/v1/agents",
-        headers={"Authorization": f"Bearer {os.environ['FORMBHARO_KEY']}"},
-    )
-    response.raise_for_status()
-    print(response.json())
-    ```
-    </CodeGroup>
-
-    The API returns an array of agent objects. For example:
-
-    ```json
-    [
-      {
-        "id": "a87c1556-79fa-4492-add9-a704c13466a3",
-        "title": "Clinic intake",
-        "question_count": 6,
-        "updated_at": 1787626873.7724512,
-        "conversation_count": 3,
-        "status": "published",
-        "workspace_id": "personal-b3c9fe587b86d5a1",
-        "workspace_role": "admin"
-      }
-    ]
-    ```
-  </Step>
-
   <Step title="Create an agent">
-    Send a `POST` request with a title and at least one question. This creates a draft agent you can refine before publishing.
+    `POST` always creates a draft.
 
     <CodeGroup>
     ```bash curl
@@ -66,12 +24,10 @@ This guide walks you through the two most fundamental FormBharo API calls: listi
       -H "Authorization: Bearer $FORMBHARO_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "title": "My first agent",
+        "title": "Clinic intake",
         "questions": [
-          {
-            "text": "What is your full name?",
-            "response_type": "string"
-          }
+          { "question": "What is your full name?", "response_type": "string" },
+          { "question": "What is your date of birth?", "response_type": "date" }
         ]
       }'
     ```
@@ -80,66 +36,72 @@ This guide walks you through the two most fundamental FormBharo API calls: listi
     import os
     import requests
 
-    payload = {
-        "title": "My first agent",
+    body = {
+        "title": "Clinic intake",
         "questions": [
-            {
-                "text": "What is your full name?",
-                "response_type": "string",
-            }
+            {"question": "What is your full name?", "response_type": "string"},
+            {"question": "What is your date of birth?", "response_type": "date"},
         ],
     }
-
     response = requests.post(
         "{FORMBHARO_URL}/api/v1/agents",
-        headers={
-            "Authorization": f"Bearer {os.environ['FORMBHARO_KEY']}",
-            "Content-Type": "application/json",
-        },
-        json=payload,
+        headers={"Authorization": f"Bearer {os.environ['FORMBHARO_KEY']}"},
+        json=body,
     )
     response.raise_for_status()
-    print(response.json())
+    agent_id = response.json()["id"]
     ```
     </CodeGroup>
 
-    On success the API returns the new agent's ID and workspace:
-
-    ```json
-    {
-      "id": "f3a92c11-08bd-4e7a-b541-dc3301a4ef88",
-      "workspace_id": "personal-b3c9fe587b86d5a1"
-    }
-    ```
-
-    Save the `id` — you will need it in the next step.
+    Save the `id` from the response.
   </Step>
 
-  <Step title="Publish your agent">
-    A newly created agent starts as a draft and cannot accept calls until it is published. To publish it, send a `PUT` request to `/api/v1/agents/{agent_id}` with the complete agent body and `"status": "published"`.
+  <Step title="Publish it">
+    `PUT` always publishes. Send the same body again.
 
     ```bash curl
-    curl -X PUT "{FORMBHARO_URL}/api/v1/agents/f3a92c11-08bd-4e7a-b541-dc3301a4ef88" \
+    curl -X PUT "{FORMBHARO_URL}/api/v1/agents/AGENT_ID" \
       -H "Authorization: Bearer $FORMBHARO_KEY" \
       -H "Content-Type: application/json" \
       -d '{
-        "title": "My first agent",
-        "status": "published",
+        "title": "Clinic intake",
         "questions": [
-          {
-            "text": "What is your full name?",
-            "response_type": "string"
-          }
+          { "question": "What is your full name?", "response_type": "string" },
+          { "question": "What is your date of birth?", "response_type": "date" }
         ]
       }'
     ```
+  </Step>
 
-    <Note>
-      The `PUT` endpoint replaces the entire agent definition, so always send the full body, not just the fields you want to change. See [Agent Config Schema](/reference/agent-config-schema) for every available field.
-    </Note>
+  <Step title="Confirm it can take calls">
+    ```bash
+    curl "{FORMBHARO_URL}/api/v1/agents/AGENT_ID/public"
+    ```
+
+    Returns the agent's title and questions once it's live.
+  </Step>
+
+  <Step title="Read its analytics">
+    ```bash
+    curl "{FORMBHARO_URL}/api/v1/agents/AGENT_ID/analytics" \
+      -H "Authorization: Bearer $FORMBHARO_KEY"
+    ```
   </Step>
 </Steps>
 
-<Tip>
-  Next, read [Build an Agent](/guides/build-an-agent) for a complete walkthrough including question types, scripts, branching, and validation.
-</Tip>
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Build an Agent" icon="hammer" href="/guides/build-an-agent">
+    Question types, scripts, branching, validation.
+  </Card>
+  <Card title="Run a Call" icon="phone" href="/guides/run-a-call">
+    Embed a live call on your own page.
+  </Card>
+  <Card title="Poll for Calls" icon="database" href="/guides/poll-for-finished-calls">
+    Sync finished calls into your systems.
+  </Card>
+  <Card title="Analytics" icon="chart-bar" href="/guides/read-the-analytics">
+    Completion rates, latency, cost.
+  </Card>
+</CardGroup>
