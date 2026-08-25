@@ -1,0 +1,229 @@
+---
+title: "Agent Config JSON Schema"
+sidebarTitle: "Config Schema"
+description: "Schema for the JSON view in the agent editor's edit page."
+---
+
+This is the format used by the "JSON view" toggle on the agent edit page. Paste a config in this shape, then Save.
+
+<Note>
+  This is not the raw API request body. [Agent Configuration](/reference/agent-configuration) documents `POST`/`PUT /api/v1/agents`, which uses `description`, `ai_instructions`, `question`, and `response_type`. The JSON view here uses `context`, `instructions`, `label`, and `type` for the same concepts.
+</Note>
+
+## Schema
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Form agent config (JSON view)",
+  "type": "object",
+  "required": ["title", "questions"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1, "description": "Form name." },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "published"],
+      "description": "Send \"published\" so the form is live."
+    },
+    "context": { "type": "string", "description": "What this form is for." },
+    "instructions": { "type": "string", "description": "Standing instructions: tone, skip rules, closing." },
+    "agent_persona": { "type": "string", "description": "Who the agent is, e.g. 'community health worker'." },
+    "user_persona": { "type": "string", "description": "Who the caller is, e.g. 'caregiver answering about the patient'." },
+    "language": { "type": "string", "enum": ["english", "hindi", "hinglish", "telugu", "marathi", "kannada"] },
+    "agent_speaks_first": { "type": "boolean", "default": true },
+    "ask_questions_one_by_one": {
+      "type": "boolean",
+      "default": true,
+      "description": "true = one question at a time. false = the person can answer many fields at once."
+    },
+    "mute_user_while_agent_speaking": { "type": "boolean", "default": false },
+    "scripts": {
+      "type": "object",
+      "properties": {
+        "intro": { "type": "string", "description": "Opening line." },
+        "outro": { "type": "string", "description": "Closing line when the form is complete. Required if outro_incomplete is set." },
+        "outro_incomplete": { "type": "string", "description": "Closing line when the call ends early." }
+      }
+    },
+    "questions": { "type": "array", "items": { "$ref": "#/$defs/question" } },
+    "branches": { "type": "array", "items": { "$ref": "#/$defs/branch" } }
+  },
+  "$defs": {
+    "question": {
+      "type": "object",
+      "required": ["name", "label", "type"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "description": "Stable snake_case key. Required. Branch conditions point at this." },
+        "label": { "type": "string", "minLength": 1, "description": "Field name shown in the answers table." },
+        "type": { "type": "string", "enum": ["string", "number", "date", "boolean", "single-select", "multi-select"] },
+        "number_format": { "type": "string", "enum": ["integer", "decimal"], "description": "Number fields only." },
+        "options": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Needed for single-select and multi-select." },
+        "boolean_labels": {
+          "type": "object",
+          "properties": { "true": { "type": "string" }, "false": { "type": "string" } },
+          "description": "Custom yes/no wording. Set both, or leave the whole thing out."
+        },
+        "required": { "type": "boolean", "default": true },
+        "script": { "type": "string", "description": "Exact words used to ask this field." },
+        "skip_message": { "type": "string", "description": "Said when an optional field is skipped. Only when required is false." },
+        "advanced_instructions": { "type": "string", "description": "Extra instructions for this field only." },
+        "end_call_values": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "If the answer matches one of these, the call ends early and outro_incomplete is spoken. For boolean fields use the label, or yes/no. For date fields write the date as DD-MM-YYYY."
+        },
+        "branch_id": { "type": "string", "description": "Ask this question only when that branch's condition is true." },
+        "validation": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["phone_number", "exact_num_digits", "number_range", "min_length", "regex", "free_text", "date", "date_format", "date_today_or_past", "date_future"]
+            },
+            "rules": { "type": "object" }
+          }
+        },
+        "retry_config": {
+          "type": "object",
+          "properties": {
+            "allow_retries": { "type": "boolean", "default": true },
+            "until_answered": { "type": "boolean", "default": false, "description": "Keep asking forever. Ignores max_retries." },
+            "max_retries": { "type": "integer", "minimum": 0, "default": 2, "description": "Re-asks allowed after the first ask." },
+            "retry_messages": { "type": "array", "items": { "type": "string" }, "description": "Words for retry 1, retry 2, and so on. Empty means repeat the script." },
+            "exhausted_action": {
+              "type": "string",
+              "enum": ["skip", "end_call"],
+              "default": "skip",
+              "description": "What happens after the retries run out, for optional questions only. Required questions always end the call."
+            }
+          }
+        }
+      }
+    },
+    "branch": {
+      "type": "object",
+      "required": ["id", "condition"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "description": "Unique. Questions point here with branch_id." },
+        "condition": {
+          "type": "object",
+          "required": ["field"],
+          "description": "Set exactly one of equals or present.",
+          "properties": {
+            "field": { "type": "string", "minLength": 1, "description": "The name of the controlling question. It must sit above the branch's questions." },
+            "equals": { "type": "boolean", "description": "Boolean controllers only. true = ask when yes, false = ask when no." },
+            "present": { "type": "boolean", "description": "Any controller type. true = ask when it was answered, false = ask when it was skipped." }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## Validation: what to put in each one
+
+Leave `validation` out entirely to switch it off.
+
+| type | Use on | Send |
+|---|---|---|
+| `phone_number` | number | `{ "type": "phone_number", "rules": { "digits": 10 } }` |
+| `exact_num_digits` | string, number | `{ "type": "exact_num_digits", "rules": { "digits": 4 } }` |
+| `number_range` | number | `{ "type": "number_range", "rules": { "min": 0, "max": 120 } }` (min, max, or both) |
+| `min_length` | string, number | `{ "type": "min_length", "rules": { "min_length": 2 } }` |
+| `regex` | string | `{ "type": "regex", "rules": { "pattern": "^[A-Z]{2}[0-9]{4}$", "message": "Must look like AB1234" } }` |
+| `free_text` | any | `{ "type": "free_text", "rules": { "description": "Must be a real village name" } }` — note: this is guidance shown to the agent, not enforced on the value |
+| `date` | date | `{ "type": "date", "rules": {} }` |
+| `date_format` | date | `{ "type": "date_format", "rules": {} }` |
+| `date_today_or_past` | date | `{ "type": "date_today_or_past", "rules": {} }` |
+| `date_future` | date | `{ "type": "date_future", "rules": {} }` |
+
+`free_text` is not enforced. The backend does not check the answer against `rules.description` at all — it's extra guidance text fed to the agent, not a validation check on the value.
+
+## Branch rules
+
+- Each `id` must be unique.
+- Set exactly one of `equals` or `present`, never both, never neither.
+- `equals` works only when the controlling question is a boolean.
+- The controlling question must appear above every question that carries that `branch_id`.
+- Every `branch_id` on a question must match a branch that exists.
+
+## Example
+
+```json
+{
+  "title": "Fever follow-up",
+  "status": "published",
+  "language": "hindi",
+  "agent_persona": "community health worker",
+  "user_persona": "caregiver answering about the patient",
+  "context": "Short fever history. Ask about the patient in third person.",
+  "instructions": "Speak slowly. Do not repeat the answer back.",
+  "agent_speaks_first": true,
+  "ask_questions_one_by_one": true,
+  "mute_user_while_agent_speaking": false,
+  "scripts": {
+    "intro": "Namaste. Main bukhar ke kuch sawaal poochungi.",
+    "outro": "Dhanyavaad. Saare sawaal ho gaye.",
+    "outro_incomplete": "Theek hai, abhi ke liye itna hi. Dhanyavaad."
+  },
+  "questions": [
+    {
+      "name": "has_fever",
+      "label": "Does the patient have fever?",
+      "type": "boolean",
+      "required": true,
+      "script": "Kya mariz ko bukhar hai?",
+      "boolean_labels": { "true": "Haan", "false": "Nahi" },
+      "end_call_values": ["Nahi"]
+    },
+    {
+      "name": "date_of_birth",
+      "label": "Patient date of birth",
+      "type": "date",
+      "required": true,
+      "script": "Mariz ki janam tithi kya hai?",
+      "validation": { "type": "date_today_or_past", "rules": {} }
+    },
+    {
+      "name": "fever_days",
+      "label": "How many days of fever?",
+      "type": "number",
+      "number_format": "integer",
+      "required": true,
+      "branch_id": "if_fever",
+      "script": "Kitne din se bukhar hai?",
+      "validation": { "type": "number_range", "rules": { "min": 1, "max": 90 } },
+      "retry_config": {
+        "allow_retries": true,
+        "until_answered": false,
+        "max_retries": 2,
+        "retry_messages": ["Maaf kijiye, kitne din se bukhar hai?"],
+        "exhausted_action": "end_call"
+      }
+    },
+    {
+      "name": "symptoms",
+      "label": "Other symptoms",
+      "type": "multi-select",
+      "options": ["Khaansi", "Sar dard", "Ulti", "Kuch nahi"],
+      "required": false,
+      "branch_id": "if_fever",
+      "script": "Bukhar ke saath aur kya takleef hai?",
+      "skip_message": "Theek hai, aage badhte hain."
+    },
+    {
+      "name": "phone",
+      "label": "Contact phone number",
+      "type": "number",
+      "required": true,
+      "script": "Aapka phone number kya hai?",
+      "validation": { "type": "phone_number", "rules": { "digits": 10 } }
+    }
+  ],
+  "branches": [
+    { "id": "if_fever", "condition": { "field": "has_fever", "equals": true } }
+  ]
+}
+```
