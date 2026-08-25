@@ -10,12 +10,22 @@
   "colors": {
     "primary": "#1be39b",
     "light": "#0c8c5c",
-    "dark": "#99bbb0"
+    "dark": "#0c8c5c"
   },
   "navbar": {
+    "links": [
+      {
+        "label": "Talk to us",
+        "href": "mailto:aman.dalmia@artpark.in,jigar@artpark.in,nihar@artpark.in?subject=Interested%20in%20FormBharo"
+      },
+      {
+        "label": "Calibrate",
+        "href": "https://docs.calibrate.artpark.ai/getting-started/introduction"
+      }
+    ],
     "primary": {
       "type": "button",
-      "label": "Open FormBharo",
+      "label": "Try now",
       "href": "https://formbharo.artpark.ai"
     }
   },
@@ -27,9 +37,7 @@
           {
             "group": "Get Started",
             "pages": [
-              "index",
-              "getting-started/what-is-formbharo",
-              "getting-started/api-keys",
+              "getting-started/introduction",
               "getting-started/quickstart"
             ]
           },
@@ -47,13 +55,15 @@
               "guides/build-an-agent",
               "guides/run-a-call",
               "guides/poll-for-finished-calls",
-              "guides/read-the-analytics"
+              "guides/read-the-analytics",
+              "guides/pdf-to-form"
             ]
           },
           {
             "group": "Reference",
             "pages": [
               "reference/agent-configuration",
+              "reference/agent-config-schema",
               "reference/question-types",
               "reference/validation",
               "reference/retries",
@@ -61,6 +71,29 @@
               "reference/conventions",
               "reference/errors",
               "reference/gotchas"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Agents",
+        "groups": [
+          {
+            "group": "AI agents",
+            "pages": [
+              "agents/skills",
+              "getting-started/api-keys"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Use Cases",
+        "groups": [
+          {
+            "group": "Browse use cases",
+            "pages": [
+              "use-cases/armman"
             ]
           }
         ]
