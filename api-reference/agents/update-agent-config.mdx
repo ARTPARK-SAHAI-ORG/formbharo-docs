@@ -1,0 +1,141 @@
+---
+title: "PUT /api/v1/agents/{agent_id}/config — Write Stored Config Directly"
+sidebarTitle: "Update Config"
+description: "PUT /api/v1/agents/{agent_id}/config accepts the stored (read-back) field names directly, bypassing the create/update field name mapping."
+---
+
+`PUT /api/v1/agents/{agent_id}/config` writes the agent's stored configuration format directly. Use this when you read back a config with `GET /api/v1/agents/{agent_id}` and want to write it to a different agent without translating field names. This endpoint accepts the same field names the read endpoint returns — `label`, `type`, `context`, and `instructions` — rather than the `question`, `response_type`, `description`, and `ai_instructions` names required by the create and standard update endpoints.
+
+**Authentication:** Required — include `Authorization: Bearer <api-key>` on every request.
+
+## Path Parameters
+
+<ParamField path="agent_id" type="string" required>
+  The unique identifier of the agent whose configuration you want to replace.
+</ParamField>
+
+## Request Body
+
+Use the stored field names throughout — the same names returned by `GET /api/v1/agents/{agent_id}`.
+
+<ParamField body="title" type="string" required>
+  The agent's display name.
+</ParamField>
+
+<ParamField body="questions" type="array" required>
+  The ordered list of question objects using stored field names.
+
+  <Expandable title="Question object fields">
+    <ParamField body="name" type="string">
+      Machine-readable key for the collected answer.
+    </ParamField>
+    <ParamField body="label" type="string" required>
+      The question text (stored name for `question`).
+    </ParamField>
+    <ParamField body="type" type="string" required>
+      The answer type: `text`, `number`, `date`, `select`, or `multi_select` (stored name for `response_type`).
+    </ParamField>
+    <ParamField body="context" type="string">
+      Background context for the AI (stored name for `description`).
+    </ParamField>
+    <ParamField body="instructions" type="string">
+      Behavioural instructions for the AI (stored name for `ai_instructions`).
+    </ParamField>
+    <ParamField body="options" type="array">
+      Allowed answer values for `select` and `multi_select` types.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="agent_speaks_first" type="boolean">
+  Whether the agent opens the call with an introduction.
+</ParamField>
+
+<ParamField body="language" type="string">
+  BCP-47 language tag for the agent's voice.
+</ParamField>
+
+<Tip>
+  The most common use case for this endpoint is a **copy-and-clone** workflow: read a config from agent A, adjust the `title`, then POST it to agent B using this endpoint — no field-name translation required.
+</Tip>
+
+## Response
+
+<ResponseField name="id" type="string">
+  The agent's unique identifier.
+</ResponseField>
+
+<ResponseField name="version" type="integer">
+  The updated version number.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The agent's publication status after the write.
+</ResponseField>
+
+## Examples
+
+<CodeGroup>
+  ```bash curl
+  # Read config from agent A, write it to agent B
+  curl -X PUT https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_def456/config \
+    -H "Authorization: Bearer fb_live_0123456789ab_..." \
+    -H "Content-Type: application/json" \
+    -d '{
+      "title": "New Patient Registration (Copy)",
+      "agent_speaks_first": true,
+      "language": "en-US",
+      "questions": [
+        {
+          "name": "full_name",
+          "label": "What is your full legal name?",
+          "type": "text",
+          "context": "We need your full name as it appears on your ID.",
+          "instructions": "Ask clearly and confirm spelling if the name is unusual."
+        },
+        {
+          "name": "date_of_birth",
+          "label": "What is your date of birth?",
+          "type": "date",
+          "context": "Required for identity verification.",
+          "instructions": "Accept any common date format and confirm the year."
+        }
+      ]
+    }'
+  ```
+
+  ```python Python
+  import requests
+
+  BASE = "https://YOUR-FORMBHARO-SERVER"
+  HEADERS = {
+      "Authorization": "Bearer fb_live_0123456789ab_...",
+      "Content-Type": "application/json",
+  }
+
+  # Step 1: Read config from source agent
+  source = requests.get(f"{BASE}/api/v1/agents/agt_abc123", headers=HEADERS).json()
+
+  # Step 2: Adjust the title for the destination
+  source["title"] = source["title"] + " (Copy)"
+
+  # Step 3: Write directly to destination agent using stored field names
+  response = requests.put(
+      f"{BASE}/api/v1/agents/agt_def456/config",
+      headers=HEADERS,
+      json=source,
+  )
+  result = response.json()
+  print(f"Updated to version {result['version']}")
+  ```
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "id": "agt_def456",
+  "version": 2,
+  "status": "published"
+}
+```

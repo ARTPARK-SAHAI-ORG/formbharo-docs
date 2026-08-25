@@ -1,0 +1,67 @@
+---
+title: "POST /api/v1/workspaces — Create a Workspace"
+sidebarTitle: "Create Workspace"
+description: "POST /api/v1/workspaces creates a new shared workspace. You become the admin. Add members with POST /api/v1/workspaces/{workspace_id}/members."
+---
+
+`POST /api/v1/workspaces` creates a new shared workspace. The API key owner becomes the workspace admin automatically.
+
+## Authentication
+
+Required. Include your API key in the `Authorization` header.
+
+```http
+Authorization: Bearer <api-key>
+```
+
+## Request Body
+
+<ParamField body="name" type="string" required>
+  The display name for the new workspace. Must be a non-empty string.
+</ParamField>
+
+## Response
+
+Returns the newly created workspace object.
+
+<ResponseField name="id" type="string">
+  The unique identifier assigned to the new workspace. Store this value — you will need it to manage members and retrieve analytics.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The display name of the workspace, as provided in the request.
+</ResponseField>
+
+## Example
+
+<CodeGroup>
+
+```bash curl
+curl -X POST https://YOUR-FORMBHARO-SERVER/api/v1/workspaces \
+  -H "Authorization: Bearer fb_live_0123456789ab_..." \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Acme Sales Team"}'
+```
+
+```python python
+import requests
+
+BASE_URL = "https://YOUR-FORMBHARO-SERVER"
+API_KEY  = "fb_live_0123456789ab_..."
+
+resp = requests.post(
+    f"{BASE_URL}/api/v1/workspaces",
+    json={"name": "Acme Sales Team"},
+    headers={"Authorization": f"Bearer {API_KEY}"},
+)
+resp.raise_for_status()
+workspace = resp.json()
+
+print(f"Created workspace: {workspace['name']} (id: {workspace['id']})")
+```
+
+</CodeGroup>
+
+<Note>
+  After creating a workspace, add colleagues with [POST /api/v1/workspaces/\{workspace_id\}/members](/api-reference/workspaces/add-member). You can rename the workspace at any time with [PUT /api/v1/workspaces/\{workspace_id\}](/api-reference/workspaces/rename-workspace).
+</Note>

@@ -1,130 +1,250 @@
 ---
-title: "Validation"
-description: "Rules an answer has to satisfy before it is saved."
+title: "Validation Rules for FormBharo Questions"
+sidebarTitle: "Validation"
+description: "Add a validation object to any question to enforce answer format. Rules run during the call and when you manually patch form data via the API."
 ---
 
-Add a `validation` object to a question to put a rule on the answer:
+You can attach a `validation` object to any question to enforce the format of the answer. Validation runs in two places: during the call (triggering a retry if the answer doesn't match), and when you manually correct an answer via `PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data`.
+
+## Validation object structure
+
+Add a `validation` key to any question object and set its `type` to one of the rule names below. Some rules accept additional parameters in a `rules` sub-object.
 
 ```json
 {
-  "name": "phone",
-  "question": "What is your phone number?",
-  "response_type": "string",
-  "validation": {"type": "phone_number", "rules": {"digits": 10}}
+  "validation": {
+    "type": "<rule-name>",
+    "rules": { ... }
+  }
 }
 ```
 
-`type` picks the rule. `rules` carries its settings, and is `{}` for rules that have
-none.
+For rules that take no parameters (such as `date`), you can omit `rules` entirely.
 
-The rule is checked both during the call and when you write an answer yourself with
-`PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data`. An answer
-that fails during a call is re-asked, following the question's
-[retry settings](/reference/retries). An answer that fails a `PATCH` comes back as 400
-with `invalid_fields`.
+## Available rules
 
-## The rules
+<Accordion title="phone_number — 10-digit Indian phone number">
+  Validates that the answer is a 10-digit Indian mobile or landline number.
 
-<ResponseField name="phone_number" type="rules: digits">
-  A phone number with exactly `digits` digits. `digits` defaults to 10. A number where
-  every digit is the same is rejected. Only the digits are saved, so punctuation and
-  spaces are dropped, and when `digits` is 10 a leading `+91`, `91`, or `0` is dropped
-  too.
+  **Parameters:**
 
-  ```json
-  {"type": "phone_number", "rules": {"digits": 10}}
-  ```
-</ResponseField>
+  | Key | Type | Description |
+  |---|---|---|
+  | `digits` | integer | The required digit count. Pass `10` for standard Indian numbers. |
 
-<ResponseField name="min_length" type="rules: min_length">
-  At least `min_length` characters. Defaults to 1.
+  **Behaviour:**
+  - Strips leading `+91`, `91`, or `0` prefixes before counting digits.
+  - Rejects numbers where all digits are the same (e.g., `9999999999`).
 
   ```json
-  {"type": "min_length", "rules": {"min_length": 2}}
+  {
+    "validation": {
+      "type": "phone_number",
+      "rules": { "digits": 10 }
+    }
+  }
   ```
-</ResponseField>
+</Accordion>
 
-<ResponseField name="exact_num_digits" type="rules: digits">
-  Exactly `digits` digits. Defaults to 1.
+<Accordion title="min_length — minimum character count">
+  Requires the answer to be at least a given number of characters long.
+
+  **Parameters:**
+
+  | Key | Type | Description |
+  |---|---|---|
+  | `min_length` | integer | The minimum number of characters required. |
 
   ```json
-  {"type": "exact_num_digits", "rules": {"digits": 6}}
+  {
+    "validation": {
+      "type": "min_length",
+      "rules": { "min_length": 5 }
+    }
+  }
   ```
-</ResponseField>
+</Accordion>
 
-<ResponseField name="number_range" type="rules: min, max">
-  A number between `min` and `max`. Give one of them or both.
+<Accordion title="exact_num_digits — exact digit count">
+  Requires the answer to contain exactly the specified number of digits, ignoring non-digit characters.
+
+  **Parameters:**
+
+  | Key | Type | Description |
+  |---|---|---|
+  | `digits` | integer | The exact number of digits required. |
 
   ```json
-  {"type": "number_range", "rules": {"min": 0, "max": 120}}
+  {
+    "validation": {
+      "type": "exact_num_digits",
+      "rules": { "digits": 6 }
+    }
+  }
   ```
-</ResponseField>
+</Accordion>
 
-<ResponseField name="date" type="rules: none">
-  A valid `DD-MM-YYYY` date. `date_format` is the same rule under another name.
+<Accordion title="number_range — numeric range">
+  Requires the numeric answer to fall within a specified range. You can supply one or both bounds.
+
+  **Parameters:**
+
+  | Key | Type | Description |
+  |---|---|---|
+  | `min` | number | The minimum allowed value (inclusive). Optional. |
+  | `max` | number | The maximum allowed value (inclusive). Optional. |
 
   ```json
-  {"type": "date", "rules": {}}
+  {
+    "validation": {
+      "type": "number_range",
+      "rules": { "min": 0, "max": 120 }
+    }
+  }
   ```
-</ResponseField>
+</Accordion>
 
-<ResponseField name="date_today_or_past" type="rules: none">
-  A valid `DD-MM-YYYY` date that is today or earlier.
+<Accordion title="date — valid DD-MM-YYYY date">
+  Requires the answer to be a valid calendar date in `DD-MM-YYYY` format.
+
+  **Parameters:** None.
 
   ```json
-  {"type": "date_today_or_past", "rules": {}}
+  {
+    "validation": {
+      "type": "date"
+    }
+  }
   ```
-</ResponseField>
+</Accordion>
 
-<ResponseField name="date_future" type="rules: none">
-  A valid `DD-MM-YYYY` date after today.
+<Accordion title="date_format — alias for date">
+  An alias for the `date` rule. Behaves identically — use whichever name feels clearer in your configuration.
+
+  **Parameters:** None.
 
   ```json
-  {"type": "date_future", "rules": {}}
+  {
+    "validation": {
+      "type": "date_format"
+    }
+  }
   ```
-</ResponseField>
+</Accordion>
 
-<ResponseField name="regex" type="rules: pattern, message">
-  The answer has to match `pattern`, which is a regular expression. `message` is what
-  the person is told when it does not.
+<Accordion title="date_today_or_past — today or earlier">
+  Requires the answer to be a valid `DD-MM-YYYY` date that is today or in the past. Useful for fields like date of birth or symptom onset date.
+
+  **Parameters:** None.
 
   ```json
-  {"type": "regex", "rules": {"pattern": "^[A-Z]{2}[0-9]{4}$", "message": "Two letters then four digits."}}
+  {
+    "validation": {
+      "type": "date_today_or_past"
+    }
+  }
   ```
-</ResponseField>
+</Accordion>
 
-<ResponseField name="free_text" type="rules: description">
-  A rule you write out in words in `description`, for anything the rules above do not
-  cover. The agent applies it during the call. Unlike every other rule here, it is not
-  applied when you write an answer yourself with `PATCH`, because there is nothing exact
-  to check against.
+<Accordion title="date_future — strictly after today">
+  Requires the answer to be a valid `DD-MM-YYYY` date that is after today. Useful for appointment or follow-up dates.
+
+  **Parameters:** None.
 
   ```json
-  {"type": "free_text", "rules": {"description": "Must name a district in Karnataka."}}
+  {
+    "validation": {
+      "type": "date_future"
+    }
+  }
   ```
-</ResponseField>
+</Accordion>
 
-## What a failure looks like
+<Accordion title="regex — custom regular expression">
+  Validates the answer against a regular expression you define. Include a `message` to tell the agent (and the caller) what format is expected.
+
+  **Parameters:**
+
+  | Key | Type | Description |
+  |---|---|---|
+  | `pattern` | string | A valid regular expression. |
+  | `message` | string | A human-readable error message shown when the pattern does not match. |
+
+  ```json
+  {
+    "validation": {
+      "type": "regex",
+      "rules": {
+        "pattern": "^[A-Z]{2}[0-9]{6}$",
+        "message": "Must be two capital letters followed by six digits"
+      }
+    }
+  }
+  ```
+</Accordion>
+
+<Accordion title="free_text — natural-language LLM rule">
+  Describes a validation rule in plain English, enforced by the LLM during the call. Use this for rules that are difficult to express as a pattern — for example, requiring a valid Indian state name.
+
+  **Parameters:**
+
+  | Key | Type | Description |
+  |---|---|---|
+  | `description` | string | A plain-language description of what constitutes a valid answer. |
+
+  ```json
+  {
+    "validation": {
+      "type": "free_text",
+      "rules": { "description": "Must be a valid Indian state name" }
+    }
+  }
+  ```
+
+  <Warning>
+    The `free_text` rule is only enforced during the live call. It is **not** checked when you manually patch form data via `PATCH /api/v1/.../form_data`. Use a `regex` or other structural rule if you need server-side enforcement on manual edits.
+  </Warning>
+</Accordion>
+
+---
+
+## Failure response
+
+When validation fails during a `PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data` request, you receive HTTP `400`. The response body identifies every field that failed:
 
 ```json
 {
-  "error": "Deterministic validation failed for phone: Phone number must be exactly 10 digits (got 3). Parsed digits: 123 Captured value: 123",
+  "error": "Validation failed",
   "invalid_fields": {
     "phone": {
-      "value": "123",
-      "normalized_value": "123",
-      "error": "Phone number must be exactly 10 digits (got 3). Parsed digits: 123",
-      "source": "deterministic_validation"
+      "value": "999",
+      "normalized_value": "999",
+      "error": "Must be 10 digits",
+      "source": "phone_number"
     }
   }
 }
 ```
 
-`invalid_fields` names every field that failed and says why. Nothing is saved when any
-field fails, so fix the values and send the whole change again.
+<ResponseField name="invalid_fields" type="object">
+  A map of field names to failure details. Each entry describes one field that failed validation.
 
-## The type is checked too
+  <Expandable title="Fields in each invalid_fields entry">
+    <ResponseField name="value" type="any">
+      The raw value you submitted.
+    </ResponseField>
+    <ResponseField name="normalized_value" type="any">
+      The value after any pre-processing (e.g., stripping a country code prefix from a phone number). This is the value the rule actually tested.
+    </ResponseField>
+    <ResponseField name="error" type="string">
+      A human-readable explanation of why the value failed.
+    </ResponseField>
+    <ResponseField name="source" type="string">
+      The rule type that rejected the value — e.g., `"phone_number"` or `"number_range"`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
 
-Each answer type has its own check that runs whether or not you set a `validation` rule.
-A `date` has to be `DD-MM-YYYY`, a `number` has to be a number, a `single-select` has to
-be one of the options. See [Question types](/reference/question-types).
+<Note>
+  Nothing is saved if any field fails validation. Fix all reported fields and resubmit the entire patch.
+</Note>

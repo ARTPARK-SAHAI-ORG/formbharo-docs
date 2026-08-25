@@ -1,0 +1,165 @@
+---
+title: "POST /api/v1/agents/{agent_id}/config/diff-preview — Preview Config Save"
+sidebarTitle: "Config Diff Preview"
+description: "POST /api/v1/agents/{agent_id}/config/diff-preview previews what would change if you wrote raw stored config directly, using the stored field name format."
+---
+
+`POST /api/v1/agents/{agent_id}/config/diff-preview` is the diff-preview counterpart for `PUT /api/v1/agents/{agent_id}/config`. It accepts the stored format field names and returns a diff without saving. Use this when you are working directly with stored configuration objects — for example, when building tooling that reads and writes the raw config format rather than the typed API format.
+
+## Authentication
+
+This endpoint requires a valid API key in the `Authorization` header.
+
+```http
+Authorization: Bearer <api-key>
+```
+
+## Path Parameters
+
+<ParamField path="agent_id" type="string" required>
+  The unique identifier of the agent you want to preview changes for.
+</ParamField>
+
+## Request Body
+
+Send the agent configuration using the stored format field names. This mirrors the body accepted by `PUT /api/v1/agents/{agent_id}/config`.
+
+<ParamField body="label" type="string">
+  The agent's display name (stored format equivalent of `title`).
+</ParamField>
+
+<ParamField body="context" type="string">
+  Background context provided to the agent before the call begins.
+</ParamField>
+
+<ParamField body="instructions" type="string">
+  Top-level behavioural instructions for the agent.
+</ParamField>
+
+<ParamField body="type" type="string">
+  The agent type identifier used internally by the stored configuration.
+</ParamField>
+
+<ParamField body="questions" type="array">
+  The full question list in stored format. Each question uses `label`, `type`, `context`, and `instructions` field names.
+</ParamField>
+
+## Response
+
+<ResponseField name="lines" type="array">
+  An ordered array of `DiffLine` objects — the same shape returned by [Version Diff](/api-reference/versions/get-version-diff) and [Diff Preview](/api-reference/versions/diff-preview).
+
+  <Expandable title="DiffLine fields">
+    <ResponseField name="type" type="string">
+      The role of this line. One of `add`, `remove`, `context`, `hunk`, or `meta`.
+    </ResponseField>
+    <ResponseField name="content" type="string">
+      The text content of the diff line.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example
+
+<CodeGroup>
+```bash curl
+curl -X POST \
+  https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/config/diff-preview \
+  -H "Authorization: Bearer fb_live_0123456789ab_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "label": "Patient Intake Form",
+    "context": "You are a patient intake agent for Riverside Clinic.",
+    "instructions": "Be polite and professional. Confirm each answer before moving on.",
+    "type": "intake",
+    "questions": [
+      {
+        "label": "Full Name",
+        "type": "text",
+        "context": "Collecting the patient legal name.",
+        "instructions": "Ask the caller for their full legal name."
+      },
+      {
+        "label": "Date of Birth",
+        "type": "date",
+        "context": "Collecting the patient date of birth.",
+        "instructions": "Ask the caller for their date of birth in day, month, year order."
+      },
+      {
+        "label": "Insurance Provider",
+        "type": "text",
+        "context": "Collecting the patient insurance details.",
+        "instructions": "Ask the caller for the name of their insurance provider."
+      }
+    ]
+  }'
+```
+
+```python python
+import requests
+
+payload = {
+    "label": "Patient Intake Form",
+    "context": "You are a patient intake agent for Riverside Clinic.",
+    "instructions": "Be polite and professional. Confirm each answer before moving on.",
+    "type": "intake",
+    "questions": [
+        {
+            "label": "Full Name",
+            "type": "text",
+            "context": "Collecting the patient legal name.",
+            "instructions": "Ask the caller for their full legal name.",
+        },
+        {
+            "label": "Date of Birth",
+            "type": "date",
+            "context": "Collecting the patient date of birth.",
+            "instructions": "Ask the caller for their date of birth in day, month, year order.",
+        },
+        {
+            "label": "Insurance Provider",
+            "type": "text",
+            "context": "Collecting the patient insurance details.",
+            "instructions": "Ask the caller for the name of their insurance provider.",
+        },
+    ],
+}
+
+response = requests.post(
+    "https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/config/diff-preview",
+    headers={
+        "Authorization": "Bearer fb_live_0123456789ab_...",
+        "Content-Type": "application/json",
+    },
+    json=payload,
+)
+
+for line in response.json()["lines"]:
+    print(line["type"].ljust(8), line["content"])
+```
+</CodeGroup>
+
+### Sample Response
+
+```json
+{
+  "lines": [
+    { "type": "meta",    "content": "--- current" },
+    { "type": "meta",    "content": "+++ preview" },
+    { "type": "hunk",    "content": "@@ -4,5 +4,6 @@" },
+    { "type": "context", "content": "   \"instructions\": \"Be polite and professional.\"" },
+    { "type": "remove",  "content": "-  \"instructions\": \"Be polite and professional.\"" },
+    { "type": "add",     "content": "+  \"instructions\": \"Be polite and professional. Confirm each answer before moving on.\"" },
+    { "type": "hunk",    "content": "@@ -20,4 +20,8 @@" },
+    { "type": "context", "content": "   \"label\": \"Date of Birth\"" },
+    { "type": "add",     "content": "+  \"label\": \"Insurance Provider\"," },
+    { "type": "add",     "content": "+  \"type\": \"text\"," },
+    { "type": "add",     "content": "+  \"context\": \"Collecting the patient insurance details.\"," },
+    { "type": "add",     "content": "+  \"instructions\": \"Ask the caller for the name of their insurance provider.\"" }
+  ]
+}
+```
+
+<Note>
+  If you are using the typed field names (`name`, `title`, `script`) rather than the stored format, use [Diff Preview](/api-reference/versions/diff-preview) instead. Both endpoints produce the same `lines` output format.
+</Note>

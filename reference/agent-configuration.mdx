@@ -1,178 +1,114 @@
 ---
-title: "Agent configuration"
-description: "Every field you can send when you create or update an agent."
+title: "Agent Configuration: All Fields for Creating Agents"
+sidebarTitle: "Agent Config"
+description: "Full field reference for POST /api/v1/agents and PUT /api/v1/agents/{agent_id} — titles, questions, scripts, language settings, and behaviour flags."
 ---
 
-`POST /api/v1/agents` and `PUT /api/v1/agents/{agent_id}` take the same body. Only
-`title` and `questions` are required.
+When you create or update an agent, you send a JSON body to `POST /api/v1/agents` or `PUT /api/v1/agents/{agent_id}`. This page covers every field you can include. Required fields are `title` and `questions`.
 
-```json
-{
-  "title": "Clinic intake",
-  "description": "Booking a patient in before they see a doctor.",
-  "language": "English",
-  "agent_speaks_first": true,
-  "scripts": {
-    "intro": "Hello. I have a few questions before your appointment.",
-    "outro": "Thank you. That is everything.",
-    "outro_incomplete": "Thank you. We will not go any further today."
-  },
-  "questions": [
-    {
-      "name": "full_name",
-      "question": "What is your full name?",
-      "response_type": "string",
-      "required": true
-    }
-  ],
-  "branches": []
-}
-```
+## Top-level fields
 
-## Top level
+<ParamField body="title" type="string" required>
+  The display name for the agent. Shown in the dashboard and in conversation records.
+</ParamField>
 
-<ResponseField name="title" type="string" required>
-  The agent's name. Shown in listings.
-</ResponseField>
+<ParamField body="questions" type="array of Question" required>
+  The questions the agent asks, in order. See [Question Types](/reference/question-types) for the structure of each question object.
+</ParamField>
 
-<ResponseField name="questions" type="Question[]" required>
-  The questions, in the order they are asked. See
-  [Question types](/reference/question-types).
-</ResponseField>
+<ParamField body="branches" type="array of Branch" default="[]">
+  Conditional question groups. Declare a branch here, then tag individual questions with its `id` using `branch_id`. See [Branching](/reference/branching) for the full setup.
+</ParamField>
 
-<ResponseField name="branches" type="Branch[]" default="[]">
-  Groups of questions that are only asked when a condition holds. See
-  [Branching](/reference/branching).
-</ResponseField>
+<ParamField body="description" type="string">
+  An optional internal description for your own reference. Not used by the voice agent.
+</ParamField>
 
-<ResponseField name="description" type="string" default="">
-  Background on what the call is for and who is on the other end.
-</ResponseField>
+<ParamField body="ai_instructions" type="string">
+  Extra instructions appended to the agent's system prompt. Use this to give the agent domain context, rules about how to handle edge cases, or persona reinforcement beyond `agent_persona`.
+</ParamField>
 
-<ResponseField name="ai_instructions" type="string" default="">
-  Extra instructions for the agent that apply to the whole call.
-</ResponseField>
+<ParamField body="agent_persona" type="string">
+  A description of the agent's character. For example: `"You are a friendly and professional healthcare coordinator named Priya."`
+</ParamField>
 
-<ResponseField name="agent_persona" type="string">
-  Who the agent should be, for example `community health worker conducting a symptom
-  interview`.
-</ResponseField>
+<ParamField body="user_persona" type="string">
+  A description of the expected caller. Helps the agent calibrate its tone and vocabulary. For example: `"The caller is a patient who has recently been discharged from hospital."`
+</ParamField>
 
-<ResponseField name="user_persona" type="string">
-  Who the agent is talking to, for example `patient or caregiver answering about the
-  patient`.
-</ResponseField>
+<ParamField body="language" type="string">
+  The language code for the agent's speech output. Uses BCP 47 language tags (e.g., `"en-IN"`, `"hi-IN"`). Defaults to the workspace language if omitted.
+</ParamField>
 
-<ResponseField name="language" type="string">
-  The language the call is held in, for example `English` or `Hindi`.
-</ResponseField>
+<ParamField body="agent_speaks_first" type="boolean" default="true">
+  When `true`, the agent opens the conversation with its intro script or a generated greeting. Set to `false` if your telephony infrastructure plays an IVR prompt before connecting the agent.
+</ParamField>
 
-<ResponseField name="agent_speaks_first" type="boolean" default="true">
-  Whether the agent opens the call or waits for the person to speak.
-</ResponseField>
+<ParamField body="ask_questions_one_by_one" type="boolean" default="true">
+  When `true`, the agent asks exactly one question, waits for an answer, then moves on. When `false`, the agent may batch multiple questions into a single turn.
+</ParamField>
 
-<ResponseField name="ask_questions_one_by_one" type="boolean" default="true">
-  Whether the agent asks one question at a time.
-</ResponseField>
+<ParamField body="mute_user_while_agent_speaking" type="boolean" default="false">
+  When `true`, the caller's audio input is suppressed while the agent is speaking. Useful in noisy environments where background sound triggers false end-of-turn detection.
+</ParamField>
 
-<ResponseField name="mute_user_while_agent_speaking" type="boolean" default="false">
-  When true, the person's microphone is off while the agent is talking, so nobody can
-  cut in mid-sentence.
-</ResponseField>
+<ParamField body="send_hearing_acknowledgements" type="boolean" default="true">
+  When `true`, the agent interjects short acknowledgements (`"mm-hmm"`, `"I see"`) while the caller is speaking to signal it is listening.
+</ParamField>
 
-<ResponseField name="send_hearing_acknowledgements" type="boolean" default="true">
-  Whether the agent says a short phrase to show it heard the answer, before it asks the
-  next question.
-</ResponseField>
+<ParamField body="hearing_acknowledgement_mode" type='"fixed" | "llm"' default='"fixed"'>
+  Controls how acknowledgement phrases are chosen. `"fixed"` cycles through `hearing_acknowledgement_phrases`. `"llm"` generates a contextually appropriate phrase each time.
+</ParamField>
 
-<ResponseField name="hearing_acknowledgement_mode" type="string" default="fixed">
-  `fixed` picks one of `hearing_acknowledgement_phrases` at random. `llm` lets the agent
-  word it itself. Only read when `send_hearing_acknowledgements` is true.
-</ResponseField>
+<ParamField body="hearing_acknowledgement_phrases" type="array of strings">
+  Custom phrases used in `"fixed"` acknowledgement mode. If omitted, a built-in default list is used. Example: `["Got it", "Understood", "Okay"]`.
+</ParamField>
 
-<ResponseField name="hearing_acknowledgement_phrases" type="string[]">
-  The phrases `fixed` mode picks from. Sending a list where every entry is blank is
-  rejected, because the agent would then say nothing.
-</ResponseField>
+<ParamField body="scripts" type="Scripts object">
+  Exact words for the opening and closing of the call. See [Scripts](#scripts) below.
+</ParamField>
 
-<ResponseField name="scripts" type="Scripts">
-  The exact words the agent says at the start and the end. See below.
-</ResponseField>
+<ParamField body="workspace_id" type="string">
+  Only valid on `POST /api/v1/agents` (create). Associates the agent with a specific workspace. Omit to place the agent in your personal workspace.
+</ParamField>
 
-<ResponseField name="workspace_id" type="string">
-  The workspace to create the agent in. You must administer it. Only read when the agent
-  is created; `PUT` ignores it. Leave it out for your personal workspace.
-</ResponseField>
+---
 
-## scripts
+## Scripts
 
-<ResponseField name="scripts.intro" type="string">
-  What the agent says to open the call.
-</ResponseField>
+The `scripts` object controls what the agent says at the start and end of every call. Each field is optional — the agent improvises if you leave it out.
 
-<ResponseField name="scripts.outro" type="string">
-  What the agent says when the form is finished.
-</ResponseField>
+<ParamField body="scripts.intro" type="string">
+  The exact words the agent speaks to open the conversation. If omitted, the agent generates an appropriate greeting based on its persona and the first question.
+</ParamField>
 
-<ResponseField name="scripts.outro_incomplete" type="string">
-  What the agent says when the call ends early, such as when an answer screened the
-  person out. Sending this without `outro` is rejected.
-</ResponseField>
+<ParamField body="scripts.outro" type="string">
+  The closing words the agent speaks after all questions have been answered successfully.
+</ParamField>
 
-## Reading the configuration back
+<ParamField body="scripts.outro_incomplete" type="string">
+  The closing words the agent speaks when the call ends without completing all questions — for example, when the caller hangs up early or a required question exhausts its retries.
+</ParamField>
 
-`GET /api/v1/agents/{agent_id}` returns the agent as it is stored, which is not the same
-shape as what you sent. Each question is stored with `label` in place of `question` and
-`type` in place of `response_type`:
+<Warning>
+  You cannot set `outro_incomplete` without also setting `outro`. If you include `outro_incomplete` in the request but omit `outro`, the save will be rejected with a `400` validation error.
+</Warning>
 
-```json
-{
-  "title": "Clinic intake",
-  "questions": [
-    {
-      "name": "full_name",
-      "label": "What is your full name?",
-      "type": "string",
-      "required": true
-    }
-  ],
-  "branches": [],
-  "context": "Booking a patient in before they see a doctor.",
-  "validation_rules": "",
-  "instructions": "",
-  "agent_speaks_first": true,
-  "ask_questions_one_by_one": true,
-  "mute_user_while_agent_speaking": false,
-  "send_hearing_acknowledgements": true,
-  "hearing_acknowledgement_mode": "fixed",
-  "status": "published",
-  "updated_at": 1787626873.7724512
-}
-```
+---
 
-`description` is stored as `context`, and `ai_instructions` is stored as `instructions`.
+## Reading the agent back
 
-`PUT /api/v1/agents/{agent_id}/config` writes that stored shape back directly, for
-callers that would rather build it themselves. Most callers should use
-`PUT /api/v1/agents/{agent_id}` and send the shape at the top of this page.
+When you read an agent back via `GET /api/v1/agents/{agent_id}`, some field names differ from the ones you used to create it. The stored format uses a different vocabulary:
 
-## Checking a change before you save it
+| Request field (create / update) | Stored field (GET response) |
+|---|---|
+| `question` | `label` |
+| `response_type` | `type` |
+| `description` | `context` |
+| `ai_instructions` | `instructions` |
 
-`POST /api/v1/agents/{agent_id}/diff-preview` takes the same body as a save and returns
-what would change, without saving:
+To write to an agent using the stored format directly — for example, when round-tripping a config you fetched from GET — use `PUT /api/v1/agents/{agent_id}/config` instead of the standard `PUT /api/v1/agents/{agent_id}`.
 
-```json
-{
-  "lines": [
-    {"type": "meta", "text": "--- current"},
-    {"type": "meta", "text": "+++ new"},
-    {"type": "hunk", "text": "@@ -1,108 +1,21 @@"},
-    {"type": "context", "text": " {"},
-    {"type": "remove", "text": "-    \"title\": \"Clinic intake\","},
-    {"type": "add", "text": "+    \"title\": \"Clinic intake v2\","}
-  ]
-}
-```
-
-`type` is `add`, `remove`, `hunk`, `meta`, or `context`.
-`POST /api/v1/agents/{agent_id}/config/diff-preview` does the same for the stored shape.
+<Note>
+  If your save is rejected, the response is a `400` with a `validation_issues` array. Each item in the array has a `field` property identifying which field failed and a `message` property explaining why. Fix all reported issues and resubmit — no partial saves are applied.
+</Note>

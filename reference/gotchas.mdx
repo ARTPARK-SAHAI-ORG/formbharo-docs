@@ -1,67 +1,99 @@
 ---
-title: "Gotchas"
-description: "Four things that will catch you out."
+title: "Common Gotchas When Integrating with FormBharo"
+sidebarTitle: "Gotchas"
+description: "Four integration pitfalls that catch most new FormBharo users: null form_data, screened_out in analytics, created_at as last-write time, and multi-select as a string."
 ---
 
-## A skipped answer is null, so read form_status
+A handful of FormBharo behaviours are counterintuitive if you come from a typical REST API background. This page documents the four most common integration mistakes.
 
-A question that was put to someone and got no answer is stored as `null`. It is not left
-out.
+<Accordion title="Skipped answer is null — read form_status, not form_data">
+  Both unanswered questions and questions that were never reached appear as `null` in `form_data`. This makes it impossible to distinguish "caller skipped this question" from "call ended before we got here" by looking at `form_data` alone.
 
-```json
-{
-  "form_data": {"phone": null},
-  "form_status": {"phone": "skipped"}
-}
-```
+  The trap is testing truthiness: `if (form_data.field_name)` fails silently for three legitimate answer values:
 
-A plain truthy check treats that the same as a question nobody has reached yet, and the
-two are different. Read `form_status` when the difference matters. The same catches the
-number `0`, an empty string, and `false`, which are all real answers.
+  - `0` — a valid numeric answer
+  - `""` — a valid (if unusual) string answer
+  - `false` — a valid boolean answer
 
-## Screened out counts as completed in the analytics
+  All three are falsy in JavaScript (and similar in Python and other languages), so they would be incorrectly treated as missing answers.
 
-A call ends as `screened_out` when an answer meant the person did not qualify, so the
-agent stopped early on purpose. The analytics treat that as a success, because the agent
-did the job it was asked to do.
+  **What to do instead:** Always check `form_status.field_name === "answered"` before using a value from `form_data`. A status of `"answered"` guarantees the caller provided a valid response. A status of `"skipped"` means the question was reached but not answered. If the key is absent from `form_status`, the question was never asked.
 
-`completed` in the `stats` object is the number of `complete` calls plus the number of
-`screened_out` calls, and `completion_rate` is built from that sum. Three calls, one
-finished, one screened out, one still going, gives you:
+  ```js
+  // ❌ Wrong — treats false, 0, and "" as missing
+  if (form_data.has_fever) {
+    processAnswer(form_data.has_fever);
+  }
 
-```json
-{
-  "attempted": 3,
-  "completed": 2,
-  "screened_out": 1,
-  "completion_rate": 0.6666666666666666
-}
-```
+  // ✅ Correct — checks status first
+  if (form_status.has_fever === "answered") {
+    processAnswer(form_data.has_fever);
+  }
+  ```
+</Accordion>
 
-`screened_out` is reported on its own, so subtract it when you want only the calls that
-went the whole way.
+<Accordion title="screened_out counts as completed in analytics">
+  The `completed` counter in agent analytics includes **both** `complete` and `screened_out` calls. The `completion_rate` metric is built from this combined count.
 
-## created_at is the last time the answers were written
+  This is intentional — a screened-out caller did complete the relevant portion of the form (they gave an answer that matched an `end_call_values` trigger). But if you want to count only calls where the caller answered all questions all the way through, you need to subtract `screened_out` from `completed` yourself.
 
-It is not when the call started. It moves every time an answer is saved, so during a live
-call it keeps advancing, and correcting an answer afterwards with
-`PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data` pushes it to
-the present.
+  ```python
+  # Total completions including screened-out calls
+  total_completed = analytics["completed"]
 
-Two consequences:
+  # Only calls that went all the way through
+  full_completions = analytics["completed"] - analytics["screened_out"]
+  ```
 
-- Sorting by `created_at` sorts by last activity. There is no field holding the moment a
-  call began.
-- A date range is never final. A call from Monday that someone edits on Friday now sits
-  in Friday's window and is gone from Monday's. Asking for last week again next month can
-  give you a different set of calls, and an analytics figure for a past range can change.
+  Keep this in mind when reporting conversion rates or SLA metrics — the dashboard number will be higher than your "fully answered" count.
+</Accordion>
 
-For polling this works in your favour: an edited call comes back to you again, which is
-what you want if you are keeping a copy in step. Match rows by `conversation_id` so a
-call that comes back a second time updates your copy instead of adding a duplicate.
+<Accordion title="created_at is last-write time, not call start time">
+  `created_at` on a conversation record is updated every time the record is written — including when someone manually edits an answer via the API. It is **not** a fixed timestamp set at the moment the call was connected.
 
-## A multi-select answer is a string, not a list
+  This has two consequences:
 
-`["Headache", "Cough"]` is what you might expect. What you get is `"Headache, Cough"`,
-one string with the chosen options separated by a comma and a space. Split on `", "` to
-get the list back.
+  1. **Sorting by `created_at` sorts by most recent activity**, not by when calls happened. A call from last month that was edited today appears at the top of a `created_at DESC` sort.
+
+  2. **A past time window is never final.** If you poll for all calls between yesterday 09:00 and 10:00, you will get a set of results. If you poll the same window an hour later, a call from that slot that was edited in the meantime will reappear — and a call that slipped in at exactly 10:00:00 originally might now be gone if its `created_at` moved.
+
+  **What to do instead:** Treat `conversation_id` as your stable identifier. When a call comes back in a poll response, update your local record rather than inserting a new one. For polling new activity, use a `since` value slightly before your last successful poll timestamp to catch records whose `created_at` was bumped into the gap.
+</Accordion>
+
+<Accordion title="A multi-select answer is a string, not a list">
+  When a caller answers a `multi-select` question, FormBharo stores the result as a single comma-and-space-joined string — not as a JSON array.
+
+  ```json
+  {
+    "form_data": {
+      "symptoms": "Headache, Cough, Fever"
+    }
+  }
+  ```
+
+  Not:
+
+  ```json
+  {
+    "form_data": {
+      "symptoms": ["Headache", "Cough", "Fever"]
+    }
+  }
+  ```
+
+  If you pass the raw value to code that expects a list — an array `.map()`, a Python `for` loop, a database array column — it will fail or behave unexpectedly.
+
+  **What to do instead:** Split on `", "` (comma followed by a space) to reconstruct the list before using the value.
+
+  ```js
+  const symptomList = form_data.symptoms.split(", ");
+  // ["Headache", "Cough", "Fever"]
+  ```
+
+  ```python
+  symptom_list = form_data["symptoms"].split(", ")
+  # ["Headache", "Cough", "Fever"]
+  ```
+
+  Be precise with the delimiter — splitting on `","` alone (no space) will leave leading spaces on every item after the first.
+</Accordion>

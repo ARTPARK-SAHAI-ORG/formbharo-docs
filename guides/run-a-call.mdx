@@ -1,115 +1,135 @@
 ---
-title: "Run a call from your own page"
-description: "Open the audio connection, then read the answers as they arrive."
+title: "Run a Call from Your Own Web Page"
+sidebarTitle: "Run a Call"
+description: "Embed FormBharo voice calls in your own page using WebRTC: generate a conversation ID, open the audio connection, and poll for answers as they arrive."
 ---
 
-There is no endpoint that says "start a call". A call starts when a browser opens an
-audio connection to the server. Three steps.
+You can embed a FormBharo voice call directly in your web page using WebRTC. The call opens an audio connection to the agent, which asks questions out loud. You poll a key-less endpoint to read the answers as they come in.
 
-## 1. Invent a conversation id
+## Before you start
 
-You choose it, not the server. In a browser, `crypto.randomUUID()` does the job. It only
-has to be unique for that agent. Everything the call produces is filed under this id.
+You need two things: the **agent ID** for the agent you want to run, and the **URL of your FormBharo server**.
 
-```js
-const conversationId = crypto.randomUUID();
+Before the call begins, fetch the agent's public profile with `GET /api/v1/agents/{agent_id}/public`. This route requires no API key, so you can call it safely from the browser. It returns the agent's `title`, its `questions` list, and an `agent_speaks_first` flag — enough to render a form UI or a progress indicator before the audio connection is open.
+
+```bash curl
+curl https://YOUR-FORMBHARO-SERVER/api/v1/agents/AGENT_ID/public
 ```
 
-## 2. Post a WebRTC offer to /offer
+Use `agent_speaks_first` to decide whether to show a "waiting for agent" state or a push-to-talk prompt when the call first connects.
 
-`/offer` is not under `/api/v1`. It is at the bare path on the same server, for example
-`http://localhost:7860/offer`.
+## Run the call
 
-The body is the offer your WebRTC code produced, plus a `request_data` object naming the
-agent and the conversation id you just made up.
+<Steps>
 
-```json
-{
-  "sdp": "v=0\r\no=- ...",
-  "type": "offer",
-  "request_data": {
-    "agentId": "a87c1556-79fa-4492-add9-a704c13466a3",
-    "conversation_id": "6f1f0a1c-1111-4b0c-9a3a-2b6f9c0d0001"
-  }
-}
-```
+  <Step title="Generate a conversation ID">
+    Create a unique conversation ID in your browser before opening the connection. FormBharo uses whatever ID you provide — it does not generate one for you.
 
-The reply is the WebRTC answer. Apply it and the agent starts talking. Send ICE
-candidates to the same path with `PATCH /offer`, carrying `pc_id` and `candidates`.
+    ```javascript javascript
+    const conversationId = crypto.randomUUID();
+    ```
 
-The practical way to do the WebRTC part is a browser client library that handles it for
-you, rather than writing the signalling by hand.
+    Store this value — you'll pass it to the WebRTC offer and use it later to poll for answers.
+  </Step>
 
-## 3. Read the answers as they arrive
+  <Step title="Open the audio connection">
+    Send a `POST /offer` request to start the WebRTC handshake. Note that this path is at the **bare root** of the server — it is not under `/api/v1` — and it requires no API key.
 
-Call `GET /api/v1/data/{agent_id}/{conversation_id}` on a timer while the call is
-running. Every two seconds is a reasonable rate.
+    Send a JSON body with three fields:
 
-```bash
-curl "$FORMBHARO_URL/api/v1/data/a87c1556-79fa-4492-add9-a704c13466a3/6f1f0a1c-1111-4b0c-9a3a-2b6f9c0d0001"
-```
+    | Field | Value |
+    |---|---|
+    | `sdp` | Your browser's WebRTC SDP offer string |
+    | `type` | Always `"offer"` |
+    | `request_data` | Object with `agentId` and `conversation_id` |
 
-```json
-{
-  "form_data": {
-    "consent": true,
-    "full_name": "Asha Rao",
-    "has_fever": "Yes",
-    "phone": null
-  },
-  "form_status": {
-    "consent": "answered",
-    "full_name": "answered",
-    "phone": "skipped",
-    "has_fever": "answered",
-    "fever_started_on": "empty",
-    "fever_symptoms": "empty"
-  }
-}
-```
+    The response is a WebRTC SDP answer. Use it to complete the peer connection on the browser side.
 
-Before the first answer is saved the whole reply is `{}`. See
-[Answers](/concepts/answers).
+    To exchange ICE candidates after the initial handshake, send them with `PATCH /offer`.
 
-## Drawing the form on your page
+    ```javascript javascript
+    // Step 1: Generate a conversation ID
+    const conversationId = crypto.randomUUID();
 
-`GET /api/v1/agents/{agent_id}/public` gives you the agent's title and its questions,
-which is what a page needs to show the form filling in as the person talks.
+    // Step 2: Create a peer connection and generate an SDP offer
+    const pc = new RTCPeerConnection();
 
-```bash
-curl "$FORMBHARO_URL/api/v1/agents/a87c1556-79fa-4492-add9-a704c13466a3/public"
-```
+    pc.addTransceiver("audio", { direction: "sendrecv" });
 
-```json
-{
-  "id": "a87c1556-79fa-4492-add9-a704c13466a3",
-  "title": "Clinic intake",
-  "questions": [
-    {
-      "name": "full_name",
-      "label": "What is your full name?",
-      "type": "string",
-      "required": true
+    await pc.setLocalDescription(await pc.createOffer());
+
+    // Wait for ICE gathering to complete
+    await new Promise((resolve) => {
+      if (pc.iceGatheringState === "complete") {
+        resolve();
+      } else {
+        pc.addEventListener("icegatheringstatechange", () => {
+          if (pc.iceGatheringState === "complete") resolve();
+        });
+      }
+    });
+
+    // Step 3: Send the offer to FormBharo
+    const offerResponse = await fetch(
+      "https://YOUR-FORMBHARO-SERVER/offer",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sdp: pc.localDescription.sdp,
+          type: "offer",
+          request_data: {
+            agentId: "AGENT_ID",
+            conversation_id: conversationId,
+          },
+        }),
+      }
+    );
+
+    const answer = await offerResponse.json();
+
+    // Step 4: Apply the SDP answer to complete the handshake
+    await pc.setRemoteDescription(new RTCSessionDescription(answer));
+
+    // Play incoming audio
+    pc.addEventListener("track", (event) => {
+      const audio = new Audio();
+      audio.srcObject = event.streams[0];
+      audio.play();
+    });
+    ```
+  </Step>
+
+  <Step title="Read answers as they arrive">
+    Poll `GET /api/v1/data/{agent_id}/{conversation_id}` every two seconds or so to read answers as the agent collects them. This route requires no API key.
+
+    - Before the first answer is written, the endpoint returns an empty object `{}`.
+    - Once the call is underway, it returns a `form_data` object (keyed by question ID) and a `form_status` string.
+
+    ```javascript javascript
+    async function pollAnswers(agentId, conversationId) {
+      const url = `https://YOUR-FORMBHARO-SERVER/api/v1/data/${agentId}/${conversationId}`;
+
+      const interval = setInterval(async () => {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.form_status === "complete" || data.form_status === "screened_out") {
+          clearInterval(interval);
+        }
+
+        console.log("Current answers:", data.form_data);
+      }, 2000);
     }
-  ],
-  "agent_speaks_first": true
-}
-```
+    ```
+  </Step>
 
-## These routes take no key
-
-There is no `Authorization` header in the two commands above. That is not an omission.
-
-`POST /offer`, `GET /api/v1/data/{agent_id}/{conversation_id}`,
-`GET /api/v1/agents/{agent_id}/public`, and
-`PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data` all accept
-requests with no key at all. Your page runs in someone's browser, where a key could be
-read by anyone, so these four do without one.
+</Steps>
 
 <Warning>
-Anyone who knows an agent id can read a live call's answers and can overwrite them. The
-agent id is a random identifier and is not published anywhere, so it is the only thing
-standing between a stranger and that call's answers. If your agents collect anything
-sensitive, put your own check in front of these routes before you open your server to the
-internet.
+  Anyone who knows the agent ID can read or overwrite live answers through the open routes. If your agents collect sensitive data, put your own authentication layer in front of these routes at the infrastructure level.
 </Warning>
+
+<Tip>
+  See **Answers** for details on reading `form_data` and `form_status`, including why you should never rely on truthiness alone when checking answer values.
+</Tip>

@@ -1,0 +1,129 @@
+---
+title: "PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data — Correct Answers"
+sidebarTitle: "Update Form Data"
+description: "PATCH form_data lets you manually correct one or more answers after a call. Validation runs before saving. Requires no API key."
+---
+
+`PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data` lets you manually correct one or more answers after a call ends. Validation rules still apply — if any field fails validation, nothing is saved and you receive a `400` response with an `invalid_fields` map. This route requires no API key, making it accessible from client-side code that has the agent and conversation IDs.
+
+## Authentication
+
+No API key is required. This endpoint is publicly accessible to anyone who knows the `agent_id` and `conversation_id`.
+
+## Path Parameters
+
+<ParamField path="agent_id" type="string" required>
+  The unique identifier of the agent that conducted the call.
+</ParamField>
+
+<ParamField path="conversation_id" type="string" required>
+  The unique identifier of the call whose form data you want to correct.
+</ParamField>
+
+## Request Body
+
+<ParamField body="updates" type="object" required>
+  A map of question names to their corrected values. Only the fields you include are updated — all other answers remain unchanged.
+
+  - Set a field to a new value to overwrite the existing answer.
+  - Set a field to `null` to mark it as `skipped`.
+</ParamField>
+
+### Example Body
+
+```json
+{
+  "updates": {
+    "full_name": "Jane Smith",
+    "date_of_birth": null
+  }
+}
+```
+
+## Response
+
+On success, returns the full updated `form_data` and `form_status` objects.
+
+<ResponseField name="form_data" type="object">
+  The complete form data after applying your updates.
+</ResponseField>
+
+<ResponseField name="form_status" type="object">
+  The updated per-field status map after applying your updates.
+</ResponseField>
+
+## Error Response
+
+If any submitted value fails validation, the entire update is rejected and no changes are saved.
+
+```json
+{
+  "error": "Validation failed for one or more fields.",
+  "invalid_fields": {
+    "date_of_birth": "Value '32-13-1985' is not a valid date."
+  }
+}
+```
+
+## Example
+
+<CodeGroup>
+```bash curl
+curl -X PATCH \
+  https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/conversations/conv_xyz789/form_data \
+  -H "Content-Type: application/json" \
+  -d '{
+    "updates": {
+      "full_name": "Jane Smith"
+    }
+  }'
+```
+
+```python python
+import requests
+
+payload = {
+    "updates": {
+        "full_name": "Jane Smith",
+    }
+}
+
+response = requests.patch(
+    "https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/conversations/conv_xyz789/form_data",
+    headers={"Content-Type": "application/json"},
+    json=payload,
+)
+
+if response.status_code == 200:
+    result = response.json()
+    print("Updated form_data:", result["form_data"])
+elif response.status_code == 400:
+    error = response.json()
+    print("Validation failed:", error["invalid_fields"])
+```
+</CodeGroup>
+
+### Sample Success Response
+
+```json
+{
+  "form_data": {
+    "full_name": "Jane Smith",
+    "date_of_birth": "1985-04-12",
+    "insurance_provider": "Blue Cross"
+  },
+  "form_status": {
+    "full_name": "filled",
+    "date_of_birth": "filled",
+    "insurance_provider": "filled"
+  }
+}
+```
+
+<Note>
+  Updates are atomic. If you submit three field corrections and one fails validation, none of the three are saved. Fix the failing field and resubmit the full `updates` object.
+</Note>
+
+<Warning>
+  Because this endpoint requires no API key, anyone with access to the agent and conversation IDs can modify answers. Use this capability carefully and avoid exposing these IDs in contexts where unauthorised edits would be harmful.
+</Warning>

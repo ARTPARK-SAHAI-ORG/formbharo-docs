@@ -1,0 +1,144 @@
+---
+title: "PUT /api/v1/agents/{agent_id} — Update and Publish an Agent"
+sidebarTitle: "Update Agent"
+description: "PUT /api/v1/agents/{agent_id} replaces the agent's configuration and publishes it. Send the full body each time — this is a full replacement, not a partial update."
+---
+
+`PUT /api/v1/agents/{agent_id}` replaces the entire agent configuration and publishes it, recording a new version in the agent's history. Always send the complete body — this is a full replacement, not a partial update. Any field you omit will revert to its default value.
+
+**Authentication:** Required — include `Authorization: Bearer <api-key>` on every request.
+
+## Path Parameters
+
+<ParamField path="agent_id" type="string" required>
+  The unique identifier of the agent to update.
+</ParamField>
+
+## Request Body
+
+Send the complete agent configuration using the **create/update field names** (`question`, `response_type`, `description`, `ai_instructions`). See the [Agent Configuration reference](/reference/agent-configuration) for the full list of supported fields and their allowed values.
+
+<Warning>
+  This endpoint performs a **full replacement**. Any field you omit reverts to its default. Always read the current configuration first if you intend to make a partial change.
+</Warning>
+
+<Tip>
+  Use `POST /api/v1/agents/{agent_id}/diff-preview` before calling this endpoint to preview exactly what will change without committing the update. This is especially useful in automated pipelines where accidental overwrites can be costly.
+</Tip>
+
+## Response
+
+<ResponseField name="id" type="string">
+  The agent's unique identifier.
+</ResponseField>
+
+<ResponseField name="version" type="integer">
+  The new version number created by this update.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Always `published` after a successful update.
+</ResponseField>
+
+## Validation Errors
+
+If the request body fails validation, the API returns `400 Bad Request` with a `validation_issues` array:
+
+```json
+{
+  "error": "Validation failed",
+  "validation_issues": [
+    {
+      "field": "questions[2].response_type",
+      "message": "response_type must be one of: text, number, date, select, multi_select"
+    }
+  ]
+}
+```
+
+## Examples
+
+<CodeGroup>
+  ```bash curl
+  curl -X PUT https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123 \
+    -H "Authorization: Bearer fb_live_0123456789ab_..." \
+    -H "Content-Type: application/json" \
+    -d '{
+      "title": "New Patient Registration",
+      "agent_speaks_first": true,
+      "language": "en-US",
+      "questions": [
+        {
+          "question": "What is your full legal name?",
+          "response_type": "text",
+          "description": "We need your full name as it appears on your ID.",
+          "ai_instructions": "Ask clearly and confirm spelling if the name is unusual."
+        },
+        {
+          "question": "What is your date of birth?",
+          "response_type": "date",
+          "description": "Required for identity verification.",
+          "ai_instructions": "Accept any common date format and confirm the year."
+        },
+        {
+          "question": "Which insurance provider do you use?",
+          "response_type": "select",
+          "description": "Select the patient'\''s primary insurer.",
+          "options": ["Aetna", "BlueCross", "Cigna", "United", "Other"]
+        }
+      ]
+    }'
+  ```
+
+  ```python Python
+  import requests
+
+  BASE = "https://YOUR-FORMBHARO-SERVER"
+  HEADERS = {
+      "Authorization": "Bearer fb_live_0123456789ab_...",
+      "Content-Type": "application/json",
+  }
+
+  payload = {
+      "title": "New Patient Registration",
+      "agent_speaks_first": True,
+      "language": "en-US",
+      "questions": [
+          {
+              "question": "What is your full legal name?",
+              "response_type": "text",
+              "description": "We need your full name as it appears on your ID.",
+              "ai_instructions": "Ask clearly and confirm spelling if the name is unusual.",
+          },
+          {
+              "question": "What is your date of birth?",
+              "response_type": "date",
+              "description": "Required for identity verification.",
+              "ai_instructions": "Accept any common date format and confirm the year.",
+          },
+          {
+              "question": "Which insurance provider do you use?",
+              "response_type": "select",
+              "description": "Select the patient's primary insurer.",
+              "options": ["Aetna", "BlueCross", "Cigna", "United", "Other"],
+          },
+      ],
+  }
+
+  response = requests.put(
+      f"{BASE}/api/v1/agents/agt_abc123", headers=HEADERS, json=payload
+  )
+  result = response.json()
+  print(f"Published as version {result['version']}")
+  ```
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "id": "agt_abc123",
+  "version": 4,
+  "status": "published"
+}
+```

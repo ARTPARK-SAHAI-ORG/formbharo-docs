@@ -1,68 +1,71 @@
 ---
-title: "Retries"
-description: "How many times a question is re-asked, and what happens when it runs out."
+title: "Retry Configuration for Voice Agent Questions"
+sidebarTitle: "Retries"
+description: "Control how many times FormBharo re-asks an unanswered question and what happens when retries run out — skip, end call, or retry indefinitely."
 ---
 
-Add a `retry_config` to a question to say how often the agent re-asks it when the answer
-does not come through:
+By default, FormBharo re-asks each unanswered question twice before moving on. You can customise this per question using `retry_config`.
+
+## retry_config fields
+
+<ParamField body="allow_retries" type="boolean" default="true">
+  Set to `false` to move on immediately after the first unanswered attempt, without re-asking. All other `retry_config` fields are ignored when this is `false`.
+</ParamField>
+
+<ParamField body="until_answered" type="boolean" default="false">
+  When `true`, the agent re-asks the question indefinitely until it receives a valid answer. The `max_retries` value is ignored. Use with caution — callers can get stuck if they genuinely cannot provide the answer.
+</ParamField>
+
+<ParamField body="max_retries" type="integer" default="2">
+  The number of additional attempts after the first. A value of `2` means the agent asks the question up to three times total (one initial attempt plus two retries).
+</ParamField>
+
+<ParamField body="retry_messages" type="array of strings">
+  Custom messages the agent uses for each re-ask. The first string is used on the first retry, the second on the second retry, and so on. If the list is shorter than `max_retries` or is omitted entirely, the agent falls back to the original question script for any retry that lacks a custom message.
+</ParamField>
+
+<ParamField body="exhausted_action" type='"skip" | "end_call"' default='"skip"'>
+  What to do when all retries have been used on an optional question. Has no effect on required questions — those always end the call when retries are exhausted. See below for the full breakdown.
+</ParamField>
+
+---
+
+## What happens when retries are exhausted
+
+The outcome depends on whether the question is required and what `exhausted_action` is set to:
+
+**Required question, retries exhausted**
+The call ends immediately. The conversation status is set to `failed`. The `form_data` entry for the question is `null`.
+
+**Optional question, `exhausted_action: "skip"` (default)**
+The answer is stored as `null`. The `form_status` for the question is set to `"skipped"`. The call continues to the next question.
+
+**Optional question, `exhausted_action: "end_call"`**
+The call ends. The conversation status is `failed` — unless the answer that triggered the end matched a value in the question's `end_call_values` list, in which case the status is `screened_out`.
+
+---
+
+## Example
 
 ```json
 {
-  "name": "phone",
-  "question": "What is your phone number?",
-  "response_type": "string",
+  "question": "What is your date of birth?",
+  "response_type": "date",
   "required": false,
   "retry_config": {
     "allow_retries": true,
     "until_answered": false,
-    "max_retries": 2,
+    "max_retries": 3,
     "retry_messages": [
-      "Sorry, I did not catch that. What is your phone number?",
-      "One more time please, ten digits."
+      "Sorry, I didn't catch that. Could you give me your date of birth in day, month, year format?",
+      "Let me try once more — what is your date of birth?",
+      "I'm having trouble understanding. Could you say the day, month, and year separately?"
     ],
     "exhausted_action": "skip"
   }
 }
 ```
 
-Leave `retry_config` out and the defaults below apply.
-
-## Fields
-
-<ResponseField name="allow_retries" type="boolean" default="true">
-  Whether the question is ever re-asked. Set it to false and the first attempt that does
-  not produce an answer is the last one.
-</ResponseField>
-
-<ResponseField name="until_answered" type="boolean" default="false">
-  Set it to true and the question is re-asked for as long as it takes. `max_retries` is
-  then ignored.
-</ResponseField>
-
-<ResponseField name="max_retries" type="integer" default="2">
-  How many re-asks are allowed after the first attempt. With 2, the agent asks once, then
-  twice more, and then gives up.
-</ResponseField>
-
-<ResponseField name="retry_messages" type="string[]" default="[]">
-  What to say on each re-ask. The first entry is the first re-ask, the second is the
-  second, and so on. Leave an entry blank, or run out of entries, and the agent repeats
-  the question's `script` word for word.
-</ResponseField>
-
-<ResponseField name="exhausted_action" type="string" default="skip">
-  What to do once the re-asks run out, for an optional question. `skip` moves on to the
-  next question, saying the question's `skip_message`. `end_call` ends the call instead.
-</ResponseField>
-
-## When the re-asks run out
-
-A **required** question always ends the call. `exhausted_action` is not read.
-
-An **optional** question follows `exhausted_action`. With `skip`, the question is stored
-as `null` and its `form_status` becomes `skipped`, and the call carries on. With
-`end_call`, the call ends there.
-
-A call that ends this way is marked `failed`, unless the answer that stopped it was one
-of the question's `end_call_values`, which marks it `screened_out` instead. See
-[Calls](/concepts/calls).
+<Tip>
+  If you need a caller to always provide an answer and want to keep re-asking until they do, combine `until_answered: true` with a varied `retry_messages` list so the conversation doesn't feel robotic.
+</Tip>

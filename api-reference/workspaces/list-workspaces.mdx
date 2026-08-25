@@ -1,0 +1,69 @@
+---
+title: "GET /api/v1/workspaces — List Your Workspaces"
+sidebarTitle: "List Workspaces"
+description: "GET /api/v1/workspaces returns all workspaces your key has access to, including your personal workspace. Supports optional pagination."
+---
+
+`GET /api/v1/workspaces` returns all workspaces your API key has access to. This includes your personal workspace and any shared workspaces you are a member of.
+
+## Authentication
+
+Required. Include your API key in the `Authorization` header.
+
+```http
+Authorization: Bearer <api-key>
+```
+
+## Query Parameters
+
+<ParamField query="limit" type="integer">
+  Number of workspaces to return per page. Behaviour mirrors the agents list endpoint — omitting this parameter returns a plain array; supplying it returns the paginated envelope.
+</ParamField>
+
+<ParamField query="cursor" type="integer">
+  Pagination offset. Pass the `next_cursor` value from the previous response to retrieve the next page.
+</ParamField>
+
+## Response
+
+When `limit` is omitted, the response is a plain array of workspace objects. When `limit` is supplied, the response uses the paginated envelope: `{ "data": [...], "next_cursor": ... }`.
+
+<ResponseField name="id" type="string">
+  The workspace's unique identifier. Use this value when calling other workspace endpoints.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The display name of the workspace.
+</ResponseField>
+
+<ResponseField name="role" type="string">
+  Your role in this workspace. Either `admin` or `member`. Workspace admins can manage members and rename the workspace.
+</ResponseField>
+
+## Example
+
+```bash curl
+curl https://YOUR-FORMBHARO-SERVER/api/v1/workspaces \
+  -H "Authorization: Bearer fb_live_0123456789ab_..."
+```
+
+Example response:
+
+```json
+[
+  {
+    "id": "ws_personal_abc",
+    "name": "My Workspace",
+    "role": "admin"
+  },
+  {
+    "id": "ws_shared_xyz",
+    "name": "Acme Sales Team",
+    "role": "member"
+  }
+]
+```
+
+<Tip>
+  Use the `id` from this response as the `workspace_id` path parameter when calling workspace-scoped endpoints such as analytics, member management, or agent filtering.
+</Tip>

@@ -1,103 +1,118 @@
 ---
-title: "Branching"
-description: "Ask a group of questions only when an earlier answer calls for them."
+title: "Conditional Branching for Voice Agent Questions"
+sidebarTitle: "Branching"
+description: "Ask a group of follow-up questions only when an earlier answer calls for them using FormBharo's branch system — declare branches, then tag questions with a branch_id."
 ---
 
-A branch is a group of questions that is only asked when a condition holds. You declare
-the branch in `branches`, then point questions at it with `branch_id`.
+Branching lets you ask additional questions only when a specific earlier answer warrants them. You declare branches in the top-level `branches` array and tag each conditional question with the branch's ID.
+
+## How branching works
+
+Setting up a branch is a two-step process:
+
+<Steps>
+  <Step title="Declare the branch">
+    Add a branch object to the top-level `branches` array. Give it a unique `id` and a `condition` that references an earlier question by its `name`.
+  </Step>
+  <Step title="Tag the conditional questions">
+    On each question that should only be asked when the branch condition is true, add `"branch_id": "<your-branch-id>"`. You can tag as many questions as you like with the same `branch_id`.
+  </Step>
+</Steps>
+
+When the call reaches a branched question, FormBharo evaluates the condition first. If the condition is true, the question is asked normally. If it is false, the question is skipped entirely.
+
+---
+
+## Branch object fields
+
+<ParamField body="id" type="string" required>
+  A unique identifier for this branch. Referenced by questions using `branch_id`. Use a short, descriptive slug — e.g., `"fever-details"`.
+</ParamField>
+
+<ParamField body="condition" type="object" required>
+  The trigger condition. Evaluated when the call reaches any question tagged with this branch's ID.
+
+  <Expandable title="condition fields">
+    <ParamField body="condition.field" type="string" required>
+      The `name` of the controlling question. This question must appear **before** any of the branch's questions in the `questions` array.
+    </ParamField>
+
+    <ParamField body="condition.equals" type="boolean">
+      For boolean questions only. The branch activates when the answer equals this value. For example, `"equals": true` activates the branch when the caller answers yes.
+    </ParamField>
+
+    <ParamField body="condition.present" type="boolean">
+      For any question type. When `true`, the branch activates if the controlling field was answered (not skipped). When `false`, the branch activates if the field was skipped or unanswered.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<Note>
+  If you include both `equals` and `present` in the same condition, `present` takes precedence and `equals` is silently ignored.
+</Note>
+
+---
+
+## Completion
+
+Branch questions that were never activated do not block the `complete` status. If a call reaches the end of the question list without ever triggering a branch condition, the conversation is still marked `complete` — the skipped branch questions are treated as if they were not part of the required flow for that caller.
+
+---
+
+## Save validation errors
+
+If the agent save is rejected due to a branching configuration problem, the `400` response includes a `validation_issues` array. Each issue has a `field` and a `message`. The following configuration errors are caught at save time:
+
+- **Unknown `branch_id` on a question** — the `branch_id` value does not match any branch declared in `branches`.
+- **`condition.field` references a non-existent question** — no question with that `name` exists in the `questions` array.
+- **Controlling question appears after the branch's questions** — the question named in `condition.field` must precede all questions tagged with this branch.
+- **`equals` condition on a non-boolean question** — `equals` is only valid when the controlling question has `response_type: "boolean"`.
+- **Duplicate branch IDs** — two or more branches share the same `id`.
+- **Branch missing required fields** — a branch object is missing `id`, `condition`, or `condition.field`.
+
+---
+
+## Example
+
+This agent asks whether the caller has a fever. If they answer yes, it branches into two follow-up questions about their temperature and how long the fever has lasted.
 
 ```json
 {
-  "title": "Clinic intake",
+  "title": "Symptom Check",
   "questions": [
     {
-      "name": "has_fever",
-      "question": "Do you have a fever?",
+      "question": "Do you currently have a fever?",
       "response_type": "boolean",
-      "required": true
+      "name": "has_fever"
     },
     {
-      "name": "fever_started_on",
-      "question": "What date did the fever start?",
-      "response_type": "date",
-      "required": true,
-      "branch_id": "fever_details"
+      "question": "What is your current temperature in degrees Celsius?",
+      "response_type": "number",
+      "name": "temperature",
+      "branch_id": "fever-details"
     },
     {
-      "name": "fever_symptoms",
-      "question": "Which of these do you also have?",
-      "response_type": "multi-select",
-      "options": ["Headache", "Cough", "Body ache", "None"],
-      "required": true,
-      "branch_id": "fever_details"
+      "question": "How many days have you had the fever?",
+      "response_type": "number",
+      "name": "fever_duration_days",
+      "branch_id": "fever-details"
+    },
+    {
+      "question": "Are you taking any medication?",
+      "response_type": "boolean",
+      "name": "on_medication"
     }
   ],
   "branches": [
-    {"id": "fever_details", "condition": {"field": "has_fever", "equals": true}}
-  ]
-}
-```
-
-Someone who says no to `has_fever` is never asked the two fever questions. Their call
-still finishes as `complete`, with those two left at `empty` in `form_status`.
-
-## The branch
-
-<ResponseField name="id" type="string" required>
-  The name you refer to from a question's `branch_id`.
-</ResponseField>
-
-<ResponseField name="condition" type="object" required>
-  When the branch's questions are asked. It has a `field` and exactly one of `equals` or
-  `present`.
-</ResponseField>
-
-## The condition
-
-<ResponseField name="condition.field" type="string" required>
-  The `name` of the question the branch depends on. It has to come before the branch's
-  questions in the `questions` list.
-</ResponseField>
-
-<ResponseField name="condition.equals" type="boolean">
-  Ask the branch when that question's answer is `true`, or when it is `false`. Only for a
-  `boolean` question.
-</ResponseField>
-
-<ResponseField name="condition.present" type="boolean">
-  Ask the branch based on whether that question was answered at all, whatever its type.
-  `true` means ask when it was answered, `false` means ask when it was skipped.
-</ResponseField>
-
-Set one of `equals` and `present`. Sending both is not refused, and `present` is the one
-that is used, so the `equals` you wrote is quietly dropped.
-
-## What gets rejected
-
-A save is refused with 400 and a `validation_issues` list when:
-
-- A question's `branch_id` names a branch that is not in `branches`.
-- A branch's `condition.field` names a question that does not exist.
-- The controlling question comes after the branch's questions in the list. The message is
-  `Branch condition field must appear before the branch's questions.`
-- `equals` is used on a question that is not a `boolean`. The message is
-  `Branch conditions are only supported for boolean questions.`
-- Two branches share the same `id`.
-- A branch has no `id`, no `condition`, or a `condition` with no `field`.
-
-```json
-{
-  "validation_issues": [
     {
-      "field": "questions[0].branch_id",
-      "message": "Question references unknown branch 'nope'."
+      "id": "fever-details",
+      "condition": {
+        "field": "has_fever",
+        "equals": true
+      }
     }
   ]
 }
 ```
 
-## Branches and completion
-
-A question inside a branch that never activated does not stop a call from being
-`complete`, whether or not it is `required`. A question inside a branch that did activate
-does, exactly like any other question.
+In this example, `temperature` and `fever_duration_days` are only asked if the caller answers yes to `has_fever`. The final question (`on_medication`) is asked for all callers.

@@ -1,0 +1,98 @@
+---
+title: "PUT /api/v1/agents/{agent_id}/access — Replace Access List"
+sidebarTitle: "Update Access"
+description: "PUT /api/v1/agents/{agent_id}/access replaces the agent's access list with the emails you provide. Omitted emails lose access immediately."
+---
+
+`PUT /api/v1/agents/{agent_id}/access` replaces the agent's entire access list. This is a full replacement — any email not in the new list immediately loses access. To add a single user without disturbing existing access, first read the current list with `GET /api/v1/agents/{agent_id}/access`, append the new email, then write the complete list back.
+
+**Authentication:** Required — include `Authorization: Bearer <api-key>` on every request.
+
+## Path Parameters
+
+<ParamField path="agent_id" type="string" required>
+  The unique identifier of the agent whose access list you want to replace.
+</ParamField>
+
+## Request Body
+
+<ParamField body="emails" type="array" required>
+  The complete list of email addresses that should have access to this agent after the update. Any email currently in the list but absent here will lose access immediately.
+</ParamField>
+
+<Warning>
+  Sending an empty array (`"emails": []`) removes all explicit access grants. Users with workspace-level admin rights will still be able to access the agent.
+</Warning>
+
+## Response
+
+<ResponseField name="updated" type="boolean">
+  Always `true` on success.
+</ResponseField>
+
+<ResponseField name="agent_id" type="string">
+  The ID of the agent whose access list was updated.
+</ResponseField>
+
+<ResponseField name="email_count" type="integer">
+  The number of email addresses now in the access list.
+</ResponseField>
+
+## Examples
+
+<CodeGroup>
+  ```bash curl
+  curl -X PUT https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/access \
+    -H "Authorization: Bearer fb_live_0123456789ab_..." \
+    -H "Content-Type: application/json" \
+    -d '{
+      "emails": [
+        "alice@example.com",
+        "bob@example.com",
+        "carol@example.com"
+      ]
+    }'
+  ```
+
+  ```python Python
+  import requests
+
+  BASE = "https://YOUR-FORMBHARO-SERVER"
+  HEADERS = {
+      "Authorization": "Bearer fb_live_0123456789ab_...",
+      "Content-Type": "application/json",
+  }
+  AGENT_ID = "agt_abc123"
+
+  # Read the current access list
+  current = requests.get(
+      f"{BASE}/api/v1/agents/{AGENT_ID}/access", headers=HEADERS
+  ).json()
+
+  existing_emails = [entry["email"] for entry in current]
+
+  # Add a new user without removing existing ones
+  new_email = "carol@example.com"
+  if new_email not in existing_emails:
+      existing_emails.append(new_email)
+
+  # Write the updated list back
+  response = requests.put(
+      f"{BASE}/api/v1/agents/{AGENT_ID}/access",
+      headers=HEADERS,
+      json={"emails": existing_emails},
+  )
+  result = response.json()
+  print(f"Access list now has {result['email_count']} entries.")
+  ```
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "updated": true,
+  "agent_id": "agt_abc123",
+  "email_count": 3
+}
+```

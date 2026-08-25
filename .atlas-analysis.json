@@ -1,24 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "FormBharo",
+  "projectType": "saas",
+  "projectName": "FormBharo",
+  "projectDescription": "FormBharo is an AI voice agent platform that fills in forms by having real phone conversations, asking questions out loud and saving the answers.",
   "theme": "luma",
-  "logo": {
-    "light": "https://media.brand.dev/f9149ec8-8f45-4efb-9d85-58460ee4fee4.svg",
-    "dark": "https://media.brand.dev/f9149ec8-8f45-4efb-9d85-58460ee4fee4.svg"
-  },
-  "favicon": "https://media.brand.dev/f2193d93-22ba-4573-9126-b052b325f01b.png",
-  "colors": {
-    "primary": "#1be39b",
-    "light": "#0c8c5c",
-    "dark": "#99bbb0"
-  },
-  "navbar": {
-    "primary": {
-      "type": "button",
-      "label": "Open FormBharo",
-      "href": "https://formbharo.artpark.ai"
-    }
-  },
+  "primaryColor": "#1be39b",
+  "lightColor": "#0c8c5c",
+  "darkColor": "#99bbb0",
   "navigation": {
     "tabs": [
       {
@@ -27,7 +14,6 @@
           {
             "group": "Get Started",
             "pages": [
-              "index",
               "getting-started/what-is-formbharo",
               "getting-started/api-keys",
               "getting-started/quickstart"
@@ -131,16 +117,51 @@
       }
     ]
   },
-  "api": {
-    "openapi": "api-reference/openapi.json",
-    "playground": { "display": "interactive" },
-    "examples": {
-      "languages": ["curl", "python"],
-      "defaults": "required",
-      "autogenerate": true
-    }
-  },
-  "contextual": {
-    "options": ["copy", "view", "chatgpt", "claude"]
-  }
+  "keyFeatures": [
+    "AI voice agents that conduct form interviews over phone calls",
+    "Six configurable question types: string, number, date, boolean, single-select, multi-select",
+    "Conditional branching — ask follow-up groups only when triggered by earlier answers",
+    "Per-question validation rules (phone numbers, date ranges, regex, natural-language rules)",
+    "Configurable retry behaviour per question with custom retry messages",
+    "Screening questions that end calls early via end_call_values",
+    "WebRTC-based call embedding for integration into your own web page",
+    "Real-time answer polling via GET /data endpoint (no API key required)",
+    "Versioned agent history with diff preview and one-click restore",
+    "Agent and workspace-level analytics including completion rates, duration, latency, and cost",
+    "Multi-user workspaces with per-agent access control",
+    "Cross-agent conversation polling for keeping external databases in sync"
+  ],
+  "publicApiSurface": [
+    "GET /api/v1/agents",
+    "POST /api/v1/agents",
+    "GET /api/v1/agents/{agent_id}",
+    "PUT /api/v1/agents/{agent_id}",
+    "DELETE /api/v1/agents/{agent_id}",
+    "GET /api/v1/agents/{agent_id}/public",
+    "PUT /api/v1/agents/{agent_id}/config",
+    "POST /api/v1/agents/{agent_id}/duplicate",
+    "GET /api/v1/agents/{agent_id}/access",
+    "PUT /api/v1/agents/{agent_id}/access",
+    "PUT /api/v1/agents/{agent_id}/workspace",
+    "GET /api/v1/agents/{agent_id}/versions",
+    "GET /api/v1/agents/{agent_id}/versions/{version}",
+    "GET /api/v1/agents/{agent_id}/versions/{version}/diff",
+    "POST /api/v1/agents/{agent_id}/versions/{version}/restore",
+    "POST /api/v1/agents/{agent_id}/diff-preview",
+    "POST /api/v1/agents/{agent_id}/config/diff-preview",
+    "GET /api/v1/agents/{agent_id}/conversations",
+    "GET /api/v1/agents/{agent_id}/conversations/{conversation_id}/transcript",
+    "PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data",
+    "GET /api/v1/data/{agent_id}/{conversation_id}",
+    "GET /api/v1/conversations",
+    "GET /api/v1/agents/{agent_id}/analytics",
+    "GET /api/v1/workspaces/{workspace_id}/analytics",
+    "GET /api/v1/workspaces",
+    "POST /api/v1/workspaces",
+    "GET /api/v1/workspaces/{workspace_id}",
+    "PUT /api/v1/workspaces/{workspace_id}",
+    "POST /api/v1/workspaces/{workspace_id}/members",
+    "DELETE /api/v1/workspaces/{workspace_id}/members/{email}",
+    "POST /offer (WebRTC — not under /api/v1)"
+  ]
 }

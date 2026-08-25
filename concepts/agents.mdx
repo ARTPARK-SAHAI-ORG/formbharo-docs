@@ -1,56 +1,93 @@
 ---
-title: "Agents"
-description: "A form plus the way it is asked."
+title: "Agents: The Forms Your Voice Assistant Asks"
+sidebarTitle: "Agents"
+description: "An agent is a form plus the way it is asked — questions, scripts, and settings. Learn about draft and published states, versioning, and workspace membership."
 ---
 
-An agent is a form plus the way it is asked. It holds:
+In FormBharo, an agent is a reusable form definition. It holds the questions the voice assistant will ask, the exact words to use at the start and end of a call, and settings like language and whether the agent speaks first. You create one agent and reuse it across as many conversations as you need — each conversation writes its answers back to the same agent definition.
 
-- **Questions**, in the order they are asked. Each one has a short name you read the
-  answer back by, the wording, and an answer type.
-- **Scripts**, the exact words the agent says at the start and the end of a call.
-- **Settings** such as the language, whether the agent speaks first, and how it behaves
-  when someone does not answer.
+## What an agent contains
 
-Full field list: [Agent configuration](/reference/agent-configuration).
+Every agent is made up of four parts:
+
+- **Questions** — the list of things the agent will ask, in order. Each question has a name (used as the key in the answer object), the exact wording the assistant speaks, and an answer type such as `string`, `number`, `boolean`, or `single-select`.
+- **Scripts** — the exact phrases the assistant uses to open and close the call. The intro script runs before the first question; the outro runs after the last answer is collected.
+- **Settings** — configuration that controls call behaviour: the language the agent speaks, whether the agent speaks first or waits for the caller to start, and what to do when a question receives no answer (skip it, retry, or end the call).
+- **Branches** — conditional follow-up question groups. When an answer matches a trigger value, the agent inserts an additional set of questions before continuing the main sequence.
 
 ## Draft and published
 
-An agent is either a draft or published.
+Every agent starts as a draft:
 
-`POST /api/v1/agents` creates a draft. A draft is a work in progress and is not meant to
-be called yet.
+- `POST /api/v1/agents` creates a new agent in **draft** state.
+- `PUT /api/v1/agents/{agent_id}` replaces the agent's definition and moves it to **published** state.
 
-`PUT /api/v1/agents/{agent_id}` replaces the agent and publishes it. The response tells
-you the version number that save recorded:
+The `status` field in listing responses is either `draft` or `published`. Drafts are fully callable — conversations can run against them — but they are not considered stable. Treat drafts as works in progress and publish before sending an agent into production.
 
-```json
-{"id": "a87c1556-79fa-4492-add9-a704c13466a3", "status": "updated", "version": 1}
-```
+<Note>
+Publishing an agent by calling `PUT /api/v1/agents/{agent_id}` replaces the entire definition. Send the complete agent body each time, not just the fields you want to change.
+</Note>
 
-`status` in a listing row is `draft` or `published`.
+## Version history
 
-## Versions
+Every time you publish a save, FormBharo records an immutable version snapshot. Version numbers start at `1` and increment with each subsequent publish. Drafts are never versioned — only successful publishes create a new version entry.
 
-Every published save records a version. Drafts are not versioned, so version 1 is always
-the first published save.
+Use versions to audit changes, roll back a bad update, or preview what a pending save will affect before you commit it.
 
-- `GET /api/v1/agents/{agent_id}/versions` lists them, newest first.
-- `GET /api/v1/agents/{agent_id}/versions/{version}` returns one version with the whole
-  configuration it captured.
-- `POST /api/v1/agents/{agent_id}/versions/{version}/restore` makes an old version
-  current. The state you replaced stays in the history and can itself be restored.
+<Steps>
+  <Step title="List all versions of an agent">
+    ```bash
+    GET /api/v1/agents/{agent_id}/versions
+    ```
+    Returns a list of version summaries ordered newest first, including version number and publish timestamp.
+  </Step>
+
+  <Step title="Read a specific version">
+    ```bash
+    GET /api/v1/agents/{agent_id}/versions/{version}
+    ```
+    Returns the full agent definition exactly as it was when that version was published.
+  </Step>
+
+  <Step title="Preview what a save would change">
+    ```bash
+    POST /api/v1/agents/{agent_id}/diff-preview
+    ```
+    Send a candidate agent body. FormBharo compares it against the current published version and returns a diff — no changes are saved.
+  </Step>
+
+  <Step title="Restore an older version">
+    ```bash
+    POST /api/v1/agents/{agent_id}/versions/{version}/restore
+    ```
+    Promotes an old version to become the current published definition and increments the version counter. The restored content becomes the new latest version.
+  </Step>
+</Steps>
 
 ## Workspaces
 
-Every agent lives in one workspace. A workspace is a group of people who share a set of
-agents. Everyone gets a personal workspace of their own.
+Every agent belongs to exactly one workspace. By default, new agents are placed in your personal workspace. To place an agent in a shared workspace at creation time, include `workspace_id` in the request body of `POST /api/v1/agents`.
 
-Pass `workspace_id` when you create an agent to put it somewhere other than your
-personal workspace. You must administer that workspace. The field is only read on
-creation, so `PUT /api/v1/agents/{agent_id}` ignores it; move an agent with
-`PUT /api/v1/agents/{agent_id}/workspace` instead.
+To move an existing agent to a different workspace, call:
 
-## Deleting
+```bash
+PUT /api/v1/agents/{agent_id}/workspace
+```
 
-`DELETE /api/v1/agents/{agent_id}` marks the agent deleted and it stops appearing in
-lists. Its calls are not erased.
+with the target `workspace_id` in the request body. Moving an agent does not affect its conversations or version history.
+
+<Tip>
+Use workspaces to organise agents by team, client, or product line. Members of a workspace can view and edit all agents in it, so place agents accordingly before sharing access.
+</Tip>
+
+## Deleting an agent
+
+```bash
+DELETE /api/v1/agents/{agent_id}
+```
+
+This performs a **soft delete**. The agent stops appearing in list responses and can no longer accept new calls. However, all existing call records and their collected answers are fully preserved — nothing is erased from the database. If you need to recover a soft-deleted agent, contact support.
+
+<Warning>
+Deleting an agent is not reversible through the API. Make sure you no longer need to run new conversations against it before you delete it.
+</Warning>

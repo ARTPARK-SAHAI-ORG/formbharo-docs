@@ -1,0 +1,44 @@
+---
+title: "PUT /api/v1/workspaces/{workspace_id} — Rename a Workspace"
+sidebarTitle: "Rename Workspace"
+description: "PUT /api/v1/workspaces/{workspace_id} renames a workspace. Requires workspace admin role."
+---
+
+`PUT /api/v1/workspaces/{workspace_id}` renames a workspace. Only workspace admins can rename a workspace.
+
+## Authentication
+
+Required. The API key must belong to a workspace admin. Workspace members receive a `403 Forbidden` response.
+
+```http
+Authorization: Bearer <api-key>
+```
+
+## Path Parameters
+
+<ParamField path="workspace_id" type="string" required>
+  The unique identifier of the workspace to rename.
+</ParamField>
+
+## Request Body
+
+<ParamField body="name" type="string" required>
+  The new display name for the workspace. Must be a non-empty string.
+</ParamField>
+
+## Response
+
+Returns the updated workspace object with the new name.
+
+## Example
+
+```bash curl
+curl -X PUT https://YOUR-FORMBHARO-SERVER/api/v1/workspaces/ws_xyz789 \
+  -H "Authorization: Bearer fb_live_0123456789ab_..." \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Acme Growth Team"}'
+```
+
+<Warning>
+  Renaming a workspace is immediately visible to all members. Verify the new name before sending the request — there is no confirmation step.
+</Warning>

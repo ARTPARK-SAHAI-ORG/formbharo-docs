@@ -1,0 +1,45 @@
+---
+title: "DELETE /api/v1/workspaces/{workspace_id}/members/{email} — Remove a Member"
+sidebarTitle: "Remove Member"
+description: "DELETE /api/v1/workspaces/{workspace_id}/members/{email} removes a user from a workspace by their email address. Requires workspace admin role."
+---
+
+`DELETE /api/v1/workspaces/{workspace_id}/members/{email}` removes a member from a workspace. Only workspace admins can remove members. Removing a member does not delete their agents — ownership remains.
+
+## Authentication
+
+Required. The API key must belong to a workspace admin. Workspace members receive a `403 Forbidden` response.
+
+```http
+Authorization: Bearer <api-key>
+```
+
+## Path Parameters
+
+<ParamField path="workspace_id" type="string" required>
+  The unique identifier of the workspace to remove a member from.
+</ParamField>
+
+<ParamField path="email" type="string" required>
+  The URL-encoded email address of the member to remove. For example, `carol%40acme.com` for `carol@acme.com`.
+</ParamField>
+
+## Response
+
+Returns `204 No Content` on success. No response body is returned.
+
+## Example
+
+```bash curl
+curl -X DELETE \
+  "https://YOUR-FORMBHARO-SERVER/api/v1/workspaces/ws_xyz789/members/carol%40acme.com" \
+  -H "Authorization: Bearer fb_live_0123456789ab_..."
+```
+
+<Warning>
+  You cannot remove yourself from a workspace if you are the only admin. Promote another member to admin first.
+</Warning>
+
+<Note>
+  Removing a member revokes their access to the workspace immediately. Any agents they created within the workspace remain intact and continue to operate — ownership is not transferred.
+</Note>

@@ -1,0 +1,127 @@
+---
+title: "GET /api/v1/agents/{agent_id}/conversations/{conversation_id}/transcript"
+sidebarTitle: "Get Transcript"
+description: "GET the transcript returns a time-ordered list of what was said during a call, attributed to either the agent or the caller."
+---
+
+`GET /api/v1/agents/{agent_id}/conversations/{conversation_id}/transcript` returns a structured transcript of a call — a list of turns with speaker attribution and text. Turns are ordered chronologically from the start of the call. If no transcript has been recorded for this call, the endpoint returns `404`.
+
+## Authentication
+
+This endpoint requires a valid API key in the `Authorization` header.
+
+```http
+Authorization: Bearer <api-key>
+```
+
+## Path Parameters
+
+<ParamField path="agent_id" type="string" required>
+  The unique identifier of the agent that conducted the call.
+</ParamField>
+
+<ParamField path="conversation_id" type="string" required>
+  The unique identifier of the call whose transcript you want to retrieve.
+</ParamField>
+
+## Response
+
+Returns an array of `TranscriptEntry` objects ordered from the earliest turn to the latest.
+
+<ResponseField name="speaker" type="string">
+  Who spoke this turn. Either `agent` (the AI voice agent) or `user` (the person being called).
+</ResponseField>
+
+<ResponseField name="text" type="string">
+  The spoken content of this turn as transcribed.
+</ResponseField>
+
+<ResponseField name="timestamp" type="number">
+  Unix timestamp (seconds) indicating when this turn occurred during the call.
+</ResponseField>
+
+### Not Found
+
+If no transcript exists for the requested call, the endpoint returns `404`:
+
+```json
+{
+  "error": "Transcript not found"
+}
+```
+
+This can occur for calls that are still in progress, calls that ended before transcription was available, or calls where transcription failed.
+
+## Example
+
+<CodeGroup>
+```bash curl
+curl https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/conversations/conv_xyz789/transcript \
+  -H "Authorization: Bearer fb_live_0123456789ab_..."
+```
+
+```python python
+import requests
+
+response = requests.get(
+    "https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/conversations/conv_xyz789/transcript",
+    headers={"Authorization": "Bearer fb_live_0123456789ab_..."},
+)
+
+if response.status_code == 404:
+    print("No transcript available for this call.")
+else:
+    for turn in response.json():
+        print(f"[{turn['speaker'].upper()}] {turn['text']}")
+```
+</CodeGroup>
+
+### Sample Response
+
+```json
+[
+  {
+    "speaker": "agent",
+    "text": "Hi, I'm calling on behalf of Riverside Clinic to collect some intake information before your appointment. Is now a good time?",
+    "timestamp": 1718250001
+  },
+  {
+    "speaker": "user",
+    "text": "Yes, go ahead.",
+    "timestamp": 1718250008
+  },
+  {
+    "speaker": "agent",
+    "text": "Great. Could I start by getting your full legal name?",
+    "timestamp": 1718250010
+  },
+  {
+    "speaker": "user",
+    "text": "It's Jane Smith.",
+    "timestamp": 1718250015
+  },
+  {
+    "speaker": "agent",
+    "text": "Thank you, Jane. And could you share your date of birth?",
+    "timestamp": 1718250018
+  },
+  {
+    "speaker": "user",
+    "text": "April 12th, 1985.",
+    "timestamp": 1718250023
+  },
+  {
+    "speaker": "agent",
+    "text": "Perfect. That's everything I need. Thank you for your time, and we'll see you at your appointment.",
+    "timestamp": 1718250028
+  }
+]
+```
+
+<Note>
+  Transcripts are available only after a call has ended and processing is complete. For in-progress calls, poll [Get Form Data](/api-reference/calls/get-form-data) instead to track answers as they are collected.
+</Note>
+
+<Tip>
+  If you retrieve calls via [List Calls](/api-reference/calls/list-conversations) without setting `include_transcript=false`, the transcript is embedded in each conversation record — saving you this separate request.
+</Tip>

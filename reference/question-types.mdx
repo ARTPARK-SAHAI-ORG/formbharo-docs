@@ -1,177 +1,141 @@
 ---
-title: "Question types"
-description: "The six answer types and the fields each one uses."
+title: "Question Types: All Six Answer Formats Explained"
+sidebarTitle: "Question Types"
+description: "FormBharo supports six response types: string, number, date, boolean, single-select, and multi-select. Each has its own storage format and extra config fields."
 ---
 
-Every question in the `questions` list looks like this:
+Every question in a FormBharo agent has a `response_type` that controls how the voice agent captures and stores the answer. There are six types. Each type also has common fields that every question can use.
 
-```json
-{
-  "name": "full_name",
-  "question": "What is your full name?",
-  "response_type": "string",
-  "required": true,
-  "script": "What is your full name?"
-}
-```
+## Fields common to every question
 
-## Fields on every question
+<ParamField body="question" type="string" required>
+  The wording of the question as the agent will understand it. Also used as the key in `form_data` if `name` is omitted.
+</ParamField>
 
-<ResponseField name="question" type="string" required>
-  The wording of the question. This is what you see in listings, and it is the key you
-  read the answer back by when you leave `name` out.
-</ResponseField>
+<ParamField body="response_type" type="string" required>
+  One of `string`, `number`, `date`, `boolean`, `single-select`, or `multi-select`. Determines how the agent captures and stores the answer.
+</ParamField>
 
-<ResponseField name="response_type" type="string" required>
-  One of `string`, `number`, `date`, `boolean`, `single-select`, `multi-select`.
-</ResponseField>
+<ParamField body="name" type="string">
+  A short, machine-friendly key used in `form_data` and `form_status`. Auto-generated from the question wording if omitted. Set this explicitly when you want a stable key that won't change if you rephrase the question.
+</ParamField>
 
-<ResponseField name="name" type="string">
-  The short key this answer is stored under in `form_data` and `form_status`. Leave it
-  out and FormBharo makes one from the wording: lower case, spaces turned into
-  underscores, question marks dropped. Set it yourself when the answers go into your own
-  database, so the key does not move when you reword the question.
-</ResponseField>
+<ParamField body="required" type="boolean">
+  When `true`, the call ends if no valid answer is obtained after all retries. The conversation status is set to `failed`.
+</ParamField>
 
-<ResponseField name="required" type="boolean">
-  Whether the call can finish without this answer. A required question that never gets an
-  answer ends the call.
-</ResponseField>
+<ParamField body="script" type="string">
+  The exact words the agent speaks to ask this question. If omitted, the agent generates its own phrasing from the `question` text.
+</ParamField>
 
-<ResponseField name="script" type="string">
-  The exact words to say. Without it, the agent words the question itself.
-</ResponseField>
+<ParamField body="skip_message" type="string">
+  What the agent says when moving past an unanswered optional question. Useful for maintaining conversational flow.
+</ParamField>
 
-<ResponseField name="skip_message" type="string">
-  What the agent says as it moves past an optional question nobody answered.
-</ResponseField>
+<ParamField body="advanced_instructions" type="string">
+  Per-question extra prompt instructions. Applied in addition to the agent-level `ai_instructions`.
+</ParamField>
 
-<ResponseField name="advanced_instructions" type="string">
-  Extra instructions for this question alone, for example `Ask ONLY if fever_nature is
-  'Intermittent'.`
-</ResponseField>
+<ParamField body="validation" type="Validation object">
+  Enforces a specific format on the answer. See [Validation](/reference/validation) for the full rule reference.
+</ParamField>
 
-<ResponseField name="validation" type="Validation">
-  A rule the answer has to satisfy. See [Validation](/reference/validation).
-</ResponseField>
+<ParamField body="retry_config" type="RetryConfig object">
+  Controls how many times the agent re-asks the question and what happens when retries run out. See [Retries](/reference/retries).
+</ParamField>
 
-<ResponseField name="retry_config" type="RetryConfig">
-  How many times to re-ask, and what to say. See [Retries](/reference/retries).
-</ResponseField>
+<ParamField body="end_call_values" type="array of strings">
+  A list of answer values that trigger the `screened_out` conversation status and end the call immediately. Use this to implement eligibility screening.
+</ParamField>
 
-<ResponseField name="end_call_values" type="string[]">
-  Answers that end the call early on purpose. The call is then marked `screened_out`
-  rather than `failed`, and the agent says `scripts.outro_incomplete`. Write the values
-  as strings, so `["false"]` for a `boolean` question and `["None"]` for a select.
-</ResponseField>
+<ParamField body="branch_id" type="string">
+  Places this question inside a conditional branch. The question is only asked when the branch condition evaluates to true. See [Branching](/reference/branching).
+</ParamField>
 
-<ResponseField name="branch_id" type="string">
-  Puts the question inside a branch, so it is only asked when that branch's condition
-  holds. See [Branching](/reference/branching).
-</ResponseField>
+---
 
-## string
+## The six response types
 
-Free text. No extra fields.
+### string
 
-```json
-{"name": "full_name", "question": "What is your full name?", "response_type": "string", "required": true}
-```
+Free-text response. The agent transcribes whatever the caller says and stores it as-is.
 
-Stored as a string.
+**Extra fields:** None.
 
-## number
+**Stored as:** A plain string — e.g., `"I have had a headache for three days"`.
 
-<ResponseField name="number_format" type="string">
-  `integer` for whole numbers, `decimal` to allow a fractional part.
-</ResponseField>
+---
 
-```json
-{"name": "age", "question": "How old are you?", "response_type": "number", "number_format": "integer", "required": true}
-```
+### number
 
-Stored as a number. A `decimal` answer with no fractional part is stored as a whole
-number.
+A numeric response. The agent extracts the number from the caller's speech.
 
-## date
+**Extra fields:**
 
-```json
-{"name": "fever_started_on", "question": "What date did the fever start?", "response_type": "date", "required": true}
-```
+<ParamField body="number_format" type='"integer" | "decimal"'>
+  Controls whether the stored value is rounded to an integer or preserved as a decimal.
+</ParamField>
 
-Stored as a string in `DD-MM-YYYY` form, for example `"20-08-2026"`. Anything else is
-rejected. To also require that the date is in the past or the future, add a
-[validation rule](/reference/validation).
+**Stored as:** A JSON number — e.g., `42` or `3.5`.
 
-## boolean
+---
 
-<ResponseField name="boolean_labels" type="object">
-  Words to store instead of `true` and `false`, as `{"true": "Yes", "false": "No"}`.
-</ResponseField>
+### date
 
-```json
-{
-  "name": "has_fever",
-  "question": "Do you have a fever?",
-  "response_type": "boolean",
-  "required": true,
-  "boolean_labels": {"true": "Yes", "false": "No"}
-}
-```
+A date response in DD-MM-YYYY format.
 
-Stored as `true` or `false`. With `boolean_labels` set, the label is stored instead, so
-that question would hold `"Yes"`.
+**Extra fields:** None.
 
-When you write the answer yourself with
-`PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data`, send `true`
-or `false`. A question with `boolean_labels` also accepts either label as text, ignoring
-upper and lower case. The words `"yes"` and `"no"` are not accepted unless they are the
-labels.
+**Stored as:** A string in `"DD-MM-YYYY"` format — e.g., `"25-12-2024"`. The agent handles natural-language date expressions ("last Tuesday", "the fifth of March") and normalises them.
 
-## single-select
+---
 
-<ResponseField name="options" type="string[]">
-  The choices, in the order they are offered. A select question with no options accepts
-  any answer, so always give it options.
-</ResponseField>
+### boolean
 
-```json
-{
-  "name": "severity",
-  "question": "How severe is it?",
-  "response_type": "single-select",
-  "options": ["Low", "Moderate", "High"],
-  "required": true
-}
-```
+A yes/no response. Optionally, you can use custom labels instead of `true`/`false`.
 
-Stored as one of the option texts, for example `"Moderate"`.
+**Extra fields:**
 
-When you write the answer yourself, send either the option text, ignoring upper and lower
-case, or its position in `options` counting from zero. So `2` and `"High"` both store
-`"High"`. Anything else comes back as
-`Value must be one of: Low, Moderate, High.`
+<ParamField body="boolean_labels" type="object">
+  Custom display labels for the two states. Provide `{ "true": "Yes", "false": "No" }` or any other pair of strings.
+</ParamField>
 
-## multi-select
+**Stored as:** `true` or `false` when no labels are set. When labels are set, stored as the matching label text — e.g., `"Yes"`.
 
-<ResponseField name="options" type="string[]">
-  The choices, in the order they are offered. A select question with no options accepts
-  any answer, so always give it options.
-</ResponseField>
+**Patching:** When you manually correct a boolean answer via the API, you can send `true`, `false`, or either label text (e.g., `"Yes"` or `"No"`).
 
-```json
-{
-  "name": "fever_symptoms",
-  "question": "Which of these do you also have?",
-  "response_type": "multi-select",
-  "options": ["Headache", "Cough", "Body ache", "None"],
-  "required": true
-}
-```
+---
 
-Stored as one string holding the chosen options, joined by a comma and a space, for
-example `"Headache, Cough"`. It is not stored as a list.
+### single-select
 
-When you write the answer yourself, send either a list of positions counting from zero,
-such as `[0, 1]`, or one string of option texts separated by commas, such as
-`"Headache, Cough"`. A list of option texts is rejected.
+The caller chooses one option from a predefined list.
+
+**Extra fields:**
+
+<ParamField body="options" type="array of strings" required>
+  The list of options the caller can choose from — e.g., `["Morning", "Afternoon", "Evening"]`.
+</ParamField>
+
+**Stored as:** The chosen option text as a string — e.g., `"Morning"`.
+
+**Patching:** When correcting a single-select answer via the API, send the option text (case-insensitive) or the 0-based index of the option (e.g., `0` for the first option).
+
+---
+
+### multi-select
+
+The caller can choose one or more options from a predefined list.
+
+**Extra fields:**
+
+<ParamField body="options" type="array of strings" required>
+  The list of options the caller can choose from — e.g., `["Headache", "Cough", "Fever"]`.
+</ParamField>
+
+**Stored as:** A comma-and-space-joined string of the chosen options — e.g., `"Headache, Cough"`. **Not** a JSON array.
+
+**Patching:** When correcting a multi-select answer via the API, send a list of 0-based indices (e.g., `[0, 2]`) or a comma-separated string of option texts (e.g., `"Headache, Fever"`).
+
+<Warning>
+  A multi-select answer is stored as a string, not a list. `"Headache, Cough"` not `["Headache", "Cough"]`. Split on `", "` to get the array back when processing results in your application.
+</Warning>

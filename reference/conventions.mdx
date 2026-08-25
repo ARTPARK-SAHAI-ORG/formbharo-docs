@@ -1,75 +1,95 @@
 ---
-title: "Conventions"
-description: "Paths, paging, timestamps, and the two shapes some lists come back in."
+title: "API Conventions: Pagination, Timestamps, and Response Shapes"
+sidebarTitle: "Conventions"
+description: "FormBharo API conventions: base path, pagination with cursor and limit, unix timestamp format, and the two list response shapes you'll encounter."
 ---
 
-## Paths
+FormBharo's API follows a consistent set of conventions for paths, pagination, and timestamps. Understanding these upfront prevents common integration mistakes.
 
-Every endpoint sits under `/api/v1` on your FormBharo server. Running the server
-yourself, that is `http://localhost:7860/api/v1`.
+## Base path
 
-The one exception is `POST /offer`, which starts a call. It sits at the bare path,
-`http://localhost:7860/offer`, not under `/api/v1`.
+All endpoints sit under `/api/v1` on your FormBharo server. For example, to list agents on a server at `https://YOUR-FORMBHARO-SERVER`, the full URL is `https://YOUR-FORMBHARO-SERVER/api/v1/agents`.
 
-## Paging
+<Note>
+  **Exception:** `POST /offer` (the WebRTC signalling endpoint) is at the bare path — `https://YOUR-FORMBHARO-SERVER/offer` — with no `/api/v1` prefix.
+</Note>
 
-Lists take `limit`, meaning how many rows, and `cursor`, meaning where to start.
+---
 
-A cursor is a position in the list, counted from the top. `cursor=20` means skip the
-first twenty rows. It is not tied to a particular row. So if a call is recorded while you
-are working through the pages, every row below it moves down by one, and you can see the
-same row twice or miss one. For a list that is not changing under you, paging is exact.
+## Pagination
 
-`next_cursor` in the reply is what to send as `cursor` next time. It is `null` on the
-last page, and it is always a number.
+List endpoints support two query parameters for paging through results:
 
-## Two shapes on the same list
+| Parameter | Type | Description |
+|---|---|---|
+| `limit` | integer | The number of records to return in this page. |
+| `cursor` | integer | A positional offset from the top of the result set. Pass `0` (or omit it) to start from the beginning. |
 
-`GET /api/v1/agents/{agent_id}/conversations` replies in one of two shapes, and which one
-you get depends only on whether you asked for paging.
+`cursor` is a positional offset, not tied to a specific row's identifier. This means live inserts that happen between two page requests can cause the same record to appear on two consecutive pages, or for a record to be skipped entirely. For most use cases this is acceptable — but avoid building deduplication logic that depends on cursor-based paging being gap-free.
 
-Send neither `limit` nor `cursor`, and you get a plain list of every matching call:
+When the last page is reached, `next_cursor` in the response is `null`.
+
+---
+
+## Two response shapes on the same list endpoint
+
+Some list endpoints return different JSON shapes depending on whether you include pagination parameters:
+
+**Without `limit` or `cursor`** — the response is a plain JSON array:
 
 ```json
 [
-  {"conversation_id": "6f1f0a1c-1111-4b0c-9a3a-2b6f9c0d0001", "status": "in_progress"}
+  { "id": "agent_abc", "title": "Symptom Check" },
+  { "id": "agent_def", "title": "Follow-up Survey" }
 ]
 ```
 
-Send either `limit` or `cursor`, and you get an object instead:
+**With `limit` or `cursor` present** — the response is a paginated envelope object:
 
 ```json
 {
   "data": [
-    {"conversation_id": "6f1f0a1c-1111-4b0c-9a3a-2b6f9c0d0001", "status": "in_progress"}
+    { "id": "agent_abc", "title": "Symptom Check" }
   ],
-  "next_cursor": null
+  "next_cursor": 1
 }
 ```
 
-Filters on their own do not change the shape. `?status=complete` still gives you a plain
-list, just a shorter one.
+This behaviour applies to:
+- `GET /api/v1/agents`
+- `GET /api/v1/agents/{agent_id}/conversations`
+- `GET /api/v1/workspaces`
 
-`GET /api/v1/agents` and `GET /api/v1/workspaces` behave the same way.
-`GET /api/v1/conversations`, the list across every agent, always gives you the object.
+<Info>
+  `GET /api/v1/conversations` (the cross-agent conversation list) **always** returns the envelope shape — `{ "data": [...], "next_cursor": ... }` — regardless of whether you pass pagination parameters.
+</Info>
+
+---
 
 ## Timestamps
 
-Every time value is unix seconds, written as a number with a fractional part. For example
-`1787626873.7724512` is 25 August 2026 at 03:01 UTC. There are no date strings and no
-time zones anywhere in the API.
+All timestamps in FormBharo are unix seconds expressed as a fractional (floating-point) number. There are no date strings and no timezone objects.
 
-## Filtering by date
+```json
+{
+  "created_at": 1718123456.789
+}
+```
 
-`since` and `until` are unix seconds and both are inclusive. They filter on `created_at`,
-which is the last time the call's answers were written, not when the call happened. See
-[Gotchas](/reference/gotchas).
+The `since` and `until` query parameters on list endpoints filter on `created_at`. In FormBharo, `created_at` is the **last-write time** — it is updated whenever the record is modified, not set once at creation.
 
-## Leaving out the transcript
+<Warning>
+  A past date range is never truly final. If someone edits an answer on a call that originally happened last week, that call's `created_at` moves to the current moment and it will reappear in a fresh query for the current window. Always match incoming records by `conversation_id` and update your local copy rather than assuming a historical range is complete.
+</Warning>
 
-`GET /api/v1/agents/{agent_id}/conversations` includes each call's transcript by default.
-Pass `include_transcript=false` to leave it out, which makes the reply much smaller. The
-`transcript` key is then missing, not empty.
+---
 
-`GET /api/v1/conversations` never includes transcripts. Fetch one with
-`GET /api/v1/agents/{agent_id}/conversations/{conversation_id}/transcript`.
+## Transcript inclusion
+
+`GET /api/v1/agents/{agent_id}/conversations` includes the full call transcript for each conversation by default. Transcripts can be large — if you only need form data and metadata, pass `include_transcript=false` to omit them.
+
+```
+GET /api/v1/agents/{agent_id}/conversations?include_transcript=false
+```
+
+When omitted, the `transcript` key is **absent** from each conversation record entirely — it is not present with a `null` or empty value. Check for key existence, not for a falsy value, if your code needs to distinguish "transcript omitted" from "no transcript recorded".

@@ -1,95 +1,121 @@
 ---
-title: "Answers"
-description: "form_data holds the values, form_status says how each one got there."
+title: "Answers: Reading form_data and form_status Correctly"
+sidebarTitle: "Answers"
+description: "Answers live in form_data keyed by question name. form_status tells you whether each field was answered, skipped, or not yet reached."
 ---
 
-Every call carries two objects. Both are keyed by the question's `name`.
+When a call completes, FormBharo stores answers in two companion objects: `form_data` holds the raw values, and `form_status` records whether each question was answered, skipped, or never reached. Always read `form_status` alongside `form_data` — never rely on truthiness alone.
+
+## form_data: the values
+
+The keys in `form_data` are question names. Each question has a `name` field set when the agent is configured; if you leave it blank, FormBharo generates one from the question wording. Use these names when mapping answers into your own system.
+
+The type of each value depends on the `response_type` configured for the question:
+
+| `response_type` | Value in `form_data` |
+|---|---|
+| `string` | A plain string — e.g. `"Jane Smith"` |
+| `number` | A JSON number — e.g. `42` or `3.14` |
+| `date` | A string in `"DD-MM-YYYY"` format — e.g. `"24-06-2025"` |
+| `boolean` | `true` or `false` — or the configured label string if `boolean_labels` is set |
+| `single-select` | The text of the chosen option — e.g. `"Option A"` |
+| `multi-select` | All chosen options joined by `", "` as a **string** — e.g. `"Option A, Option C"` — not an array |
+
+A question that the caller actively declined to answer is stored as `null` — it is not omitted from the object. A missing key and a `null` value mean different things; see `form_status` below for how to tell them apart.
+
+## form_status: the per-field state
+
+`form_status` has the same keys as `form_data`. Each value is one of three strings:
+
+- **`answered`** — the agent captured a valid answer for this question. The corresponding `form_data` value is the answer.
+- **`skipped`** — the question was asked but no answer was captured (the caller said nothing, declined, or it timed out). The corresponding `form_data` value is `null`.
+- **`empty`** — the question has not been reached yet, or its branch was never activated during the call. The corresponding `form_data` value is `null`.
+
+<Warning>
+Read `form_status`, not the truthiness of `form_data`. The values `0`, `""`, and `false` are all real answers — they are truthy in some languages and falsy in others, but they represent captured data. A `null` in `form_data` could be a skipped question or an empty one — only `form_status` tells you which.
+</Warning>
+
+## Before any answers are saved
+
+`GET /api/v1/data/{agent_id}/{conversation_id}` returns `{}` until the first answer is written to the call record. This happens when the first question is successfully answered during the conversation. If you poll this endpoint immediately after a call starts, expect an empty object and retry.
+
+## Correcting an answer
+
+If an answer was captured incorrectly — for example, a name was misheard — you can patch it directly without re-running the call:
+
+```
+PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data
+```
+
+<Note>
+This route requires **no API key**. It is an open endpoint, so you can call it from client-side code or a webhook without exposing your credentials.
+</Note>
+
+Send an `updates` object containing only the fields you want to change:
+
+<CodeGroup>
+```bash curl
+curl -X PATCH \
+  https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/conversations/conv_xyz789/form_data \
+  -H "Content-Type: application/json" \
+  -d '{
+    "updates": {
+      "full_name": "Jane Smith",
+      "opted_in": true
+    }
+  }'
+```
+
+```python Python
+import httpx
+
+response = httpx.patch(
+    "https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/conversations/conv_xyz789/form_data",
+    json={
+        "updates": {
+            "full_name": "Jane Smith",
+            "opted_in": True,
+        }
+    },
+)
+print(response.json())
+```
+</CodeGroup>
+
+**Sending `null` as a value** marks that field as `skipped` in `form_status`. The response is the full updated `form_data` and `form_status` objects.
+
+FormBharo validates the new values against the question's `response_type` before saving. If validation fails, you receive a `400` response with an `invalid_fields` object listing every field that did not pass:
 
 ```json
 {
-  "form_data": {
-    "consent": true,
-    "full_name": "Asha Rao",
-    "has_fever": "Yes",
-    "phone": null
-  },
-  "form_status": {
-    "consent": "answered",
-    "full_name": "answered",
-    "phone": "skipped",
-    "has_fever": "answered",
-    "fever_started_on": "empty",
-    "fever_symptoms": "empty"
+  "error": "validation_failed",
+  "invalid_fields": {
+    "opted_in": "Expected boolean, got string"
   }
 }
 ```
 
-## form_data
+## Example: form_data and form_status together
 
-The values people gave. The type follows the question's `response_type`:
+Here is what a completed call record looks like when one question was answered, one was skipped, and one was never reached:
 
-| Response type | What you get |
-| --- | --- |
-| `string` | A string. |
-| `number` | A number. |
-| `date` | A string in `DD-MM-YYYY` form. |
-| `boolean` | `true` or `false`, unless the question sets `boolean_labels`. Then you get the label, such as `"Yes"`. |
-| `single-select` | One of the question's `options`, as a string. |
-| `multi-select` | The chosen options in one string, joined by a comma and a space, such as `"Headache, Cough"`. Not a list. |
-
-A question that was asked and turned down is stored as `null`. It is not left out.
-
-## form_status
-
-One of three words per question:
-
-<ResponseField name="answered" type="status">
-  The person gave an answer and it is in `form_data`.
-</ResponseField>
-
-<ResponseField name="skipped" type="status">
-  The question was put to the person and no answer was captured. `form_data` holds
-  `null`.
-</ResponseField>
-
-<ResponseField name="empty" type="status">
-  The question has not been reached yet, or its branch never activated.
-</ResponseField>
-
-<Warning>
-Read `form_status`, not the truthiness of `form_data`. A skipped question is `null`, and
-so is a question nobody has reached. The number `0`, an empty string, and `false` are
-all real answers that a plain truthy check would throw away.
-</Warning>
-
-## Before anything is saved
-
-`GET /api/v1/data/{agent_id}/{conversation_id}` returns `{}` until the first answer is
-written. There is no `form_data` key to read, so handle the empty object.
-
-## Correcting an answer
-
-`PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data` writes
-answers by hand. Send only the fields you are changing:
-
-```bash
-curl -X PATCH \
-  "$FORMBHARO_URL/api/v1/agents/$AGENT_ID/conversations/$CONVERSATION_ID/form_data" \
-  -H "Content-Type: application/json" \
-  -d '{"updates": {"full_name": "Asha Rao", "phone": null}}'
+```json
+{
+  "form_data": {
+    "full_name": "Jane Smith",
+    "age": 34,
+    "referral_source": null,
+    "preferred_date": null
+  },
+  "form_status": {
+    "full_name": "answered",
+    "age": "answered",
+    "referral_source": "skipped",
+    "preferred_date": "empty"
+  }
+}
 ```
 
-The reply is the whole `form_data` and `form_status` after the change. Sending `null`
-marks the field `skipped`.
-
-What each type accepts here is set out in
-[Question types](/reference/question-types). Two of them are easy to get wrong: a
-`single-select` takes the exact option text or its position in `options` counting from
-zero, and a `multi-select` takes either a list of those positions or one string of
-option texts separated by commas.
-
-Values are checked against the question's type and rules first. A value that fails comes
-back as 400 with an `invalid_fields` object naming each bad field. A name that is not one
-of the agent's questions comes back as 400 as well. See [Errors](/reference/errors).
-
-This route needs no key. See [API keys](/getting-started/api-keys).
+- `full_name` and `age` were answered — use their `form_data` values directly.
+- `referral_source` was asked but the caller did not answer — `form_data` is `null` and `form_status` is `skipped`.
+- `preferred_date` was never reached, likely because the call ended or its branch was not triggered — `form_data` is `null` and `form_status` is `empty`.

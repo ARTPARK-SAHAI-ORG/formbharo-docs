@@ -1,0 +1,91 @@
+---
+title: "GET /api/v1/data/{agent_id}/{conversation_id} — Get Form Data"
+sidebarTitle: "Get Form Data"
+description: "GET /api/v1/data/{agent_id}/{conversation_id} returns just the form_data and form_status for one call. Requires no API key — safe to call from the browser."
+---
+
+`GET /api/v1/data/{agent_id}/{conversation_id}` returns the `form_data` and `form_status` for a single call. It requires no API key, making it suitable for polling from browser JavaScript during a live call — for example, to display answers as they are collected in a real-time UI. Before the agent has written any answers, the endpoint returns an empty object `{}`.
+
+## Authentication
+
+No API key is required. This endpoint is publicly accessible to anyone who knows the `agent_id` and `conversation_id`.
+
+## Path Parameters
+
+<ParamField path="agent_id" type="string" required>
+  The unique identifier of the agent that conducted the call.
+</ParamField>
+
+<ParamField path="conversation_id" type="string" required>
+  The unique identifier of the call whose form data you want to retrieve.
+</ParamField>
+
+## Response
+
+<ResponseField name="form_data" type="object">
+  Key/value pairs mapping question names to the answers collected so far. Returns an empty object `{}` before the first answer is written. Values may be `null` for questions that have been marked as skipped.
+</ResponseField>
+
+<ResponseField name="form_status" type="object">
+  Per-field status indicators. Each key is a question name; values are `filled`, `skipped`, or `pending`. Returns an empty object `{}` before any answers exist.
+</ResponseField>
+
+## JavaScript Polling Example
+
+Poll this endpoint every 2 seconds to update your UI in real time as the agent collects answers:
+
+```javascript
+const agentId = "agt_abc123";
+const conversationId = "conv_xyz789";
+const url = `https://YOUR-FORMBHARO-SERVER/api/v1/data/${agentId}/${conversationId}`;
+
+async function pollFormData() {
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (Object.keys(data).length === 0) {
+    console.log("No answers yet — call may still be connecting.");
+    return;
+  }
+
+  console.log("Form data:", data.form_data);
+  console.log("Form status:", data.form_status);
+}
+
+// Poll every 2 seconds
+const intervalId = setInterval(pollFormData, 2000);
+
+// Stop polling once the call completes (implement your own termination logic)
+// clearInterval(intervalId);
+```
+
+### Sample Response
+
+```json
+{
+  "form_data": {
+    "full_name": "Jane Smith",
+    "date_of_birth": "1985-04-12",
+    "insurance_provider": null
+  },
+  "form_status": {
+    "full_name": "filled",
+    "date_of_birth": "filled",
+    "insurance_provider": "skipped"
+  }
+}
+```
+
+### Before the First Answer
+
+```json
+{}
+```
+
+<Warning>
+  Anyone who knows the agent ID and conversation ID can read these answers. Guard IDs carefully and avoid exposing them in public URLs or client-side logs if you are collecting sensitive information such as health data or financial details.
+</Warning>
+
+<Tip>
+  For full call metadata including transcript and duration, use [List Calls](/api-reference/calls/list-conversations) with an authenticated request instead.
+</Tip>

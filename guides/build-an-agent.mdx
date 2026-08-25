@@ -1,206 +1,229 @@
 ---
-title: "Build an agent from a form"
-description: "Turn a paper or web form into an agent that asks it out loud."
+title: "Build a Voice Agent from Your Form"
+sidebarTitle: "Build an Agent"
+description: "Turn a paper or web form into a FormBharo voice agent: map fields to question types, add scripts, configure branching, and publish with the API."
 ---
 
-Work through your form field by field. For each one you need three things: a short name
-to store the answer under, the wording of the question, and the answer type.
+FormBharo lets you turn any form — paper intake sheets, web surveys, clinical questionnaires — into a voice agent that asks questions out loud and saves the answers. This guide walks through the full process: mapping fields, adding a script, configuring conditional branches, and publishing.
 
-## 1. Create the agent
+<Steps>
 
-`POST /api/v1/agents` creates a draft.
+  <Step title="Create a draft agent">
+    Start by sending a `POST /api/v1/agents` request with at minimum a `title` and a `questions` array. The API returns a new agent in draft state along with its `agent_id`, which you'll use in every subsequent request.
 
-```bash
-curl -X POST "$FORMBHARO_URL/api/v1/agents" \
-  -H "Authorization: Bearer $FORMBHARO_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Clinic intake",
-    "questions": [
-      {"name": "full_name", "question": "What is your full name?", "response_type": "string", "required": true}
-    ]
-  }'
-```
+    <CodeGroup>
 
-```json
-{
-  "id": "a87c1556-79fa-4492-add9-a704c13466a3",
-  "workspace_id": "personal-b3c9fe587b86d5a1"
-}
-```
+    ```bash curl
+    curl -X POST https://YOUR-FORMBHARO-SERVER/api/v1/agents \
+      -H "Authorization: Bearer <api-key>" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "title": "Clinic intake",
+        "questions": [
+          {
+            "id": "full_name",
+            "label": "What is your full name?",
+            "response_type": "string"
+          },
+          {
+            "id": "date_of_birth",
+            "label": "What is your date of birth?",
+            "response_type": "date"
+          }
+        ]
+      }'
+    ```
 
-Keep the `id`. Everything else uses it.
+    ```python python
+    import requests
 
-## 2. Write the questions
+    response = requests.post(
+        "https://YOUR-FORMBHARO-SERVER/api/v1/agents",
+        headers={"Authorization": "Bearer <api-key>"},
+        json={
+            "title": "Clinic intake",
+            "questions": [
+                {
+                    "id": "full_name",
+                    "label": "What is your full name?",
+                    "response_type": "string",
+                },
+                {
+                    "id": "date_of_birth",
+                    "label": "What is your date of birth?",
+                    "response_type": "date",
+                },
+            ],
+        },
+    )
 
-Match each form field to a `response_type`:
+    agent = response.json()
+    agent_id = agent["agent_id"]
+    ```
 
-| Your field | `response_type` |
-| --- | --- |
-| Free text box | `string` |
-| Number box | `number`, with `number_format` set to `integer` or `decimal` |
-| Date picker | `date` |
-| Yes or no, a tick box | `boolean` |
-| Radio buttons, a drop-down | `single-select`, with `options` |
-| Tick boxes where more than one can be chosen | `multi-select`, with `options` |
+    </CodeGroup>
+  </Step>
 
-Then add whatever else the field needs:
+  <Step title="Map each field to a question type">
+    Every question needs a `response_type` that tells FormBharo how to parse and store the caller's spoken answer. Choose the type that matches the original form field.
 
-- **The exact wording to speak.** `script`. Without it the agent words the question
-  itself.
-- **A rule the answer has to satisfy.** `validation`, for example a ten-digit phone
-  number. See [Validation](/reference/validation).
-- **Extra guidance for one question.** `advanced_instructions`, for example
-  `If the user selects 'None', do not include any other options.`
-- **How often to re-ask.** `retry_config`. See [Retries](/reference/retries).
+    | `response_type` | What it stores | Extra options |
+    |---|---|---|
+    | `string` | Free-text answer | — |
+    | `number` | Numeric value | `number_format: "integer"` or `"decimal"` |
+    | `date` | Date, stored as `DD-MM-YYYY` | — |
+    | `boolean` | Yes/no answer | `boolean_labels` to customise the spoken options |
+    | `single-select` | One choice from a list | `options[]` — required |
+    | `multi-select` | One or more choices from a list | `options[]` — required |
 
-Full field list: [Question types](/reference/question-types).
+    For `single-select` and `multi-select`, pass `options` as an array of strings. The agent reads the list aloud and maps the caller's answer to the closest matching option.
 
-## 3. Add the follow-up questions
+    For `number`, omit `number_format` if the caller might say either integers or decimals; set it to `"integer"` or `"decimal"` when you know the expected format.
+  </Step>
 
-Questions that only apply to some people go in a branch. Declare the branch in
-`branches`, then put `branch_id` on each question that belongs to it. The question the
-branch depends on has to come first in the list.
+  <Step title="Add scripts">
+    Scripts give the agent its opening and closing lines. Set them inside a `scripts` object on the agent body.
 
-```json
-{
-  "questions": [
-    {"name": "has_fever", "question": "Do you have a fever?", "response_type": "boolean", "required": true},
-    {"name": "fever_started_on", "question": "What date did the fever start?", "response_type": "date", "required": true, "branch_id": "fever_details"}
-  ],
-  "branches": [
-    {"id": "fever_details", "condition": {"field": "has_fever", "equals": true}}
-  ]
-}
-```
+    - **`scripts.intro`** — What the agent says at the very start of the call, before the first question. Use this to greet the caller and explain the purpose of the call.
+    - **`scripts.outro`** — What the agent says when all required questions have been answered and the call is complete.
+    - **`scripts.outro_incomplete`** — What the agent says when the call ends before all questions are answered (for example, the caller hangs up early).
 
-See [Branching](/reference/branching).
+    <Note>
+      You cannot set `outro_incomplete` without also setting `outro`. Both must be present if you want to customise the incomplete ending.
+    </Note>
 
-## 4. Add the opening and closing lines
-
-```json
-{
-  "scripts": {
-    "intro": "Hello. I have a few questions before your appointment.",
-    "outro": "Thank you. That is everything.",
-    "outro_incomplete": "Thank you. We will not go any further today."
-  }
-}
-```
-
-`outro_incomplete` is said when the call ends early. Sending it without `outro` is
-refused.
-
-## 5. Stop the call early when someone does not qualify
-
-Put the disqualifying answers in `end_call_values` on the question that decides it. Write
-them as strings.
-
-```json
-{
-  "name": "consent",
-  "question": "May I ask you a few questions about your health?",
-  "response_type": "boolean",
-  "required": true,
-  "end_call_values": ["false"]
-}
-```
-
-Someone who says no gets `scripts.outro_incomplete` and the call is marked
-`screened_out`, not `failed`.
-
-## 6. Publish it
-
-`PUT /api/v1/agents/{agent_id}` replaces the agent and publishes it. Send the whole
-thing, not just what changed.
-
-```bash
-curl -X PUT "$FORMBHARO_URL/api/v1/agents/$AGENT_ID" \
-  -H "Authorization: Bearer $FORMBHARO_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Clinic intake",
-    "description": "Booking a patient in before they see a doctor.",
-    "language": "English",
-    "scripts": {
-      "intro": "Hello. I have a few questions before your appointment.",
-      "outro": "Thank you. That is everything.",
-      "outro_incomplete": "Thank you. We will not go any further today."
-    },
-    "questions": [
-      {
-        "name": "consent",
-        "question": "May I ask you a few questions about your health?",
-        "response_type": "boolean",
-        "required": true,
-        "end_call_values": ["false"]
-      },
-      {
-        "name": "full_name",
-        "question": "What is your full name?",
-        "response_type": "string",
-        "required": true,
-        "validation": {"type": "min_length", "rules": {"min_length": 2}}
-      },
-      {
-        "name": "phone",
-        "question": "What is your phone number?",
-        "response_type": "string",
-        "required": false,
-        "validation": {"type": "phone_number", "rules": {"digits": 10}},
-        "skip_message": "That is fine, we will move on."
-      },
-      {
-        "name": "has_fever",
-        "question": "Do you have a fever?",
-        "response_type": "boolean",
-        "required": true,
-        "boolean_labels": {"true": "Yes", "false": "No"}
-      },
-      {
-        "name": "fever_started_on",
-        "question": "What date did the fever start?",
-        "response_type": "date",
-        "required": true,
-        "validation": {"type": "date_today_or_past", "rules": {}},
-        "branch_id": "fever_details"
-      },
-      {
-        "name": "fever_symptoms",
-        "question": "Which of these do you also have?",
-        "response_type": "multi-select",
-        "options": ["Headache", "Cough", "Body ache", "None"],
-        "required": true,
-        "branch_id": "fever_details"
-      }
-    ],
-    "branches": [
-      {"id": "fever_details", "condition": {"field": "has_fever", "equals": true}}
-    ]
-  }'
-```
-
-```json
-{"id": "a87c1556-79fa-4492-add9-a704c13466a3", "status": "updated", "version": 1}
-```
-
-Every published save records a version you can go back to. See
-[Agents](/concepts/agents).
-
-## If the save is refused
-
-A 400 with `validation_issues` names each problem:
-
-```json
-{
-  "validation_issues": [
+    ```json
     {
-      "field": "questions[0].branch_id",
-      "message": "Question references unknown branch 'nope'."
+      "scripts": {
+        "intro": "Hi, I'm calling on behalf of City Clinic to complete your intake form. This will only take a couple of minutes.",
+        "outro": "That's everything I need. Thank you for your time — we'll see you at your appointment.",
+        "outro_incomplete": "It looks like we ran out of time. Our team will follow up to collect the remaining details."
+      }
     }
-  ]
-}
+    ```
+  </Step>
+
+  <Step title="Add conditional branches">
+    Branches let you skip or show groups of questions based on a caller's earlier answer. The flow works in two parts:
+
+    1. **Declare the branch** — add an entry to the top-level `branches` array. Give it a unique `id` and a `condition` that references a question `id` and a rule (for example, `equals` a specific value, or `present` meaning any non-empty answer).
+    2. **Tag questions** — set `branch_id` on every question that belongs to the branch. Those questions are only asked if the condition evaluates to `true` at runtime.
+
+    ```json
+    {
+      "branches": [
+        {
+          "id": "has_insurance",
+          "condition": {
+            "field": "insurance_status",
+            "equals": "yes"
+          }
+        }
+      ],
+      "questions": [
+        {
+          "id": "insurance_status",
+          "label": "Do you have health insurance?",
+          "response_type": "boolean"
+        },
+        {
+          "id": "insurance_provider",
+          "label": "Who is your insurance provider?",
+          "response_type": "string",
+          "branch_id": "has_insurance"
+        },
+        {
+          "id": "policy_number",
+          "label": "What is your policy number?",
+          "response_type": "string",
+          "branch_id": "has_insurance"
+        }
+      ]
+    }
+    ```
+  </Step>
+
+  <Step title="Configure screening">
+    Use `end_call_values` to end a call early when a caller gives a disqualifying answer. Supply an array of strings; if the agent records any of those exact values, it ends the call immediately and marks the conversation `screened_out`. Screened-out calls count as successes, not failures.
+
+    ```json
+    {
+      "end_call_values": ["no", "not interested", "already completed"]
+    }
+    ```
+
+    Screened-out calls appear in analytics separately from fully completed calls, so you can track the size of the disqualified cohort without it inflating your failure rate.
+  </Step>
+
+  <Step title="Publish">
+    When your agent is ready, publish it with `PUT /api/v1/agents/{agent_id}`. Send the complete agent body — not just the changed fields — as the request body. The API validates the configuration and returns the published agent on success.
+
+    <CodeGroup>
+
+    ```bash curl
+    curl -X PUT https://YOUR-FORMBHARO-SERVER/api/v1/agents/AGENT_ID \
+      -H "Authorization: Bearer <api-key>" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "title": "Clinic intake",
+        "questions": [ ... ],
+        "scripts": { ... },
+        "branches": [ ... ]
+      }'
+    ```
+
+    ```python python
+    import requests
+
+    agent_body = {
+        "title": "Clinic intake",
+        "questions": [...],
+        "scripts": {...},
+        "branches": [...],
+    }
+
+    response = requests.put(
+        f"https://YOUR-FORMBHARO-SERVER/api/v1/agents/{agent_id}",
+        headers={"Authorization": "Bearer <api-key>"},
+        json=agent_body,
+    )
+
+    if response.status_code == 400:
+        print("Validation failed:", response.json()["validation_issues"])
+    else:
+        print("Published:", response.json())
+    ```
+
+    </CodeGroup>
+
+    <Warning>
+      If validation fails, the API returns `400` with a `validation_issues` array describing each problem. Fix every issue before retrying — partial saves are not supported.
+    </Warning>
+  </Step>
+
+</Steps>
+
+## Preview changes before saving
+
+Before you publish a new version, you can review exactly what will change by calling `POST /api/v1/agents/{agent_id}/diff-preview` with the proposed agent body. The response contains an array of diff lines, each with a `type` field:
+
+| Type | Meaning |
+|---|---|
+| `add` | Line present in the new version but not the current one |
+| `remove` | Line present in the current version but not the new one |
+| `context` | Unchanged line shown for context |
+| `hunk` | Separator between diff sections |
+| `meta` | Header information about the diff |
+
+Use this endpoint in CI pipelines or review tools to catch unintended changes before they reach a live agent.
+
+```bash curl
+curl -X POST https://YOUR-FORMBHARO-SERVER/api/v1/agents/AGENT_ID/diff-preview \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{ "title": "Clinic intake", "questions": [ ... ] }'
 ```
 
-To see what a save would change before you make it, send the same body to
-`POST /api/v1/agents/{agent_id}/diff-preview`.
+<Tip>
+  See **Agent Configuration** for every field, **Question Types** for per-type options, and **Branching** for the full branch rules.
+</Tip>

@@ -1,0 +1,42 @@
+---
+title: "POST /api/v1/agents/{agent_id}/duplicate — Copy an Agent"
+sidebarTitle: "Duplicate Agent"
+description: "POST /api/v1/agents/{agent_id}/duplicate creates a new draft copy of an agent. The duplicate starts with the same configuration but no call history."
+---
+
+`POST /api/v1/agents/{agent_id}/duplicate` creates a new draft agent with the same configuration as the original. The duplicate has no call history and starts in draft status — it will not be callable until you publish it. This is useful for A/B testing different question sets or creating a staging version of a live agent.
+
+**Authentication:** Required — include `Authorization: Bearer <api-key>` on every request.
+
+## Path Parameters
+
+<ParamField path="agent_id" type="string" required>
+  The unique identifier of the agent to duplicate.
+</ParamField>
+
+<Tip>
+  After duplicating, update the new agent's `title` with `PUT /api/v1/agents/{new_id}` to distinguish it from the original before sharing it with your team.
+</Tip>
+
+## Response
+
+<ResponseField name="id" type="string">
+  The unique identifier of the newly created duplicate agent. Use this ID in all subsequent operations on the copy.
+</ResponseField>
+
+## Example
+
+<CodeGroup>
+  ```bash curl
+  curl -X POST https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/duplicate \
+    -H "Authorization: Bearer fb_live_0123456789ab_..."
+  ```
+</CodeGroup>
+
+### Example Response
+
+```json
+{
+  "id": "agt_ghi789"
+}
+```

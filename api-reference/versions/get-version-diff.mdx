@@ -1,0 +1,92 @@
+---
+title: "GET /api/v1/agents/{agent_id}/versions/{version}/diff — Version Diff"
+sidebarTitle: "Version Diff"
+description: "GET /api/v1/agents/{agent_id}/versions/{version}/diff returns a line-by-line diff showing what changed between this version and the previous one."
+---
+
+`GET /api/v1/agents/{agent_id}/versions/{version}/diff` returns a structured diff comparing a published version against the previous version. Use this to understand what changed between saves — for example, before deciding whether to restore an older version or to audit a change that affected call quality.
+
+## Authentication
+
+This endpoint requires a valid API key in the `Authorization` header.
+
+```http
+Authorization: Bearer <api-key>
+```
+
+## Path Parameters
+
+<ParamField path="agent_id" type="string" required>
+  The unique identifier of the agent.
+</ParamField>
+
+<ParamField path="version" type="integer" required>
+  The version number to diff. The diff is always computed relative to the immediately preceding version (i.e. `version - 1`). Requesting a diff for version `1` returns an empty `lines` array because there is no prior version to compare against.
+</ParamField>
+
+## Response
+
+<ResponseField name="lines" type="array">
+  An ordered array of `DiffLine` objects representing the line-by-line diff.
+
+  <Expandable title="DiffLine fields">
+    <ResponseField name="type" type="string">
+      The role of this line in the diff. One of:
+
+      | Value | Meaning |
+      |-------|---------|
+      | `add` | This line was added in the current version. |
+      | `remove` | This line was present in the previous version and has been removed. |
+      | `context` | Unchanged surrounding context shown for readability. |
+      | `hunk` | A hunk header (e.g. `@@ -3,7 +3,9 @@`) indicating the position in the file. |
+      | `meta` | File-level metadata line (e.g. file path header). |
+    </ResponseField>
+
+    <ResponseField name="content" type="string">
+      The text content of this diff line, including any leading `+`, `-`, or space character that would appear in a unified diff.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example
+
+<CodeGroup>
+```bash curl
+curl https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/versions/4/diff \
+  -H "Authorization: Bearer fb_live_0123456789ab_..."
+```
+
+```python python
+import requests
+
+response = requests.get(
+    "https://YOUR-FORMBHARO-SERVER/api/v1/agents/agt_abc123/versions/4/diff",
+    headers={"Authorization": "Bearer fb_live_0123456789ab_..."},
+)
+for line in response.json()["lines"]:
+    print(line["type"].ljust(8), line["content"])
+```
+</CodeGroup>
+
+### Sample Response
+
+```json
+{
+  "lines": [
+    { "type": "meta",    "content": "--- version/3" },
+    { "type": "meta",    "content": "+++ version/4" },
+    { "type": "hunk",    "content": "@@ -12,6 +12,10 @@" },
+    { "type": "context", "content": "   \"name\": \"date_of_birth\"," },
+    { "type": "context", "content": "   \"label\": \"Date of Birth\"," },
+    { "type": "context", "content": "   \"type\": \"date\"" },
+    { "type": "add",     "content": "+  \"name\": \"insurance_provider\"," },
+    { "type": "add",     "content": "+  \"label\": \"Insurance Provider\"," },
+    { "type": "add",     "content": "+  \"type\": \"text\"," },
+    { "type": "add",     "content": "+  \"instructions\": \"Ask the caller for their insurance provider name.\"" }
+  ]
+}
+```
+
+<Tip>
+  To preview what a diff would look like *before* you save, use [Diff Preview](/api-reference/versions/diff-preview) instead. It accepts your in-progress configuration and returns the same `lines` format without persisting anything.
+</Tip>

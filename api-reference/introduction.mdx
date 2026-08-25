@@ -1,49 +1,70 @@
 ---
-title: "API reference"
-description: "Twenty-four endpoints, grouped by what they act on."
+title: "FormBharo API Reference: 30 Endpoints"
+sidebarTitle: "Introduction"
+description: "FormBharo's REST API has 30 endpoints across five resource groups: Agents, Agent Versions, Calls, Analytics, and Workspaces. Base path is /api/v1."
 ---
 
-Every endpoint sits under `/api/v1` on your FormBharo server. Set two shell variables and
-the examples on these pages run as they are:
+The FormBharo REST API exposes 30 endpoints organised across five resource groups. All endpoints are under `/api/v1` on your FormBharo server, with the single exception of `POST /offer` — the WebRTC signalling path, which lives at the bare root.
 
-```bash
-export FORMBHARO_KEY=fb_live_0123456789ab_REPLACE_THIS_WITH_THE_KEY_YOU_COPIED
-export FORMBHARO_URL=https://YOUR-FORMBHARO-SERVER
+## Authentication
+
+Every request must include an `Authorization` header with your API key:
+
+```http
+Authorization: Bearer fb_live_0123456789ab_...
 ```
 
-Send the key on every request in the `Authorization` header, after the word `Bearer`.
-Three routes take no key: see [API keys](/getting-started/api-keys).
+Four routes are open and require no API key:
 
-## The groups
+| Route | Purpose |
+|---|---|
+| `POST /offer` | WebRTC signalling (browser SDK) |
+| `GET /api/v1/data/{agent_id}/{conversation_id}` | Fetch collected form data |
+| `PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data` | Write form data from a call |
+| `GET /api/v1/agents/{agent_id}/public` | Read agent title and questions list |
+
+<Note>
+  Keep your API key secret. Never embed it in client-side JavaScript or expose it in a public repository. Rotate it immediately if it is compromised.
+</Note>
+
+## Base URL
+
+Replace `YOUR-FORMBHARO-SERVER` with your own FormBharo server hostname throughout all examples.
+
+```text
+https://YOUR-FORMBHARO-SERVER
+```
+
+All API paths are then appended after this base. For example:
+
+```text
+https://YOUR-FORMBHARO-SERVER/api/v1/agents
+```
+
+## Resource Groups
 
 <CardGroup cols={2}>
-  <Card title="Agents" icon="robot">
-    Create, read, replace, and delete agents, and say who can manage them.
+  <Card title="Agents" icon="robot" href="/api-reference/agents/list-agents">
+    Create, read, update, delete, and publish agents. Manage access lists and move agents between workspaces.
   </Card>
-  <Card title="Agent versions" icon="clock-rotate-left">
-    Every published save, what changed, and going back to an earlier one.
+  <Card title="Agent Versions" icon="clock-rotate-left" href="/api-reference/versions/list-versions">
+    Browse the full version history of any agent and restore a previous version at any time.
   </Card>
-  <Card title="Calls" icon="phone">
-    One agent's calls, one call's answers, and one call's transcript.
+  <Card title="Calls" icon="phone" href="/api-reference/calls/list-conversations">
+    Read conversations, retrieve collected answers, and download full call transcripts.
   </Card>
-  <Card title="Analytics" icon="chart-line">
-    Calls across every agent, and the completion and cost figures.
+  <Card title="Analytics" icon="chart-bar" href="/api-reference/analytics/agent-analytics">
+    Query completion rates, average call duration, and per-agent cost breakdowns.
   </Card>
-  <Card title="Workspaces" icon="users">
-    The groups agents live in, and who is in them.
+  <Card title="Workspaces" icon="folder" href="/api-reference/workspaces/list-workspaces">
+    Manage workspace membership, roles, and settings across your organisation.
   </Card>
 </CardGroup>
 
-## Before you start
+## Conventions
 
-- [Conventions](/reference/conventions) covers paging, timestamps, and the two shapes
-  some lists come back in.
-- [Errors](/reference/errors) covers the three error bodies and what each status code
-  means.
-- [Gotchas](/reference/gotchas) covers four things that will catch you out.
+These supporting reference pages document the patterns that apply across the whole API:
 
-## One endpoint that is not listed here
-
-`POST /offer` opens the audio connection that starts a call. It sits at the bare path
-rather than under `/api/v1`, so it is not in the schema behind these pages. See
-[Run a call from your own page](/guides/run-a-call).
+- **[API Conventions](/reference/conventions)** — request format, content-type requirements, pagination, and date formats.
+- **[Error Responses](/reference/errors)** — every HTTP error code the API returns, with example payloads and remediation guidance.
+- **[Known Gotchas](/reference/gotchas)** — field-name differences between create/update bodies and read-back responses, and other sharp edges to watch for.

@@ -1,90 +1,137 @@
 ---
-title: "Calls"
-description: "One conversation with one person, and the answers it produced."
+title: "Calls: Conversations That Collect Your Form Data"
+sidebarTitle: "Calls"
+description: "A call is one conversation between your agent and one person. It holds the answers collected, a status, timing, cost, and an optional transcript."
 ---
 
-A call is one conversation between an agent and one person. Everything that conversation
-produces is filed under a conversation id that you choose before the call starts.
+A call represents a single conversation between a FormBharo agent and a person. Every time someone talks to an agent, FormBharo creates a call record and writes answers into it as the conversation progresses. You can read a call record at any point — during the conversation or after — to see what has been collected so far.
 
-A call row looks like this:
+## What a call contains
 
-```json
-{
-  "conversation_id": "6f1f0a1c-1111-4b0c-9a3a-2b6f9c0d0001",
-  "source": null,
-  "caller_number": null,
-  "form_data": {"consent": true, "full_name": "Asha Rao", "has_fever": "Yes", "phone": null},
-  "form_status": {
-    "consent": "answered",
-    "full_name": "answered",
-    "phone": "skipped",
-    "has_fever": "answered",
-    "fever_started_on": "empty",
-    "fever_symptoms": "empty"
-  },
-  "filled_fields": 4,
-  "total_fields": 6,
-  "status": "in_progress",
-  "created_at": 1787626888.006087,
-  "duration_secs": null,
-  "cost": null,
-  "has_recording": false,
-  "has_transcript": false,
-  "avg_ack_latency_secs": null,
-  "avg_ack_to_reply_secs": null
-}
-```
-
-| Field | What it is |
-| --- | --- |
-| `conversation_id` | The id you chose for this call. |
-| `source` | Where the call came in from, such as `twilio` or `exotel`. It is `null` for a call from a browser. |
-| `caller_number` | The phone number that called, when there is one. |
-| `form_data` | The answers. See [Answers](/concepts/answers). |
-| `form_status` | How each answer got there. See [Answers](/concepts/answers). |
-| `filled_fields` | How many questions are resolved, meaning answered or deliberately skipped. |
-| `total_fields` | How many questions the agent has. |
-| `status` | One of the four below. |
-| `created_at` | The last time this call's answers were written, in unix seconds. Not when the call started. |
-| `duration_secs` | How long the conversation lasted. `null` when there is no transcript to measure. |
-| `cost` | What the call cost in US dollars, and the number of turns. `null` when nothing was measured. |
-| `has_recording`, `has_transcript` | Whether an audio recording and a transcript were kept. |
-| `avg_ack_latency_secs`, `avg_ack_to_reply_secs` | How quickly the agent responded, averaged over the call. `null` when nothing was measured. |
-
-## The four statuses
-
-<ResponseField name="in_progress" type="status">
-  The call is still going, or it stopped so recently that FormBharo cannot tell yet. Not
-  a failure.
+<ResponseField name="conversation_id" type="string" required>
+  Unique identifier for this call. Use it to fetch answers, the transcript, or to patch form data.
 </ResponseField>
 
-<ResponseField name="complete" type="status">
-  Every question that needed an answer got one. Questions inside a branch that never
-  activated do not count, so a call can be complete with some questions left at `empty`.
+<ResponseField name="source" type="string">
+  How the call was started — for example, `web`, `phone`, or `api`.
 </ResponseField>
 
-<ResponseField name="screened_out" type="status">
-  An answer meant the person did not qualify, so the agent stopped early on purpose. You
-  set this up with `end_call_values` on a question. See
-  [Question types](/reference/question-types).
+<ResponseField name="caller_number" type="string">
+  The phone number of the caller, if available. May be `null` for web or API-initiated calls.
 </ResponseField>
 
-<ResponseField name="failed" type="status">
-  The call ended with the form still unfinished.
+<ResponseField name="form_data" type="object">
+  The answers collected, keyed by question name. Values are the raw answers; see [Answers](/concepts/answers) for how to interpret them correctly.
 </ResponseField>
 
-<Note>
-In the analytics, `screened_out` counts towards `completed`, because the agent did the
-job it was asked to do. See [Read the analytics](/guides/read-the-analytics).
-</Note>
+<ResponseField name="form_status" type="object">
+  Per-field status object indicating whether each question was `answered`, `skipped`, or `empty`. Always read this alongside `form_data`.
+</ResponseField>
+
+<ResponseField name="filled_fields" type="number">
+  The number of questions that have been answered so far.
+</ResponseField>
+
+<ResponseField name="total_fields" type="number">
+  The total number of questions in the agent. Use `filled_fields / total_fields` to calculate completion progress.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Overall outcome of the call. One of `in_progress`, `complete`, `screened_out`, or `failed`. See [The four call statuses](#the-four-call-statuses) below.
+</ResponseField>
+
+<ResponseField name="created_at" type="number">
+  Unix timestamp of the **last time answers were written** to this record — not when the call started. Use with caution when sorting by recency.
+</ResponseField>
+
+<ResponseField name="duration_secs" type="number">
+  Total length of the conversation in seconds.
+</ResponseField>
+
+<ResponseField name="cost" type="object">
+  Breakdown of the compute cost for this call.
+
+  <Expandable title="cost fields">
+    <ResponseField name="cost.llm" type="number">
+      Cost attributed to the language model.
+    </ResponseField>
+    <ResponseField name="cost.stt" type="number">
+      Cost attributed to speech-to-text transcription.
+    </ResponseField>
+    <ResponseField name="cost.tts" type="number">
+      Cost attributed to text-to-speech synthesis.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="has_recording" type="boolean">
+  `true` if an audio recording of the call is available.
+</ResponseField>
+
+<ResponseField name="has_transcript" type="boolean">
+  `true` if a text transcript of the call is available. Fetch it with the transcript endpoint listed below.
+</ResponseField>
+
+<ResponseField name="avg_ack_latency_secs" type="number">
+  Average time in seconds between the caller finishing speaking and the agent acknowledging. A voice quality metric.
+</ResponseField>
+
+<ResponseField name="avg_ack_to_reply_secs" type="number">
+  Average time in seconds between acknowledgement and the agent's full reply. A voice quality metric.
+</ResponseField>
+
+## The four call statuses
+
+<Accordion title="in_progress">
+  The call is still active, or it ended so recently that FormBharo has not yet finalised the record. Poll again in a few seconds if you see this status after a call you expect to have finished.
+</Accordion>
+
+<Accordion title="complete">
+  Every required question was answered before the call ended. This is the fully successful outcome — `form_data` contains a value for every field in the agent.
+</Accordion>
+
+<Accordion title="screened_out">
+  An answer matched one of the `end_call_values` configured on a question, which caused the agent to end the call early by design. FormBharo counts `screened_out` as a successful outcome in analytics. Use this status to identify callers who were intentionally disqualified.
+</Accordion>
+
+<Accordion title="failed">
+  The call ended before the form was finished for an unplanned reason — the caller hung up, a network error occurred, or the agent hit a timeout. Check `form_data` and `form_status` to see how far the conversation progressed before it failed.
+</Accordion>
 
 ## Reading calls
 
-- `GET /api/v1/agents/{agent_id}/conversations` lists one agent's calls, newest first.
-- `GET /api/v1/conversations` lists calls across every agent you can see, newest first.
-  This is the one to poll. See
-  [Poll for finished calls](/guides/poll-for-finished-calls).
-- `GET /api/v1/data/{agent_id}/{conversation_id}` returns just the answers for one call,
-  and needs no key. This is the one to poll while a call is running.
-- `GET /api/v1/agents/{agent_id}/conversations/{conversation_id}/transcript` returns what
-  was said, in order.
+FormBharo exposes four endpoints for reading call data:
+
+<CardGroup cols={2}>
+  <Card title="All calls for one agent" icon="list">
+    ```
+    GET /api/v1/agents/{agent_id}/conversations
+    ```
+    Returns every call made against a specific agent, sorted newest first. Use this when you want results scoped to a single form.
+  </Card>
+
+  <Card title="Calls across all agents" icon="layer-group">
+    ```
+    GET /api/v1/conversations
+    ```
+    Returns calls from every agent in your workspace. Use this endpoint for polling — it lets you process new answers without looping over each agent separately.
+  </Card>
+
+  <Card title="Just the answers (no key required)" icon="database">
+    ```
+    GET /api/v1/data/{agent_id}/{conversation_id}
+    ```
+    Returns only the `form_data` object for one call. This route requires no API key, making it safe to embed in client-side or webhook contexts.
+  </Card>
+
+  <Card title="Transcript" icon="file-lines">
+    ```
+    GET /api/v1/agents/{agent_id}/conversations/{conversation_id}/transcript
+    ```
+    Returns the full text of everything said during the call, turn by turn. Only available when `has_transcript` is `true`.
+  </Card>
+</CardGroup>
+
+<Note>
+`created_at` is the timestamp of the last answer write, not when the call started. Sorting by `created_at` gives you calls ordered by most recent activity, which may differ from chronological start order — especially for long calls or calls with late-stage answers.
+</Note>
