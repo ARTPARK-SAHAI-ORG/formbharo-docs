@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "name": "FormBharo",
-  "theme": "luma",
+  "theme": "mint",
   "logo": {
     "light": "/logo/formbharo.svg",
     "dark": "/logo/formbharo.svg"
