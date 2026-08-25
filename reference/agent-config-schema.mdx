@@ -1,13 +1,13 @@
 ---
-title: "Agent Config JSON Schema"
-sidebarTitle: "Config Schema"
-description: "Schema for the JSON view in the agent editor's edit page."
+title: "Form Schema"
+sidebarTitle: "Form Schema"
+description: "The full config for a voice form: questions, validation, retries, and branches."
 ---
 
-This is the format used by the "JSON view" toggle on the agent edit page. Paste a config in this shape, then Save.
+The complete shape of a form. `PUT` it to `/api/v1/agents/{agent_id}/config` to replace an agent's whole configuration in one call.
 
 <Note>
-  This is not the raw API request body. `POST`/`PUT /api/v1/agents` uses `description`, `ai_instructions`, `question`, and `response_type` for the same concepts the JSON view calls `context`, `instructions`, `label`, and `type`.
+  `POST`/`PUT /api/v1/agents`, used in [Build an Agent](/guides/build-an-agent), takes a slightly different shape: `description`, `ai_instructions`, `question`, and `response_type` in place of `context`, `instructions`, `label`, and `type` below.
 </Note>
 
 ## Schema
@@ -133,13 +133,13 @@ Leave `validation` out entirely to switch it off.
 | `number_range` | number | `{ "type": "number_range", "rules": { "min": 0, "max": 120 } }` (min, max, or both) |
 | `min_length` | string, number | `{ "type": "min_length", "rules": { "min_length": 2 } }` |
 | `regex` | string | `{ "type": "regex", "rules": { "pattern": "^[A-Z]{2}[0-9]{4}$", "message": "Must look like AB1234" } }` |
-| `free_text` | any | `{ "type": "free_text", "rules": { "description": "Must be a real village name" } }` — note: this is guidance shown to the agent, not enforced on the value |
+| `free_text` | any | `{ "type": "free_text", "rules": { "description": "Must be a real village name" } }` |
 | `date` | date | `{ "type": "date", "rules": {} }` |
 | `date_format` | date | `{ "type": "date_format", "rules": {} }` |
 | `date_today_or_past` | date | `{ "type": "date_today_or_past", "rules": {} }` |
 | `date_future` | date | `{ "type": "date_future", "rules": {} }` |
 
-`free_text` is not enforced. The backend does not check the answer against `rules.description` at all — it's extra guidance text fed to the agent, not a validation check on the value.
+`free_text` is not enforced. Its `rules.description` is guidance for the agent, not a check on the answer.
 
 ## Branch rules
 

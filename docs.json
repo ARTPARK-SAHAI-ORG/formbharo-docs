@@ -4,7 +4,7 @@
   "theme": "mint",
   "logo": {
     "light": "/logo/formbharo.svg",
-    "dark": "/logo/formbharo.svg"
+    "dark": "/logo/formbharo-dark.svg"
   },
   "favicon": "/favicon.svg",
   "colors": {
@@ -72,17 +72,6 @@
         ]
       },
       {
-        "tab": "Use Cases",
-        "groups": [
-          {
-            "group": "Browse use cases",
-            "pages": [
-              "use-cases/armman"
-            ]
-          }
-        ]
-      },
-      {
         "tab": "API Reference",
         "groups": [
           {
@@ -94,6 +83,17 @@
           {
             "group": "Endpoints",
             "openapi": "api-reference/openapi.json"
+          }
+        ]
+      },
+      {
+        "tab": "Use Cases",
+        "groups": [
+          {
+            "group": "Browse use cases",
+            "pages": [
+              "use-cases/armman"
+            ]
           }
         ]
       }

@@ -1,7 +1,7 @@
 ---
 title: "FormBharo REST API Reference: Overview and Auth Guide"
 sidebarTitle: "Introduction"
-description: "Overview and authentication guide for the FormBharo REST API, organised into Agents, Calls, Analytics, and Workspaces. Base path is /api/v1."
+description: "Base path, authentication, and resource groups for the FormBharo REST API."
 ---
 
 import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
@@ -10,20 +10,13 @@ The FormBharo REST API is organised into resource groups: Agents, Calls, Analyti
 
 ## Authentication
 
-Every request must include an `Authorization` header with your API key:
+Every request must include an `Authorization` header with your API key. See [API Keys](/getting-started/api-keys) for how to create one.
 
 ```http
 Authorization: Bearer fb_live_0123456789ab_...
 ```
 
-Four routes are open and require no API key:
-
-| Route | Purpose |
-|---|---|
-| `POST /offer` | WebRTC signalling (browser SDK) |
-| `GET /api/v1/data/{agent_id}/{conversation_id}` | Fetch collected form data |
-| `PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data` | Write form data from a call |
-| `GET /api/v1/agents/{agent_id}/public` | Read agent title and questions list |
+Two routes need no key, both used when running a call from your own page: `POST /offer` to open the audio connection, and `GET /api/v1/data/{agent_id}/{conversation_id}` to read answers as they arrive. See [Run a Call](/guides/run-a-call).
 
 <Note>
   Keep your API key secret. Never embed it in client-side JavaScript or expose it in a public repository. Rotate it immediately if it is compromised.

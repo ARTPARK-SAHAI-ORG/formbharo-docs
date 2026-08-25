@@ -6,11 +6,9 @@ description: "Fetch completion rates, average call duration, voice latency, and 
 
 import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
 
-FormBharo exposes analytics endpoints for both individual agents and entire workspaces. You can filter by time window, call status, and source to compare performance across different cohorts — for example, comparing completion rates between a weekday campaign and a weekend one, or between two versions of an agent script.
-
 ## Agent analytics
 
-Fetch performance stats for a single agent with `GET /api/v1/agents/{agent_id}/analytics`.
+`GET /api/v1/agents/{agent_id}/analytics` returns stats for one agent.
 
 ```bash curl
 curl -G "{FORMBHARO_URL}/api/v1/agents/AGENT_ID/analytics" \
@@ -23,14 +21,14 @@ curl -G "{FORMBHARO_URL}/api/v1/agents/AGENT_ID/analytics" \
 
 | Query parameter | Description |
 |---|---|
-| `status` | Filter by call status: `in_progress`, `complete`, `screened_out`, or `failed` |
-| `source` | Filter by the source that initiated the call |
-| `since` | Unix timestamp — include only calls with `created_at >= since` |
-| `until` | Unix timestamp — include only calls with `created_at <= until` |
+| `status` | `in_progress`, `complete`, `screened_out`, or `failed` |
+| `source` | The source that started the call |
+| `since` | Unix timestamp: `created_at >= since` |
+| `until` | Unix timestamp: `created_at <= until` |
 
 ## Workspace analytics
 
-Fetch aggregated stats across all agents in a workspace with `GET /api/v1/workspaces/{workspace_id}/analytics`. This endpoint is restricted to **workspace admins**.
+`GET /api/v1/workspaces/{workspace_id}/analytics` returns the same stats across all agents in a workspace, plus a per-agent breakdown. Workspace admins only.
 
 ```bash curl
 curl -G "{FORMBHARO_URL}/api/v1/workspaces/WORKSPACE_ID/analytics" \
@@ -38,91 +36,15 @@ curl -G "{FORMBHARO_URL}/api/v1/workspaces/WORKSPACE_ID/analytics" \
   --data-urlencode "since=1700000000"
 ```
 
-The workspace response includes the same top-level stats as the agent endpoint, plus a **per-agent breakdown** — an array where each entry contains the agent's ID, name, and its own copy of the stats object. Use the breakdown to spot which agents are underperforming without making a separate request for each one.
+## Reading the numbers
 
-## What the stats mean
+| Stat | Meaning |
+|---|---|
+| `attempted` | Calls started, in any status |
+| `completed` | Calls that reached a defined ending, including screened out ones |
+| `screened_out` | Calls ended early because an answer matched `end_call_values` |
+| `completion_rate` | `completed / attempted`, between `0` and `1`. `null` when `attempted` is zero |
 
-<ResponseField name="attempted" type="integer">
-  Total number of calls started. Includes calls that are still in progress, completed, screened out, or failed.
-</ResponseField>
+To count calls that answered every question, subtract `screened_out` from `completed`.
 
-<ResponseField name="completed" type="integer">
-  Calls that reached either `complete` or `screened_out` status. Both outcomes mean the agent reached a defined ending — not that the caller answered every question.
-</ResponseField>
-
-<ResponseField name="screened_out" type="integer">
-  Calls ended early because the caller's answer matched a value in `end_call_values`. These are counted inside `completed`.
-</ResponseField>
-
-<ResponseField name="completion_rate" type="number">
-  The ratio `completed / attempted`, expressed as a decimal between `0` and `1`. Returns `null` when `attempted` is zero.
-</ResponseField>
-
-<ResponseField name="avg_duration_secs" type="object">
-  Average call length in seconds, plus a 95% confidence interval and the sample size used to compute it.
-
-  <Expandable title="Fields">
-    <ResponseField name="mean" type="number">
-      The average duration in seconds across all calls in the sample.
-    </ResponseField>
-    <ResponseField name="ci_95" type="array | null">
-      Two-element array `[lower, upper]` representing the 95% confidence interval. `null` when the sample contains fewer than two calls.
-    </ResponseField>
-    <ResponseField name="n" type="integer">
-      Number of calls included in the calculation.
-    </ResponseField>
-  </Expandable>
-</ResponseField>
-
-<ResponseField name="avg_ack_latency_secs" type="object">
-  Average time in seconds from the end of a caller's spoken turn to the agent's first acknowledgement word. Lower is better — high values suggest the agent is slow to process speech.
-
-  <Expandable title="Fields">
-    <ResponseField name="mean" type="number">
-      Mean acknowledgement latency in seconds.
-    </ResponseField>
-    <ResponseField name="ci_95" type="array | null">
-      95% confidence interval. `null` when fewer than two turns are in the sample.
-    </ResponseField>
-    <ResponseField name="n" type="integer">
-      Number of turns included in the calculation.
-    </ResponseField>
-  </Expandable>
-</ResponseField>
-
-<ResponseField name="avg_ack_to_reply_secs" type="object">
-  Average time in seconds from the agent's acknowledgement to the start of its full reply. Together with `avg_ack_latency_secs`, this gives you a complete picture of perceived voice latency.
-
-  <Expandable title="Fields">
-    <ResponseField name="mean" type="number">
-      Mean acknowledgement-to-reply time in seconds.
-    </ResponseField>
-    <ResponseField name="ci_95" type="array | null">
-      95% confidence interval. `null` when fewer than two turns are in the sample.
-    </ResponseField>
-    <ResponseField name="n" type="integer">
-      Number of turns included in the calculation.
-    </ResponseField>
-  </Expandable>
-</ResponseField>
-
-<ResponseField name="cost" type="object">
-  Cost breakdown for the calls in the sample.
-
-  <Expandable title="Fields">
-    <ResponseField name="per_call" type="object">
-      Average cost per call, split by service: `llm` (language model), `stt` (speech-to-text), and `tts` (text-to-speech). Each value is in USD.
-    </ResponseField>
-    <ResponseField name="per_turn" type="object">
-      Average cost per agent turn, split by the same three services.
-    </ResponseField>
-  </Expandable>
-</ResponseField>
-
-<Warning>
-  `completed` **includes** `screened_out` calls. If you want the count of calls that went all the way through every question, subtract `screened_out` from `completed`.
-</Warning>
-
-<Note>
-  All average fields return `null` when there are no usable calls in the requested window. The `ci_95` field within each average is `null` when the sample contains fewer than two calls — a confidence interval cannot be computed from a single data point.
-</Note>
+The response also carries average call duration, voice latency, and cost per call and per turn. See the [API reference](/api-reference/introduction) for those fields. Every average is `null` when the window has no usable calls.

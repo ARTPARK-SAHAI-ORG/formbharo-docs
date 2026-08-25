@@ -1,17 +1,15 @@
 ---
 title: "Build a FormBharo Voice Agent from Your Form Fields"
 sidebarTitle: "Build an Agent"
-description: "Turn a paper or web form into a FormBharo voice agent: map fields to question types, add scripts, configure branching, and publish with the API."
+description: "Turn a form into a FormBharo voice agent: map fields to question types, add scripts, configure branching, and publish with the API."
 ---
 
 import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
 
-FormBharo lets you turn any form — paper intake sheets, web surveys, clinical questionnaires — into a voice agent that asks questions out loud and saves the answers. This guide walks through the full process: mapping fields, adding a script, configuring conditional branches, and publishing.
-
 <Steps>
 
   <Step title="Create a draft agent">
-    Start by sending a `POST /api/v1/agents` request with at minimum a `title` and a `questions` array. The API returns a new agent in draft state along with its `agent_id`, which you'll use in every subsequent request.
+    `POST /api/v1/agents` always creates a draft. Send a `title` and a `questions` array. The response contains the `agent_id`.
 
     <CodeGroup>
 
@@ -23,13 +21,11 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
         "title": "Clinic intake",
         "questions": [
           {
-            "id": "full_name",
-            "label": "What is your full name?",
+            "question": "What is your full name?",
             "response_type": "string"
           },
           {
-            "id": "date_of_birth",
-            "label": "What is your date of birth?",
+            "question": "What is your date of birth?",
             "response_type": "date"
           }
         ]
@@ -46,13 +42,11 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
             "title": "Clinic intake",
             "questions": [
                 {
-                    "id": "full_name",
-                    "label": "What is your full name?",
+                    "question": "What is your full name?",
                     "response_type": "string",
                 },
                 {
-                    "id": "date_of_birth",
-                    "label": "What is your date of birth?",
+                    "question": "What is your date of birth?",
                     "response_type": "date",
                 },
             ],
@@ -67,38 +61,40 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
   </Step>
 
   <Step title="Map each field to a question type">
-    Every question needs a `response_type` that tells FormBharo how to parse and store the caller's spoken answer. Choose the type that matches the original form field.
+    `response_type` sets how the spoken answer is parsed and stored.
 
     | `response_type` | What it stores | Extra options |
     |---|---|---|
-    | `string` | Free-text answer | — |
+    | `string` | Free-text answer | |
     | `number` | Numeric value | `number_format: "integer"` or `"decimal"` |
-    | `date` | Date, stored as `DD-MM-YYYY` | — |
+    | `date` | Date, stored as `DD-MM-YYYY` | |
     | `boolean` | Yes/no answer | `boolean_labels` to customise the spoken options |
-    | `single-select` | One choice from a list | `options[]` — required |
-    | `multi-select` | One or more choices from a list | `options[]` — required |
+    | `single-select` | One choice from a list | `options[]`, required |
+    | `multi-select` | One or more choices from a list | `options[]`, required |
 
-    For `single-select` and `multi-select`, pass `options` as an array of strings. The agent reads the list aloud and maps the caller's answer to the closest matching option.
+    `options` is an array of strings. The agent reads the list aloud and maps the answer to the closest option.
 
-    For `number`, omit `number_format` if the caller might say either integers or decimals; set it to `"integer"` or `"decimal"` when you know the expected format.
+    Omit `number_format` to accept both integers and decimals.
+
+    Add an optional `name` to a question to give it a stable snake_case key. Branch conditions reference questions by `name`.
   </Step>
 
   <Step title="Add scripts">
-    Scripts give the agent its opening and closing lines. Set them inside a `scripts` object on the agent body.
+    Set `scripts` on the agent body.
 
-    - **`scripts.intro`** — What the agent says at the very start of the call, before the first question. Use this to greet the caller and explain the purpose of the call.
-    - **`scripts.outro`** — What the agent says when all required questions have been answered and the call is complete.
-    - **`scripts.outro_incomplete`** — What the agent says when the call ends before all questions are answered (for example, the caller hangs up early).
+    | Field | When the agent says it |
+    |---|---|
+    | `scripts.intro` | At the start of the call, before the first question |
+    | `scripts.outro` | After all required questions are answered |
+    | `scripts.outro_incomplete` | When the call ends before all questions are answered |
 
-    <Note>
-      You cannot set `outro_incomplete` without also setting `outro`. Both must be present if you want to customise the incomplete ending.
-    </Note>
+    `outro_incomplete` requires `outro`.
 
     ```json
     {
       "scripts": {
         "intro": "Hi, I'm calling on behalf of City Clinic to complete your intake form. This will only take a couple of minutes.",
-        "outro": "That's everything I need. Thank you for your time — we'll see you at your appointment.",
+        "outro": "That's everything I need. Thank you for your time, we'll see you at your appointment.",
         "outro_incomplete": "It looks like we ran out of time. Our team will follow up to collect the remaining details."
       }
     }
@@ -106,24 +102,18 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
   </Step>
 
   <Step title="Add conditional branches">
-    Branches let you skip or show groups of questions based on a caller's earlier answer. The flow works like this:
-
-    1. **Declare the branch** — add an entry to the top-level `branches` array. Give it a unique `id` and a `condition` that references a question `id` and a rule.
-    2. **Tag questions** — set `branch_id` on every question that belongs to the branch. Those questions are only asked if the condition evaluates to `true` at runtime.
+    1. Add an entry to the top-level `branches` array with a unique `id` and a `condition`.
+    2. Set `branch_id` on every question in that branch. Those questions are asked only when the condition is true.
 
     A condition supports these fields:
 
     | Field | Type | Meaning |
     |---|---|---|
-    | `field` | string | The `id` of the question whose answer is evaluated |
-    | `equals` | string | Branch is active when the answer exactly matches this value |
-    | `present` | boolean | Branch is active when the answer is any non-empty value |
+    | `field` | string | The `name` of the question whose answer is evaluated |
+    | `equals` | boolean | Matches the answer to a `boolean` question |
+    | `present` | boolean | `true` asks the branch when the question was answered, `false` asks it when the question was skipped |
 
-    <Note>
-      `present` takes priority over `equals`. If both are set on the same condition, `present` is evaluated and `equals` is ignored.
-    </Note>
-
-    Use `equals` to branch on a specific value (for example, only proceed if the caller answered "yes"). Use `present` to branch whenever the caller gave any answer at all, regardless of what it was.
+    `present` takes priority over `equals`. If both are set, `equals` is ignored.
 
     <CodeGroup>
 
@@ -134,25 +124,23 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
           "id": "has_insurance",
           "condition": {
             "field": "insurance_status",
-            "equals": "yes"
+            "equals": true
           }
         }
       ],
       "questions": [
         {
-          "id": "insurance_status",
-          "label": "Do you have health insurance?",
+          "name": "insurance_status",
+          "question": "Do you have health insurance?",
           "response_type": "boolean"
         },
         {
-          "id": "insurance_provider",
-          "label": "Who is your insurance provider?",
+          "question": "Who is your insurance provider?",
           "response_type": "string",
           "branch_id": "has_insurance"
         },
         {
-          "id": "policy_number",
-          "label": "What is your policy number?",
+          "question": "What is your policy number?",
           "response_type": "string",
           "branch_id": "has_insurance"
         }
@@ -173,13 +161,12 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
       ],
       "questions": [
         {
-          "id": "referral_source",
-          "label": "Were you referred by someone?",
+          "name": "referral_source",
+          "question": "Were you referred by someone?",
           "response_type": "string"
         },
         {
-          "id": "referral_name",
-          "label": "What is the name of the person who referred you?",
+          "question": "What is the name of the person who referred you?",
           "response_type": "string",
           "branch_id": "has_referral"
         }
@@ -191,19 +178,17 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
   </Step>
 
   <Step title="Configure screening">
-    Use `end_call_values` to end a call early when a caller gives a disqualifying answer. Supply an array of strings; if the agent records any of those exact values, it ends the call immediately and marks the conversation `screened_out`. Screened-out calls count as successes, not failures.
+    `end_call_values` is an array of strings. When the agent records any of those exact values, it ends the call and marks the conversation `screened_out`. Screened-out calls count as successes, not failures, and appear separately in analytics.
 
     ```json
     {
       "end_call_values": ["no", "not interested", "already completed"]
     }
     ```
-
-    Screened-out calls appear in analytics separately from fully completed calls, so you can track the size of the disqualified cohort without it inflating your failure rate.
   </Step>
 
   <Step title="Publish">
-    When your agent is ready, publish it with `PUT /api/v1/agents/{agent_id}`. Send the complete agent body — not just the changed fields — as the request body. The API validates the configuration and returns the published agent on success.
+    `PUT /api/v1/agents/{agent_id}` always publishes. Send the complete agent body, not just the changed fields.
 
     <CodeGroup>
 
@@ -244,7 +229,7 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
     </CodeGroup>
 
     <Warning>
-      If validation fails, the API returns `400` with a `validation_issues` array describing each problem. Fix every issue before retrying — partial saves are not supported.
+      On validation failure the API returns `400` with a `validation_issues` array. Fix every issue before retrying, partial saves are not supported.
     </Warning>
   </Step>
 
@@ -252,7 +237,7 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
 
 ## Preview changes before saving
 
-Before you publish a new version, you can review exactly what will change by calling `POST /api/v1/agents/{agent_id}/diff-preview` with the proposed agent body. The response contains an array of diff lines, each with a `type` field:
+`POST /api/v1/agents/{agent_id}/diff-preview` takes a proposed agent body and returns an array of diff lines, each with a `type` field.
 
 | Type | Meaning |
 |---|---|
@@ -262,8 +247,6 @@ Before you publish a new version, you can review exactly what will change by cal
 | `hunk` | Separator between diff sections |
 | `meta` | Header information about the diff |
 
-Use this endpoint in CI pipelines or review tools to catch unintended changes before they reach a live agent.
-
 ```bash curl
 curl -X POST {FORMBHARO_URL}/api/v1/agents/AGENT_ID/diff-preview \
   -H "Authorization: Bearer <api-key>" \
@@ -272,5 +255,5 @@ curl -X POST {FORMBHARO_URL}/api/v1/agents/AGENT_ID/diff-preview \
 ```
 
 <Tip>
-  See **Agent Configuration** for every field, **Question Types** for per-type options, and **Branching** for the full branch rules.
+  See [Agent config schema](/reference/agent-config-schema) for every field.
 </Tip>

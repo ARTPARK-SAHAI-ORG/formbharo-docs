@@ -6,14 +6,14 @@ description: "Use GET /api/v1/conversations?since= to continuously pull complete
 
 import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
 
-FormBharo's cross-agent conversations endpoint lets you pull finished calls into any external system on a schedule. By filtering on `since`, you retrieve only calls updated since your last poll — making it easy to keep a local database in sync without re-processing the full history on every request.
+`GET /api/v1/conversations` returns finished calls across every agent. Filter on `since` to fetch only what changed since your last poll.
 
 ## The polling pattern
 
 <Steps>
 
   <Step title="First poll">
-    On your very first run, call `GET /api/v1/conversations?since=0` to retrieve all calls. Process each record and insert it into your database. After processing, find the **largest `created_at` value** in the response and save it — this becomes your cursor for the next poll.
+    Call the endpoint with `since=0` to retrieve all calls, then save the largest `created_at` in the response as your cursor.
 
     ```bash curl
     curl "{FORMBHARO_URL}/api/v1/conversations?since=0" \
@@ -21,17 +21,20 @@ FormBharo's cross-agent conversations endpoint lets you pull finished calls into
     ```
   </Step>
 
-  <Step title="Subsequent polls">
-    On every subsequent run, call `GET /api/v1/conversations?since=<last_created_at>`, substituting the cursor you saved in the previous step.
-
-    The `since` filter is **inclusive**: it returns calls whose `created_at` is greater than or equal to the timestamp you pass. That means the call at the boundary will appear again. Match incoming records by `conversation_id` and **update** the existing row rather than inserting a duplicate.
+  <Step title="Later polls">
+    Pass the saved cursor as `since=<last_created_at>`. Save the new largest `created_at` each time.
   </Step>
 
   <Step title="Repeat">
-    Wait a few seconds to a minute, then return to step 2. How often you poll depends on how fresh your data needs to be — a CRM sync can afford a one-minute interval; a live dashboard might poll every five seconds.
+    Poll at most a few times per minute. Each request scans history, so response time grows with your total call count.
   </Step>
 
 </Steps>
+
+## Two things to know
+
+- `since` is inclusive, so the call at the boundary comes back in the next poll.
+- `created_at` is the last-write time, not the call start time. Editing an answer on an old call moves it into the current window. Match on `conversation_id` and update the existing row instead of inserting a new one.
 
 ## Example request
 
@@ -73,8 +76,7 @@ def poll_conversations(since: int = 0) -> list[dict]:
         response.raise_for_status()
         data = response.json()
 
-        conversations = data.get("conversations", [])
-        all_conversations.extend(conversations)
+        all_conversations.extend(data.get("conversations", []))
 
         cursor = data.get("next_cursor")
         if not cursor:
@@ -82,10 +84,8 @@ def poll_conversations(since: int = 0) -> list[dict]:
 
     return all_conversations
 
-# First poll — fetch everything
 results = poll_conversations(since=0)
 
-# Save the largest created_at as your next cursor
 if results:
     last_created_at = max(r["created_at"] for r in results)
     print(f"Next poll: since={last_created_at}")
@@ -93,65 +93,26 @@ if results:
 
 </CodeGroup>
 
-## Filtering options
+## Query parameters
 
-Use query parameters to narrow the result set before it reaches your system.
-
-<ResponseField name="agent_id" type="string">
-  Limit results to conversations belonging to a single agent.
-</ResponseField>
-
-<ResponseField name="workspace_id" type="string">
-  Limit results to conversations belonging to a single workspace.
-</ResponseField>
-
-<ResponseField name="status" type="string">
-  Filter by conversation status. Accepted values: `in_progress`, `complete`, `screened_out`, `failed`.
-</ResponseField>
-
-<ResponseField name="source" type="string">
-  Filter by the source that initiated the call (for example, a specific integration or channel).
-</ResponseField>
-
-<ResponseField name="since" type="integer">
-  Unix timestamp (inclusive). Returns calls where `created_at >= since`.
-</ResponseField>
-
-<ResponseField name="until" type="integer">
-  Unix timestamp (inclusive). Returns calls where `created_at <= until`.
-</ResponseField>
-
-<ResponseField name="limit" type="integer">
-  Number of rows per page. Accepts `1` to `200`. Defaults to `50`.
-</ResponseField>
-
-<ResponseField name="cursor" type="string">
-  Pagination offset returned in the previous response as `next_cursor`. Pass it to retrieve the next page.
-</ResponseField>
-
-## Two things to know
-
-<Note>
-  `created_at` is the **last-write time**, not the call start time. If someone edits an answer on a past call, that call's `created_at` moves forward into the current window. A date range you've already polled is never truly final — always upsert by `conversation_id` rather than assuming a record won't change.
-</Note>
-
-<Note>
-  Poll at most a few times per minute. The endpoint scans history on every request, and response time grows as your total call count increases. If you need near-real-time sync, consider polling every 5–10 seconds for only the most recent window rather than fetching large ranges on every request.
-</Note>
+| Parameter | Description |
+|---|---|
+| `agent_id` | Only conversations for one agent |
+| `workspace_id` | Only conversations for one workspace |
+| `status` | `in_progress`, `complete`, `screened_out`, or `failed` |
+| `source` | The source that started the call |
+| `since` | Unix timestamp, inclusive: `created_at >= since` |
+| `until` | Unix timestamp, inclusive: `created_at <= until` |
+| `limit` | Rows per page, `1` to `200`. Defaults to `50` |
+| `cursor` | The `next_cursor` from the previous response |
 
 ## Fetching transcripts
 
-Transcripts are **not** included in the cross-agent conversations list. Fetch them one call at a time once you have the identifiers you need.
+Transcripts are not in the cross-agent list. Fetch them one call at a time.
 
 ```bash curl
 curl "{FORMBHARO_URL}/api/v1/agents/AGENT_ID/conversations/CONVERSATION_ID/transcript" \
   -H "Authorization: Bearer <api-key>"
 ```
 
-If no transcript exists for a conversation, the endpoint returns `404` with the body:
-
-```json json
-{ "error": "Transcript not found" }
-```
-
-This is expected for calls that ended before any speech was recorded — treat it as an empty transcript rather than an error condition.
+A call with no recorded speech returns `404` with `{ "error": "Transcript not found" }`. Treat it as an empty transcript, not a failure.
