@@ -4,24 +4,25 @@ sidebarTitle: "Quickstart"
 description: "Set your API key and server URL, list your existing agents, and create your first voice agent in under five minutes using curl or Python."
 ---
 
-This guide walks you through the two most fundamental FormBharo API calls: listing existing agents and creating a new one. You need an API key (see [API Keys](/getting-started/api-keys)) and the URL of your FormBharo server. Both steps work in curl and Python — pick whichever you prefer.
+import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
+
+This guide walks you through the two most fundamental FormBharo API calls: listing existing agents and creating a new one. You need an API key (see [API Keys](/getting-started/api-keys)). Both steps work in curl and Python — pick whichever you prefer.
 
 <Steps>
-  <Step title="Set your environment variables">
-    Store your API key and server URL as environment variables so you don't hard-code them into every command.
+  <Step title="Set your API key">
+    Store your API key as an environment variable so you don't hard-code it into every command.
 
     ```bash
     export FORMBHARO_KEY="fb_live_0123456789ab_REPLACE_THIS_WITH_YOUR_KEY"
-    export FORMBHARO_URL="https://form-fill-agent-backend.artpark.ai"
     ```
   </Step>
 
   <Step title="List your agents">
-    Fetch all agents visible to your account. A successful response confirms your key and URL are correct.
+    Fetch all agents visible to your account. A successful response confirms your key is correct.
 
     <CodeGroup>
     ```bash curl
-    curl "$FORMBHARO_URL/api/v1/agents" \
+    curl "{FORMBHARO_URL}/api/v1/agents" \
       -H "Authorization: Bearer $FORMBHARO_KEY"
     ```
 
@@ -30,7 +31,7 @@ This guide walks you through the two most fundamental FormBharo API calls: listi
     import requests
 
     response = requests.get(
-        f"{os.environ['FORMBHARO_URL']}/api/v1/agents",
+        "{FORMBHARO_URL}/api/v1/agents",
         headers={"Authorization": f"Bearer {os.environ['FORMBHARO_KEY']}"},
     )
     response.raise_for_status()
@@ -61,7 +62,7 @@ This guide walks you through the two most fundamental FormBharo API calls: listi
 
     <CodeGroup>
     ```bash curl
-    curl -X POST "$FORMBHARO_URL/api/v1/agents" \
+    curl -X POST "{FORMBHARO_URL}/api/v1/agents" \
       -H "Authorization: Bearer $FORMBHARO_KEY" \
       -H "Content-Type: application/json" \
       -d '{
@@ -90,7 +91,7 @@ This guide walks you through the two most fundamental FormBharo API calls: listi
     }
 
     response = requests.post(
-        f"{os.environ['FORMBHARO_URL']}/api/v1/agents",
+        "{FORMBHARO_URL}/api/v1/agents",
         headers={
             "Authorization": f"Bearer {os.environ['FORMBHARO_KEY']}",
             "Content-Type": "application/json",
@@ -118,7 +119,7 @@ This guide walks you through the two most fundamental FormBharo API calls: listi
     A newly created agent starts as a draft and cannot accept calls until it is published. To publish it, send a `PUT` request to `/api/v1/agents/{agent_id}` with the complete agent body and `"status": "published"`.
 
     ```bash curl
-    curl -X PUT "$FORMBHARO_URL/api/v1/agents/f3a92c11-08bd-4e7a-b541-dc3301a4ef88" \
+    curl -X PUT "{FORMBHARO_URL}/api/v1/agents/f3a92c11-08bd-4e7a-b541-dc3301a4ef88" \
       -H "Authorization: Bearer $FORMBHARO_KEY" \
       -H "Content-Type: application/json" \
       -d '{

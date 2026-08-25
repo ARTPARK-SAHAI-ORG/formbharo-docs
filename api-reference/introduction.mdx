@@ -4,6 +4,8 @@ sidebarTitle: "Introduction"
 description: "FormBharo's REST API has 30 endpoints across five resource groups: Agents, Agent Versions, Calls, Analytics, and Workspaces. Base path is /api/v1."
 ---
 
+import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
+
 The FormBharo REST API exposes 30 endpoints organised across five resource groups. All endpoints are under `/api/v1` on your FormBharo server, with the single exception of `POST /offer` — the WebRTC signalling path, which lives at the bare root.
 
 ## Authentication
@@ -32,13 +34,13 @@ Four routes are open and require no API key:
 Every example in this reference uses this address.
 
 ```text
-https://form-fill-agent-backend.artpark.ai
+{FORMBHARO_URL}
 ```
 
 All API paths are then appended after this base. For example:
 
 ```text
-https://form-fill-agent-backend.artpark.ai/api/v1/agents
+{FORMBHARO_URL}/api/v1/agents
 ```
 
 ## Resource Groups
