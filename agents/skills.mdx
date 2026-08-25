@@ -26,9 +26,7 @@ npx skills add ARTPARK-SAHAI-ORG/formbharo-skills --agent codex
 ```
 </CodeGroup>
 
-Restart your coding agent session after installing so it picks up the skill.
-
-The repo is public ([ARTPARK-SAHAI-ORG/formbharo-skills](https://github.com/ARTPARK-SAHAI-ORG/formbharo-skills)), so no credentials are needed to install it.
+Restart your coding agent session after installing so it picks up the skill. The repo is public ([ARTPARK-SAHAI-ORG/formbharo-skills](https://github.com/ARTPARK-SAHAI-ORG/formbharo-skills)), so no credentials are needed.
 
 ### Manual install
 
@@ -37,11 +35,11 @@ git clone https://github.com/ARTPARK-SAHAI-ORG/formbharo-skills.git
 cp -r formbharo-skills/skills/formbharo ~/.claude/skills/formbharo
 ```
 
-For other tools, copy into their skills folder instead (Cursor: `.cursor/skills/`). Copy the whole `formbharo` folder, not just `SKILL.md` — `SKILL.md` links to files in its `references/` folder.
+Copy the whole `formbharo` folder, and for other tools copy it into their skills folder instead (Cursor: `.cursor/skills/`).
 
 ## Before you use it
 
-The skill needs two environment variables. These are the skill's own names, not the rest of this site's convention:
+Set these two environment variables. The names are the skill's own, and differ from the rest of this site's convention.
 
 | Variable | What it is |
 |---|---|
@@ -54,45 +52,19 @@ Verify both are set correctly:
 curl -s -H "Authorization: Bearer $FORMBHARO_API_KEY" "$FORMBHARO_API_URL/api/v1/agents"
 ```
 
-A list back (even an empty `[]`) means it's set up correctly.
+A list back, even an empty `[]`, means it is set up correctly.
 
 ## What it can do
 
-Ask your coding agent to build, edit, or inspect a voice form agent in plain English. For building an agent, it follows these steps:
+Describe your form to your coding agent in plain English, for example "collect name, age, and whether they have a fever, in Hindi", and the skill builds and publishes the agent. You can also ask it to edit an existing agent, pull the answers people gave on calls, and read back analytics.
 
-<Steps>
-  <Step title="You describe the form">
-    For example: "collect name, age, and whether they have a fever, in Hindi."
-  </Step>
-  <Step title="It builds the config">
-    Each item becomes a question entry in the agent's JSON config.
-  </Step>
-  <Step title="It creates a draft">
-    `POST /api/v1/agents`.
-  </Step>
-  <Step title="It publishes it">
-    `PUT /api/v1/agents/{agent_id}` with the same body. This also saves it as version 1.
-  </Step>
-  <Step title="It verifies">
-    `GET /api/v1/agents/{agent_id}` to confirm the agent looks right.
-  </Step>
-</Steps>
-
-It can also edit an existing agent, pull the answers people gave on calls, and read back numbers and analytics without misleading you.
-
-The skill only works from a plain-English description of your form, not a PDF or document directly. To turn a form document into an agent, see [PDF to form](/guides/pdf-to-form), which pairs Claude's own document reading with this skill.
+It works from a plain-English description only, not a PDF or document directly. To turn a form document into an agent, see [PDF to form](/guides/pdf-to-form).
 
 ## Next steps
 
 <CardGroup cols={2}>
   <Card title="Agent config schema" icon="brackets-curly" href="/reference/agent-config-schema">
     See the full shape of an agent's JSON config
-  </Card>
-  <Card title="PDF to form" icon="file-import" href="/guides/pdf-to-form">
-    Turn an existing form document into an agent
-  </Card>
-  <Card title="Build an agent" icon="hammer" href="/guides/build-an-agent">
-    Walk through creating an agent by hand, without the skill
   </Card>
   <Card title="API keys" icon="key" href="/getting-started/api-keys">
     Create the API key the skill authenticates with

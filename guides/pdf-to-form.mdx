@@ -4,41 +4,41 @@ sidebarTitle: "Create Agent from PDF"
 description: "Read a form PDF with Claude, then hand the extracted questions to the formbharo skill to build the agent."
 ---
 
-You already have a paper form as a PDF and you want a FormBharo agent that asks the same questions over a call. This isn't one built-in feature — it's two things working together. Claude reads the PDF the same way it reads any document you attach to a conversation, and turns it into a plain-English list of questions. The `formbharo` skill then builds the agent from that list, exactly the way it builds one from a list you typed yourself. The skill itself has no PDF or file-reading ability of its own — it only ever works from a plain-English description of the form.
+This is two things working together: Claude reads the PDF the way it reads any attached document, and the `formbharo` skill builds the agent from the plain-English question list Claude produces. The skill has no PDF reading of its own.
 
 ## Prerequisites
 
-- The `formbharo` skill installed. See [Agent Skills](/agents/skills) for install steps.
-- `FORMBHARO_API_KEY` and `FORMBHARO_API_URL` set in your environment. See [Agent Skills](/agents/skills) for where to get them.
+- The `formbharo` skill installed. See [Agent Skills](/agents/skills).
+- `FORMBHARO_API_KEY` and `FORMBHARO_API_URL` set in your environment. See [Agent Skills](/agents/skills).
 
 <Steps>
   <Step title="Attach the PDF and ask Claude to read it">
-    In Claude Code, Claude Desktop, or wherever the skill is installed, attach the form PDF to your conversation and ask Claude to list out every question or field on the form.
+    Attach the form PDF to your conversation and ask Claude to list every question or field on the form.
   </Step>
 
   <Step title="Review and correct the extracted list">
-    Check the list against the actual form. Fix anything Claude misread, and tell it the language and tone you want the agent to use — for example, "ask these in Hindi, keep it friendly."
+    Check the list against the form. Fix anything Claude misread, and tell it the language and tone you want, for example, "ask these in Hindi, keep it friendly."
   </Step>
 
   <Step title="Ask Claude to build the agent">
-    Once the question list looks right, ask Claude to build a FormBharo agent from it. From here it's the same skill workflow as building from a typed description — see [Agent Skills](/agents/skills) for how that workflow maps questions to the agent config.
+    Ask Claude to build a FormBharo agent from the list. From here it is the same skill workflow as building from a typed description. See [Agent Skills](/agents/skills).
   </Step>
 
   <Step title="The skill creates and publishes the agent">
-    The skill creates the agent as a draft (`POST /api/v1/agents`), then publishes it (`PUT /api/v1/agents/{agent_id}`), the same two-step process it always uses.
+    The skill creates the agent as a draft (`POST /api/v1/agents`), then publishes it (`PUT /api/v1/agents/{agent_id}`).
   </Step>
 
   <Step title="Review the agent before real calls">
-    Check the created agent in the web app, or with `GET /api/v1/agents/{agent_id}`, before using it for real calls. PDFs are often subtly wrong on:
+    Check the agent in the web app, or with `GET /api/v1/agents/{agent_id}`. PDFs are often subtly wrong on:
 
-    - **Field types** — a "date of birth" field on paper should become `response_type: "date"`, not `"string"`. See [Agent Config Schema](/reference/agent-config-schema).
-    - **Option lists** — check that every choice on a single-select or multi-select field made it into `options[]`, spelled the way you want them read aloud.
-    - **Validation the form implied but didn't spell out** — a phone number field should usually get a `phone_number` validation rule even though the paper form never wrote that rule down. See [Agent Config Schema](/reference/agent-config-schema).
+    - **Field types.** A "date of birth" field should become `response_type: "date"`, not `"string"`. See [Agent Config Schema](/reference/agent-config-schema).
+    - **Option lists.** Check that every choice on a single-select or multi-select field made it into `options[]`, spelled the way you want it read aloud.
+    - **Validation the form implied but did not spell out.** A phone number field should usually get a `phone_number` validation rule. See [Agent Config Schema](/reference/agent-config-schema).
   </Step>
 </Steps>
 
 <Warning>
-  A scanned or handwritten PDF can be misread by OCR. Always check the extracted question list against the source form before publishing, especially field types and which questions are required versus optional.
+  OCR can misread a scanned or handwritten PDF. Check the extracted question list against the source form before publishing, especially field types and which questions are required.
 </Warning>
 
 ## Next steps

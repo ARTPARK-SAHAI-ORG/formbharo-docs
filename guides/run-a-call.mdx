@@ -6,36 +6,36 @@ description: "Embed FormBharo voice calls in your own page using WebRTC: generat
 
 import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
 
-You can embed a FormBharo voice call directly in your web page using WebRTC. The call opens an audio connection to the agent, which asks questions out loud. You poll a key-less endpoint to read the answers as they come in.
+`POST /offer` and `GET /api/v1/data/{agent_id}/{conversation_id}` are the two routes you call without an API key. Every other route needs one.
 
 ## Before you start
 
-You need two things: the **agent ID** for the agent you want to run, and the **URL of your FormBharo server**.
+You need the **agent ID** of the agent you want to run and the **URL of your FormBharo server**.
 
-Before the call begins, fetch the agent's public profile with `GET /api/v1/agents/{agent_id}/public`. This route requires no API key, so you can call it safely from the browser. It returns the agent's `title`, its `questions` list, and an `agent_speaks_first` flag — enough to render a form UI or a progress indicator before the audio connection is open.
+`GET /api/v1/agents/{agent_id}/public` returns the agent's `title`, `questions` list, and `agent_speaks_first` flag. Use it to render your form UI before the audio connection opens. It needs no API key.
 
 ```bash curl
 curl {FORMBHARO_URL}/api/v1/agents/AGENT_ID/public
 ```
 
-Use `agent_speaks_first` to decide whether to show a "waiting for agent" state or a push-to-talk prompt when the call first connects.
+`agent_speaks_first` tells you whether to show a "waiting for agent" state or a push-to-talk prompt on connect.
 
 ## Run the call
 
 <Steps>
 
   <Step title="Generate a conversation ID">
-    Create a unique conversation ID in your browser before opening the connection. FormBharo uses whatever ID you provide — it does not generate one for you.
+    FormBharo uses the ID you provide. It does not generate one for you.
 
     ```javascript javascript
     const conversationId = crypto.randomUUID();
     ```
 
-    Store this value — you'll pass it to the WebRTC offer and use it later to poll for answers.
+    You pass this to the WebRTC offer and use it later to poll for answers.
   </Step>
 
   <Step title="Open the audio connection">
-    Send a `POST /offer` request to start the WebRTC handshake. Note that this path is at the **bare root** of the server — it is not under `/api/v1` — and it requires no API key.
+    `POST /offer` starts the WebRTC handshake. This path sits at the bare root of the server, not under `/api/v1`.
 
     Send a JSON body with these fields:
 
@@ -45,15 +45,11 @@ Use `agent_speaks_first` to decide whether to show a "waiting for agent" state o
     | `type` | Always `"offer"` |
     | `request_data` | Object with `agentId` and `conversation_id` |
 
-    The response is a WebRTC SDP answer. Use it to complete the peer connection on the browser side.
-
-    To exchange ICE candidates after the initial handshake, send them with `PATCH /offer`.
+    The response is a WebRTC SDP answer. To exchange ICE candidates after the initial handshake, send them with `PATCH /offer`.
 
     ```javascript javascript
-    // Step 1: Generate a conversation ID
     const conversationId = crypto.randomUUID();
 
-    // Step 2: Create a peer connection and generate an SDP offer
     const pc = new RTCPeerConnection();
 
     pc.addTransceiver("audio", { direction: "sendrecv" });
@@ -71,7 +67,6 @@ Use `agent_speaks_first` to decide whether to show a "waiting for agent" state o
       }
     });
 
-    // Step 3: Send the offer to FormBharo
     const offerResponse = await fetch(
       "{FORMBHARO_URL}/offer",
       {
@@ -90,7 +85,6 @@ Use `agent_speaks_first` to decide whether to show a "waiting for agent" state o
 
     const answer = await offerResponse.json();
 
-    // Step 4: Apply the SDP answer to complete the handshake
     await pc.setRemoteDescription(new RTCSessionDescription(answer));
 
     // Play incoming audio
@@ -103,10 +97,10 @@ Use `agent_speaks_first` to decide whether to show a "waiting for agent" state o
   </Step>
 
   <Step title="Read answers as they arrive">
-    Poll `GET /api/v1/data/{agent_id}/{conversation_id}` every two seconds or so to read answers as the agent collects them. This route requires no API key.
+    Poll `GET /api/v1/data/{agent_id}/{conversation_id}` every two seconds or so.
 
-    - Before the first answer is written, the endpoint returns an empty object `{}`.
-    - Once the call is underway, it returns a `form_data` object (keyed by question ID) and a `form_status` string.
+    - Before the first answer is written, it returns an empty object `{}`.
+    - Once the call is underway, it returns a `form_data` object keyed by question ID and a `form_status` string.
 
     ```javascript javascript
     async function pollAnswers(agentId, conversationId) {
@@ -128,10 +122,13 @@ Use `agent_speaks_first` to decide whether to show a "waiting for agent" state o
 
 </Steps>
 
-<Warning>
-  Anyone who knows the agent ID can read or overwrite live answers through the open routes. If your agents collect sensitive data, put your own authentication layer in front of these routes at the infrastructure level.
-</Warning>
+## Next steps
 
-<Tip>
-  See **Answers** for details on reading `form_data` and `form_status`, including why you should never rely on truthiness alone when checking answer values.
-</Tip>
+<CardGroup cols={2}>
+  <Card title="Poll for finished calls" icon="clock" href="/guides/poll-for-finished-calls">
+    Read `form_data` and `form_status` after a call ends
+  </Card>
+  <Card title="Agent config schema" icon="brackets-curly" href="/reference/agent-config-schema">
+    See the full shape of an agent's JSON config
+  </Card>
+</CardGroup>

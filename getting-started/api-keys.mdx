@@ -1,83 +1,53 @@
 ---
-title: "API Keys: Authenticate Your FormBharo API Requests"
+title: "API Keys"
 sidebarTitle: "API Keys"
-description: "Create an API key in the FormBharo Settings tab and send it in the Authorization header on every request. Keys inherit the permissions of their creator."
+description: "Create a key in the web app and send it on every request."
 ---
 
 import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
 
-Every FormBharo API request requires an API key in the `Authorization: Bearer` header. Keys are tied to your account and carry the same permissions you have — if your account can read a workspace, your key can read it too. Keep your keys secure and rotate them regularly.
-
 ## Create a key
 
 <Steps>
-  <Step title="Sign in to the FormBharo web app">
-    Go to your FormBharo server URL and sign in with your account credentials.
+  <Step title="Sign in to FormBharo">
+    Go to [formbharo.artpark.ai](https://formbharo.artpark.ai) and sign in.
   </Step>
-  <Step title="Open Settings">
-    Click your account avatar or name in the top-right corner, then select **Settings** from the dropdown menu.
+  <Step title="Open API keys">
+    Click your profile picture in the top right, then **API keys**. This opens your workspace, where the keys live. Any member of a workspace can create one.
   </Step>
-  <Step title="Open the API keys tab">
-    Inside Settings, click the **API keys** tab in the left-hand navigation.
+  <Step title="Create it">
+    Click **Create API key**, enter a name, then **Create key**.
   </Step>
-  <Step title="Create your key">
-    Click **Create API key**, enter a descriptive name (for example, `production-backend` or `local-dev`), and confirm. FormBharo generates and displays the key.
-  </Step>
-  <Step title="Copy the key immediately">
-    The full key value is shown **once only**. Copy it now and store it somewhere safe — a password manager or secrets vault. If you lose it, you cannot retrieve it; revoke the key and create a new one.
+  <Step title="Copy it now">
+    The key is shown once. Copy it and store it somewhere safe.
+
+    <Warning>
+      You cannot view the full key again after closing the dialog. If you lose it, revoke it and create a new one.
+    </Warning>
   </Step>
 </Steps>
 
-Every key follows this format:
+Keys start with `fb_live_`.
 
-```text
-fb_live_0123456789ab_REPLACE_THIS_WITH_THE_KEY_YOU_COPIED
-```
+## Use it
 
-## Send it on every request
+Send the key as a bearer token on every request.
 
-Pass the key in the `Authorization` header on every authenticated request. The examples below list all your agents to verify the key is working.
-
-<CodeGroup>
-```bash curl
-curl {FORMBHARO_URL}/api/v1/agents \
+```bash
+curl "{FORMBHARO_URL}/api/v1/agents" \
   -H "Authorization: Bearer $FORMBHARO_KEY"
 ```
 
-```python Python
-import os
-import requests
-
-response = requests.get(
-    "{FORMBHARO_URL}/api/v1/agents",
-    headers={"Authorization": f"Bearer {os.environ['FORMBHARO_KEY']}"},
-)
-response.raise_for_status()
-print(response.json())
-```
-</CodeGroup>
+A list of your agents, or `[]` if you have none, means the key works.
 
 ## What a key can do
 
-A key carries its creator's identity. It sees the same agents and workspaces you see and acts with the same role (owner, admin, member) you hold in each workspace. There is one thing a key cannot do: create or revoke other API keys — those actions require an interactive session in the web app.
-
-Treat your API key like a password. Do not commit it to source control, do not log it, and do not share it in plain text over chat or email. If a key is ever exposed, revoke it immediately and issue a replacement.
+A key reaches the agents in its workspace and acts with the role you hold there. It cannot create or revoke other keys.
 
 ## Revoke a key
 
-To revoke a key, return to **Settings → API keys**, find the key by name, and click **Revoke**. The revocation takes effect immediately. The next request that uses the revoked key receives a `401 Unauthorized` response.
-
-## Routes that don't need a key
+Find the key by name in the same **API keys** table and click **Revoke**. The next request using it gets `401`.
 
 <Note>
-  The following routes are intentionally open and do not require an API key:
-
-  - `POST /offer` — initiates a WebRTC call session
-  - `GET /api/v1/data/{agent_id}/{conversation_id}` — reads collected answers for a conversation
-  - `PATCH /api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data` — updates live call answers mid-conversation
-  - `GET /api/v1/agents/{agent_id}/public` — reads the public configuration of an agent
+  Never commit a key to source control or embed it in client-side JavaScript. Use environment variables or your team's secret manager.
 </Note>
-
-<Warning>
-  Anyone who knows an agent ID can read and overwrite live call answers through these open routes. If you are collecting sensitive data — medical information, financial details, personal identifiers — add your own authentication layer in front of them before deploying to production. FormBharo does not enforce access control on these endpoints by design, so the responsibility lies with you.
-</Warning>
