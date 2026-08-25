@@ -31,9 +31,9 @@ You already have a paper form as a PDF and you want a FormBharo agent that asks 
   <Step title="Review the agent before real calls">
     Check the created agent in the web app, or with `GET /api/v1/agents/{agent_id}`, before using it for real calls. PDFs are often subtly wrong on:
 
-    - **Field types** — a "date of birth" field on paper should become `response_type: "date"`, not `"string"`. See [Question Types](/reference/question-types).
+    - **Field types** — a "date of birth" field on paper should become `response_type: "date"`, not `"string"`. See [Agent Config Schema](/reference/agent-config-schema).
     - **Option lists** — check that every choice on a single-select or multi-select field made it into `options[]`, spelled the way you want them read aloud.
-    - **Validation the form implied but didn't spell out** — a phone number field should usually get a `phone_number` validation rule even though the paper form never wrote that rule down. See [Validation](/reference/validation).
+    - **Validation the form implied but didn't spell out** — a phone number field should usually get a `phone_number` validation rule even though the paper form never wrote that rule down. See [Agent Config Schema](/reference/agent-config-schema).
   </Step>
 </Steps>
 
@@ -45,9 +45,9 @@ You already have a paper form as a PDF and you want a FormBharo agent that asks 
 
 <CardGroup cols={2}>
   <Card title="Agent config schema" icon="brackets-curly" href="/reference/agent-config-schema">
-    See the full shape of an agent's JSON config.
+    See the full shape of an agent's JSON config
   </Card>
   <Card title="Agent Skills" icon="sparkles" href="/agents/skills">
-    Install the skill and see everything it can do.
+    Install the skill and see everything it can do
   </Card>
 </CardGroup>
