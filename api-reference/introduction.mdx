@@ -1,12 +1,12 @@
 ---
-title: "FormBharo REST API Reference — Overview and Auth Guide"
+title: "FormBharo REST API Reference: Overview and Auth Guide"
 sidebarTitle: "Introduction"
-description: "FormBharo's REST API has 30 endpoints across five resource groups: Agents, Agent Versions, Calls, Analytics, and Workspaces. Base path is /api/v1."
+description: "Overview and authentication guide for the FormBharo REST API, organised into Agents, Calls, Analytics, and Workspaces. Base path is /api/v1."
 ---
 
 import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
 
-The FormBharo REST API exposes 30 endpoints organised across five resource groups. All endpoints are under `/api/v1` on your FormBharo server, with the single exception of `POST /offer` — the WebRTC signalling path, which lives at the bare root.
+The FormBharo REST API is organised into resource groups: Agents, Calls, Analytics, and Workspaces. All endpoints are under `/api/v1` on your FormBharo server, with one exception: `POST /offer`, the WebRTC signalling path, which lives at the bare root.
 
 ## Authentication
 
@@ -47,26 +47,15 @@ All API paths are then appended after this base. For example:
 
 <CardGroup cols={2}>
   <Card title="Agents" icon="robot" href="/api-reference/agents/get-agents">
-    Create, read, update, delete, and publish agents. Manage access lists and move agents between workspaces.
-  </Card>
-  <Card title="Agent Versions" icon="clock-rotate-left" href="/api-reference/agents/get-agent-versions">
-    Browse the full version history of any agent and restore a previous version at any time.
+    Create, read, update, delete, and publish agents. Manage access lists and move agents between workspaces
   </Card>
   <Card title="Calls" icon="phone" href="/api-reference/analytics/list-all-conversations">
-    Read conversations, retrieve collected answers, and download full call transcripts.
+    Read conversations, retrieve collected answers, and download full call transcripts
   </Card>
   <Card title="Analytics" icon="chart-bar" href="/api-reference/analytics/get-agent-analytics">
-    Query completion rates, average call duration, and per-agent cost breakdowns.
+    Query completion rates, average call duration, and per-agent cost breakdowns
   </Card>
   <Card title="Workspaces" icon="folder" href="/api-reference/workspaces/get-workspaces">
-    Manage workspace membership, roles, and settings across your organisation.
+    Manage workspace membership, roles, and settings across your organisation
   </Card>
 </CardGroup>
-
-## Conventions
-
-These supporting reference pages document the patterns that apply across the whole API:
-
-- **[API Conventions](/reference/conventions)** — request format, content-type requirements, pagination, and date formats.
-- **[Error Responses](/reference/errors)** — every HTTP error code the API returns, with example payloads and remediation guidance.
-- **[Known Gotchas](/reference/gotchas)** — field-name differences between create/update bodies and read-back responses, and other sharp edges to watch for.

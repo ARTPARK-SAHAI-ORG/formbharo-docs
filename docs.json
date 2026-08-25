@@ -19,8 +19,8 @@
         "href": "mailto:aman.dalmia@artpark.in,jigar@artpark.in,nihar@artpark.in?subject=Interested%20in%20FormBharo"
       },
       {
-        "label": "Calibrate",
-        "href": "https://docs.calibrate.artpark.ai/getting-started/introduction"
+        "label": "Changelog",
+        "href": "https://formbharo.artpark.ai/changelog"
       }
     ],
     "primary": {
@@ -42,14 +42,6 @@
             ]
           },
           {
-            "group": "Core Concepts",
-            "pages": [
-              "concepts/agents",
-              "concepts/calls",
-              "concepts/answers"
-            ]
-          },
-          {
             "group": "Guides",
             "pages": [
               "guides/build-an-agent",
@@ -62,15 +54,7 @@
           {
             "group": "Reference",
             "pages": [
-              "reference/agent-configuration",
-              "reference/agent-config-schema",
-              "reference/question-types",
-              "reference/validation",
-              "reference/retries",
-              "reference/branching",
-              "reference/conventions",
-              "reference/errors",
-              "reference/gotchas"
+              "reference/agent-config-schema"
             ]
           }
         ]

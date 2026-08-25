@@ -7,7 +7,7 @@ description: "Schema for the JSON view in the agent editor's edit page."
 This is the format used by the "JSON view" toggle on the agent edit page. Paste a config in this shape, then Save.
 
 <Note>
-  This is not the raw API request body. [Agent Configuration](/reference/agent-configuration) documents `POST`/`PUT /api/v1/agents`, which uses `description`, `ai_instructions`, `question`, and `response_type`. The JSON view here uses `context`, `instructions`, `label`, and `type` for the same concepts.
+  This is not the raw API request body. `POST`/`PUT /api/v1/agents` uses `description`, `ai_instructions`, `question`, and `response_type` for the same concepts the JSON view calls `context`, `instructions`, `label`, and `type`.
 </Note>
 
 ## Schema

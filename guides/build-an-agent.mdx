@@ -106,12 +106,12 @@ FormBharo lets you turn any form — paper intake sheets, web surveys, clinical 
   </Step>
 
   <Step title="Add conditional branches">
-    Branches let you skip or show groups of questions based on a caller's earlier answer. The flow works in two parts:
+    Branches let you skip or show groups of questions based on a caller's earlier answer. The flow works like this:
 
     1. **Declare the branch** — add an entry to the top-level `branches` array. Give it a unique `id` and a `condition` that references a question `id` and a rule.
     2. **Tag questions** — set `branch_id` on every question that belongs to the branch. Those questions are only asked if the condition evaluates to `true` at runtime.
 
-    A condition supports three fields:
+    A condition supports these fields:
 
     | Field | Type | Meaning |
     |---|---|---|
