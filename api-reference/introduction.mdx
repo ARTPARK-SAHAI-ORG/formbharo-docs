@@ -7,13 +7,13 @@ The FormBharo REST API is organized into resource groups: Agents, Calls, Analyti
 
 ## Authentication
 
-Every request must include an `Authorization` header with your API key. See [API Keys](/getting-started/api-keys) for how to create one.
+Every request must include an `Authorization` header with your API key. See [API keys](/getting-started/api-keys) for how to create one.
 
 ```http
 Authorization: Bearer fb_live_0123456789ab_...
 ```
 
-Running a call from your own page needs no key: `POST /api/v1/conversations` returns a conversation id and a token, and that token authorizes the audio connection and the answer poll. See [Run a Call](/guides/run-a-call).
+Running a call from your own page needs no key: `POST /api/v1/conversations` returns a conversation id and a token, and that token authorizes the audio connection and the answer poll. See [Run a call](/guides/run-a-call).
 
 <Note>
   Keep your API key secret. Never embed it in client-side JavaScript or expose it in a public repository. Rotate it immediately if it is compromised.

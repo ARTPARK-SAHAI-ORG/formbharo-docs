@@ -33,3 +33,20 @@ the API reference pages here; see that repo's `CLAUDE.md`.
   every page. Do not put it behind a snippet variable: MDX does not substitute
   variables inside code fences, so readers copy the raw placeholder. If the
   domain changes, grep-replace it across the repo.
+
+## How these rules are enforced
+
+`scripts/check_docs_rules.py` fails the build on every rule a script can
+check: em-dashes, snippet variables inside code fences, card punctuation,
+spelling, Title Case titles, descriptions that restate the first paragraph,
+broken links, link labels that disagree with the page they point at, and
+pages missing from the nav. Run it before pushing:
+
+```bash
+python3 scripts/check_docs_rules.py
+```
+
+`.github/workflows/style-rules-check.yml` runs it on every pull request, and runs a
+second job for the judgement calls a script cannot make. Adding a rule here
+means adding it to the script if it can be checked, and to the review job's
+prompt only if it cannot.

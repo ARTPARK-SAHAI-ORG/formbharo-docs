@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Fail the build on the docs rules that can be checked mechanically.
+"""Fail the build on the docs rules a script can check.
 
-Every check here exists because that exact mistake reached the live site once.
-A rule a script can check should never be left to a reviewer to notice.
+Every rule here is one that already reached the live site once. A rule a
+script can check should never be left to a reviewer to notice.
 
-Run locally:  python3 scripts/check_docs_rules.py
+    python3 scripts/check_docs_rules.py
 """
 
 import json
-import os
 import re
 import sys
 from pathlib import Path
@@ -16,23 +15,23 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 FAILURES: list[str] = []
 
-
-def fail(path, line, rule, detail):
-    where = f"{path}:{line}" if line else str(path)
-    FAILURES.append(f"{where}\n    [{rule}] {detail}")
+# Words that stay capitalised inside a sentence-case title.
+PROPER = {"FormBharo", "Claude", "ARMMAN", "PDF", "API", "URL", "JSON", "S3", "AI"}
 
 
-def pages() -> list[Path]:
-    return sorted(
-        p for p in ROOT.rglob("*.mdx") if ".git" not in p.parts and "node_modules" not in p.parts
-    )
+def fail(where, line, rule, detail):
+    FAILURES.append(f"{where}:{line}\n    [{rule}] {detail}" if line else f"{where}\n    [{rule}] {detail}")
 
 
-def rel(p: Path) -> str:
+def pages():
+    return sorted(p for p in ROOT.rglob("*.mdx") if ".git" not in p.parts)
+
+
+def rel(p):
     return str(p.relative_to(ROOT))
 
 
-def frontmatter(text: str) -> dict:
+def frontmatter(text):
     m = re.match(r"^---\n(.*?)\n---\n", text, re.S)
     if not m:
         return {}
@@ -43,15 +42,14 @@ def frontmatter(text: str) -> dict:
     return out
 
 
-def body(text: str) -> str:
+def body(text):
     return re.sub(r"^---\n.*?\n---\n", "", text, flags=re.S)
 
 
-def code_fences(text: str):
-    """Yield (line_number, fence_body) for every fenced block."""
-    lines = text.splitlines()
+def code_fences(text):
+    """Yield (first_line_number, fence_body) for every fenced block."""
     inside, start, buf = False, 0, []
-    for i, line in enumerate(lines, 1):
+    for i, line in enumerate(text.splitlines(), 1):
         if line.lstrip().startswith("```"):
             if inside:
                 yield start, "\n".join(buf)
@@ -63,31 +61,42 @@ def code_fences(text: str):
             buf.append(line)
 
 
-def strip_code(text: str) -> str:
+def strip_code(text):
     return re.sub(r"```.*?```", "", text, flags=re.S)
 
 
-# --- the checks ---------------------------------------------------------------
+# --- checks -------------------------------------------------------------------
 
 
 def check_no_em_dashes(p, text):
     for i, line in enumerate(text.splitlines(), 1):
         if "—" in line:
-            fail(rel(p), i, "em-dash", "use a comma, colon, or two sentences")
+            fail(rel(p), i, "em-dash", "use a comma, a colon, or two sentences")
 
 
-def check_no_placeholder_in_code(p, text):
-    """MDX does not substitute variables inside a fence, so the reader copies
-    the literal placeholder and the command fails."""
+def check_no_snippet_var_in_code(p, text):
+    """MDX does not substitute a snippet variable inside a fence, so the reader
+    copies the literal placeholder and the command fails.
+
+    Only snippet imports count. A Python f-string or JS template literal using a
+    variable defined in the same block is fine.
+    """
+    imported = set()
+    for m in re.finditer(r'import\s*\{([^}]*)\}\s*from\s*"/snippets/', text):
+        imported.update(n.strip() for n in m.group(1).split(","))
+    if not imported:
+        return
     for start, block in code_fences(text):
         for offset, line in enumerate(block.splitlines()):
-            for m in re.finditer(r"\{([A-Z][A-Z0-9_]{2,})\}", line):
-                fail(
-                    rel(p),
-                    start + offset + 1,
-                    "placeholder-in-code",
-                    f"{{{m.group(1)}}} renders literally inside a code block; write the real value",
-                )
+            for name in imported:
+                if "{" + name + "}" in line:
+                    fail(
+                        rel(p),
+                        start + offset + 1,
+                        "snippet-var-in-code",
+                        f"{{{name}}} is a snippet variable; inside a code block it renders "
+                        "literally. Write the real value.",
+                    )
 
 
 def check_card_descriptions(p, text):
@@ -97,54 +106,49 @@ def check_card_descriptions(p, text):
             continue
         collapsed = " ".join(inner.split())
         if collapsed.endswith("."):
-            line = text[: m.start()].count("\n") + 1
-            fail(rel(p), line, "card-period", f"card one-liner ends with a period: {collapsed[:60]!r}")
+            fail(rel(p), text[: m.start()].count("\n") + 1, "card-period",
+                 f"card one-liner ends with a period: {collapsed[:60]!r}")
 
 
-def check_spelling_consistency(p, text):
-    # ARMMAN's own copy uses "programmes"; that is their wording, left alone.
+def check_spelling(p, text):
+    # ARMMAN's own copy says "programmes"; that is their wording, left alone.
     for i, line in enumerate(text.splitlines(), 1):
         for word in ("organised", "organisation", "customise", "authorise", "analyse"):
             if re.search(rf"\b{word}", line, re.I):
                 fail(rel(p), i, "spelling", f"{word!r}: this site uses -ize spellings")
 
 
-def check_titles_sentence_case(p, text):
+def check_title_sentence_case(p, text):
     fm = frontmatter(text)
     for key in ("title", "sidebarTitle"):
         val = fm.get(key)
         if not val:
             continue
-        words = val.split()
-        for w in words[1:]:
-            bare = w.strip("()[]:,.")
-            if not bare or not bare[0].isupper():
-                continue
-            # initialisms and proper nouns are fine
-            if bare.isupper() or bare in {"FormBharo", "Claude", "ARMMAN", "PDF", "API", "URL"}:
-                continue
-            fail(rel(p), 2, "title-case", f"{key} {val!r} looks Title Case; this site uses sentence case")
-            break
+        for w in val.split()[1:]:
+            bare = w.strip("()[]:,.'\"")
+            if bare and bare[0].isupper() and not bare.isupper() and bare not in PROPER:
+                fail(rel(p), 2, "title-case",
+                     f"{key} {val!r} looks Title Case; this site uses sentence case")
+                break
 
 
-def check_description_not_duplicate(p, text):
+def check_description(p, text):
     fm = frontmatter(text)
     desc = (fm.get("description") or "").strip().lower()
     if not desc:
         fail(rel(p), 2, "missing-description", "every page needs a frontmatter description")
         return
-    first = ""
     for line in strip_code(body(text)).splitlines():
         s = line.strip()
         if not s or s.startswith(("<", "#", "import", "|", "-", "```")):
             continue
-        first = s.lower()
+        if desc in s.lower() or s.lower() in desc:
+            fail(rel(p), 4, "description-duplicates-body",
+                 "the description restates the first paragraph")
         break
-    if first and desc and (desc in first or first in desc):
-        fail(rel(p), 4, "description-duplicates-body", "description restates the first paragraph")
 
 
-def check_links_resolve_and_match(all_pages):
+def check_links(all_pages):
     titles, existing = {}, set()
     for p in all_pages:
         slug = "/" + rel(p)[:-4]
@@ -155,24 +159,24 @@ def check_links_resolve_and_match(all_pages):
 
     for p in all_pages:
         text = p.read_text()
-        targets = [(m.group(1), m.group(2), m.start()) for m in re.finditer(r"\[([^\]]+)\]\((/[a-z0-9/-]+)\)", text)]
-        targets += [
-            (m.group(1), m.group(2), m.start())
-            for m in re.finditer(r'<Card\s+title="([^"]+)"[^>]*href="(/[a-z0-9/-]+)"', text)
-        ]
-        for label, href, pos in targets:
+        found = [(m.group(1), m.group(2), m.start())
+                 for m in re.finditer(r"\[([^\]]+)\]\((/[a-z0-9/-]+)\)", text)]
+        found += [(m.group(1), m.group(2), m.start())
+                  for m in re.finditer(r'<Card\s+title="([^"]+)"[^>]*href="(/[a-z0-9/-]+)"', text)]
+        for label, href, pos in found:
             line = text[:pos].count("\n") + 1
-            # Mintlify generates the endpoint pages under /api-reference/<group>/<op>
+            # Mintlify generates the endpoint pages from openapi.json.
             if href.startswith("/api-reference/") and href.count("/") > 2:
                 continue
             if href not in existing:
                 fail(rel(p), line, "broken-link", f"{href} does not exist")
                 continue
             real = titles.get(href)
-            # A link may describe rather than name the page. Only flag one that
-            # is clearly naming it: same words, different capitalisation.
+            # A link may describe a page rather than name it. Only flag one that
+            # is naming it: same words, different capitalisation.
             if real and label.lower() == real.lower() and label != real:
-                fail(rel(p), line, "link-label-case", f"{label!r} but the page is titled {real!r}")
+                fail(rel(p), line, "link-label-case",
+                     f"{label!r} but the page is titled {real!r}")
 
 
 def check_nav(all_pages):
@@ -186,9 +190,8 @@ def check_nav(all_pages):
             for k, v in node.items():
                 if k == "pages":
                     for item in v:
-                        if isinstance(item, str):
-                            yield item
-                        else:
+                        yield item if isinstance(item, str) else None
+                        if not isinstance(item, str):
                             yield from walk(item)
                 else:
                     yield from walk(v)
@@ -196,14 +199,14 @@ def check_nav(all_pages):
             for x in node:
                 yield from walk(x)
 
-    on_disk = {rel(p)[:-4] for p in all_pages}
-    in_nav = set()
-    for slug in walk(data.get("navigation", {})):
-        in_nav.add(slug)
+    in_nav = {s for s in walk(data.get("navigation", {})) if s}
+    for slug in sorted(in_nav):
         if not (ROOT / f"{slug}.mdx").exists():
             fail("docs.json", None, "nav-missing-page", f"{slug} is in the nav but has no file")
-    for slug in sorted(on_disk - in_nav):
-        fail(f"{slug}.mdx", None, "page-not-in-nav", "file exists but no nav entry points at it")
+    for p in all_pages:
+        slug = rel(p)[:-4]
+        if slug not in in_nav:
+            fail(rel(p), None, "page-not-in-nav", "file exists but nothing in the nav points at it")
 
 
 def main():
@@ -211,19 +214,19 @@ def main():
     for p in all_pages:
         text = p.read_text()
         check_no_em_dashes(p, text)
-        check_no_placeholder_in_code(p, text)
+        check_no_snippet_var_in_code(p, text)
         check_card_descriptions(p, text)
-        check_spelling_consistency(p, text)
-        check_titles_sentence_case(p, text)
-        check_description_not_duplicate(p, text)
-    check_links_resolve_and_match(all_pages)
+        check_spelling(p, text)
+        check_title_sentence_case(p, text)
+        check_description(p, text)
+    check_links(all_pages)
     check_nav(all_pages)
 
     if FAILURES:
         print(f"{len(FAILURES)} docs rule violation(s):\n")
         for f in FAILURES:
             print(f"  {f}\n")
-        print("These are in CLAUDE.md. Each one already reached the live site once.")
+        print("These rules are in CLAUDE.md. Each one already reached the live site once.")
         sys.exit(1)
     print(f"All docs rules pass across {len(all_pages)} pages.")
 
