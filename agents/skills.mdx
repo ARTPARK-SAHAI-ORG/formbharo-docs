@@ -39,17 +39,16 @@ Copy the whole `formbharo` folder, and for other tools copy it into their skills
 
 ## Before you use it
 
-Set these two environment variables. The names are the skill's own, and differ from the rest of this site's convention.
-
-| Variable | What it is |
-|---|---|
-| `FORMBHARO_API_KEY` | In the web app, click your profile picture, then **API keys**. Starts with `fb_live_`, shown once. |
-| `FORMBHARO_API_URL` | The address of your FormBharo API. This is not the web app's address. |
-
-Verify both are set correctly:
+Set one environment variable, `FORMBHARO_API_KEY`. To get the key, open the web app, click your profile picture in the top right, then **API keys**. The key starts with `fb_live_` and is shown once.
 
 ```bash
-curl -s -H "Authorization: Bearer $FORMBHARO_API_KEY" "$FORMBHARO_API_URL/api/v1/agents"
+export FORMBHARO_API_KEY=fb_live_...
+```
+
+Check the key works:
+
+```bash
+curl -s -H "Authorization: Bearer $FORMBHARO_API_KEY" "https://api.formbharo.artpark.ai/api/v1/agents"
 ```
 
 A list back, even an empty `[]`, means it is set up correctly.
