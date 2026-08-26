@@ -1,0 +1,78 @@
+name: Docs rules
+
+# Two layers, on purpose.
+#
+# check: a script. Deterministic, fails the build, no model involved. Every
+# rule it enforces is one that reached the live site once. If a rule can be
+# checked this way it belongs here, not in the review job.
+#
+# review: the model, for the judgement calls a script cannot make (does this
+# label name the thing it acts on, is this internal detail a customer should
+# not see). It comments; it does not block.
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+jobs:
+  check:
+    name: Mechanical rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/check_docs_rules.py
+
+  review:
+    name: Judgement calls
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Review this pull request's changed lines against the rules below.
+            These are the ones a script cannot check, so do not repeat anything
+            about em-dashes, spelling, link casing, card punctuation, broken
+            links or nav entries: `scripts/check_docs_rules.py` already fails
+            the build on those.
+
+            Judge only the changed lines, and only these rules:
+
+            1. Every page name, nav item, heading, step title and button label
+               must name the thing it acts on and read the way a person speaks.
+               "Create it", "Create from a PDF" and "Read the analytics" are all
+               failures: the first two drop the object, the third is not how
+               anyone talks.
+            2. No internal mechanics in customer-facing text: storage choices,
+               private function names, performance rationale, or routes the app
+               calls for itself.
+            3. No instruction that only works if the reader already ran
+               something on another page. Assume they arrived cold from a search
+               result.
+            4. Only what a customer actually calls gets documented.
+            5. No filler. Every sentence states a fact or gives an instruction.
+               No marketing language.
+            6. No number in prose that repeats a count shown by the table or
+               list right next to it.
+            7. Code examples must be runnable as written, with real values, not
+               placeholders.
+
+            A rule the diff does not touch counts as passing. Only flag a rule
+            the changed lines actually break.
+
+            Post one comment with
+            `gh pr comment ${{ github.event.pull_request.number }} --body-file <file>`
+            containing a checklist, one line per rule:
+            - [x] Rule N: <short name>
+            - [ ] Rule N: <short name> — <file>:<line>, <one sentence>
+
+            End with "X of 7 rules pass." Nothing else in the comment.
