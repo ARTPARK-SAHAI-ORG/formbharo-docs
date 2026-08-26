@@ -64,7 +64,7 @@ description: "Turn a form into a FormBharo voice agent: map fields to question t
     | `string` | Free-text answer | |
     | `number` | Numeric value | `number_format: "integer"` or `"decimal"` |
     | `date` | Date, stored as `DD-MM-YYYY` | |
-    | `boolean` | Yes/no answer | `boolean_labels` to customise the spoken options |
+    | `boolean` | Yes/no answer | `boolean_labels` to customize the spoken options |
     | `single-select` | One choice from a list | `options[]`, required |
     | `multi-select` | One or more choices from a list | `options[]`, required |
 
@@ -227,7 +227,7 @@ description: "Turn a form into a FormBharo voice agent: map fields to question t
     </CodeGroup>
 
     <Warning>
-      On validation failure the API returns `400` with a `validation_issues` array. Fix every issue before retrying, partial saves are not supported.
+      On validation failure the API returns `400` with a `validation_issues` array. Fix every issue before retrying. Partial saves are not supported.
     </Warning>
   </Step>
 

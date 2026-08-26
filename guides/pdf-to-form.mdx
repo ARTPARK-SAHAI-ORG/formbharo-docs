@@ -1,6 +1,5 @@
 ---
 title: "Create an agent from a PDF"
-sidebarTitle: "Agent from PDF"
 description: "Read a form PDF with Claude, then hand the extracted questions to the formbharo skill to build the agent."
 ---
 
@@ -31,9 +30,9 @@ Claude reads the PDF and the `formbharo` skill builds the agent from the questio
   <Step title="Review the agent before real calls">
     Check the agent in the web app, or with `GET /api/v1/agents/{agent_id}`. PDFs are often subtly wrong on:
 
-    - **Field types.** A "date of birth" field should become `response_type: "date"`, not `"string"`. See [Agent Config Schema](/reference/agent-config-schema).
+    - **Field types.** A "date of birth" field should become `response_type: "date"`, not `"string"`. See [Agent config schema](/reference/agent-config-schema).
     - **Option lists.** Check that every choice on a single-select or multi-select field made it into `options[]`, spelled the way you want it read aloud.
-    - **Validation the form implied but did not spell out.** A phone number field should usually get a `phone_number` validation rule. See [Agent Config Schema](/reference/agent-config-schema).
+    - **Validation the form implied but did not spell out.** A phone number field should usually get a `phone_number` validation rule. See [Agent config schema](/reference/agent-config-schema).
   </Step>
 </Steps>
 
