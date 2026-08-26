@@ -4,8 +4,6 @@ sidebarTitle: "API Keys"
 description: "Create a key in the web app and send it on every request."
 ---
 
-import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
-
 ## Create a key
 
 <Steps>
@@ -34,7 +32,7 @@ Keys start with `fb_live_`.
 Send the key as a bearer token on every request.
 
 ```bash
-curl "{FORMBHARO_URL}/api/v1/agents" \
+curl "https://api.formbharo.artpark.ai/api/v1/agents" \
   -H "Authorization: Bearer $FORMBHARO_KEY"
 ```
 

@@ -4,8 +4,6 @@ sidebarTitle: "Introduction"
 description: "Base path, authentication, and resource groups for the FormBharo REST API."
 ---
 
-import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
-
 The FormBharo REST API is organised into resource groups: Agents, Calls, Analytics, and Workspaces. All endpoints are under `/api/v1` on your FormBharo server, with one exception: `POST /offer`, the WebRTC signalling path, which lives at the bare root.
 
 ## Authentication
@@ -16,7 +14,7 @@ Every request must include an `Authorization` header with your API key. See [API
 Authorization: Bearer fb_live_0123456789ab_...
 ```
 
-Two routes need no key, both used when running a call from your own page: `POST /offer` to open the audio connection, and `GET /api/v1/data/{agent_id}/{conversation_id}` to read answers as they arrive. See [Run a Call](/guides/run-a-call).
+Running a call from your own page needs no key: `POST /api/v1/conversations` returns a conversation id and a token, and that token authorizes the audio connection and the answer poll. See [Run a Call](/guides/run-a-call).
 
 <Note>
   Keep your API key secret. Never embed it in client-side JavaScript or expose it in a public repository. Rotate it immediately if it is compromised.
@@ -27,13 +25,13 @@ Two routes need no key, both used when running a call from your own page: `POST 
 Every example in this reference uses this address.
 
 ```text
-{FORMBHARO_URL}
+https://api.formbharo.artpark.ai
 ```
 
 All API paths are then appended after this base. For example:
 
 ```text
-{FORMBHARO_URL}/api/v1/agents
+https://api.formbharo.artpark.ai/api/v1/agents
 ```
 
 ## Resource Groups

@@ -4,14 +4,12 @@ sidebarTitle: "Analytics"
 description: "Fetch completion rates, average call duration, voice latency, and per-call cost breakdowns for a single agent or an entire workspace."
 ---
 
-import { FORMBHARO_URL } from "/snippets/formbharo-url.mdx";
-
 ## Agent analytics
 
 `GET /api/v1/agents/{agent_id}/analytics` returns stats for one agent.
 
 ```bash curl
-curl -G "{FORMBHARO_URL}/api/v1/agents/AGENT_ID/analytics" \
+curl -G "https://api.formbharo.artpark.ai/api/v1/agents/AGENT_ID/analytics" \
   -H "Authorization: Bearer <api-key>" \
   --data-urlencode "since=1700000000" \
   --data-urlencode "until=1700086400" \
@@ -31,7 +29,7 @@ curl -G "{FORMBHARO_URL}/api/v1/agents/AGENT_ID/analytics" \
 `GET /api/v1/workspaces/{workspace_id}/analytics` returns the same stats across all agents in a workspace, plus a per-agent breakdown. Workspace admins only.
 
 ```bash curl
-curl -G "{FORMBHARO_URL}/api/v1/workspaces/WORKSPACE_ID/analytics" \
+curl -G "https://api.formbharo.artpark.ai/api/v1/workspaces/WORKSPACE_ID/analytics" \
   -H "Authorization: Bearer <api-key>" \
   --data-urlencode "since=1700000000"
 ```
@@ -43,7 +41,7 @@ curl -G "{FORMBHARO_URL}/api/v1/workspaces/WORKSPACE_ID/analytics" \
 | `attempted` | Calls started, in any status |
 | `completed` | Calls that reached a defined ending, including screened out ones |
 | `screened_out` | Calls ended early because an answer matched `end_call_values` |
-| `completion_rate` | `completed / attempted`, between `0` and `1`. `null` when `attempted` is zero |
+| `completion_rate` | `completed / attempted`, between `0` and `1`. `0` when `attempted` is zero |
 
 To count calls that answered every question, subtract `screened_out` from `completed`.
 
