@@ -46,7 +46,7 @@ pages missing from the nav. Run it before pushing:
 python3 scripts/check_docs_rules.py
 ```
 
-`.github/workflows/docs-rules.yml` runs it on every pull request, and runs a
+`.github/workflows/style-rules-check.yml` runs it on every pull request, and runs a
 second job for the judgement calls a script cannot make. Adding a rule here
 means adding it to the script if it can be checked, and to the review job's
 prompt only if it cannot.
