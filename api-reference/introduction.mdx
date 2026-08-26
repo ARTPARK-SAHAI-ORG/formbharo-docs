@@ -33,6 +33,23 @@ All API paths are then appended after this base. For example:
 https://api.formbharo.artpark.ai/api/v1/agents
 ```
 
+## Errors
+
+| Code | Meaning |
+| --- | --- |
+| 401 | The `Authorization` header is missing, or the key is not valid. |
+| 403 | The workspace or agent exists and your key may not use it. |
+| 404 | The workspace or agent does not exist. |
+| 422 | The request body failed validation. |
+
+A 403 or a 404 carries the reason in an `error` field.
+
+```json
+{ "error": "You do not have access to this workspace." }
+```
+
+A key belongs to one workspace. A request for an agent or a workspace outside it returns 404, the same as an id that does not exist.
+
 ## Resource groups
 
 <CardGroup cols={2}>
