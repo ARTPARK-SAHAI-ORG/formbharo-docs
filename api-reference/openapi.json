@@ -989,6 +989,39 @@
         "title": "CreateAgentResponse",
         "type": "object"
       },
+      "CreateConversationRequest": {
+        "description": "Body of ``POST /conversations``.",
+        "properties": {
+          "agent_id": {
+            "title": "Agent Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "agent_id"
+        ],
+        "title": "CreateConversationRequest",
+        "type": "object"
+      },
+      "CreateConversationResponse": {
+        "description": "The new conversation's id and the token that authorizes its answers.",
+        "properties": {
+          "conversation_id": {
+            "title": "Conversation Id",
+            "type": "string"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "conversation_id",
+          "token"
+        ],
+        "title": "CreateConversationResponse",
+        "type": "object"
+      },
       "CreateWorkspaceRequest": {
         "description": "Name of a new workspace to create.",
         "properties": {
@@ -2692,7 +2725,7 @@
     },
     "/api/v1/agents/{agent_id}/conversations/{conversation_id}/form_data": {
       "patch": {
-        "description": "Validate and persist manual edits to conversation form_data.",
+        "description": "Validate and persist manual edits to conversation form_data.\n\nSend the conversation's token as ``X-Conversation-Token``, or an API key\nthat reaches the agent.",
         "operationId": "update_conversation_form_data_api_v1_agents__agent_id__conversations__conversation_id__form_data_patch",
         "parameters": [
           {
@@ -2711,6 +2744,22 @@
             "schema": {
               "title": "Conversation Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-conversation-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Conversation-Token"
             }
           }
         ],
@@ -2746,7 +2795,11 @@
             "description": "Validation Error"
           }
         },
-        "security": [],
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Update Conversation Form Data",
         "tags": [
           "Agents"
@@ -3029,11 +3082,52 @@
         "tags": [
           "Analytics"
         ]
+      },
+      "post": {
+        "description": "Start a conversation and return the token that authorizes its answers.\n\nOpen on purpose: anyone who can open an agent's call page can start a call.\nThe id is generated here rather than accepted from the caller, so one caller\ncannot name another caller's conversation and read or overwrite it.",
+        "operationId": "create_conversation_api_v1_conversations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateConversationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateConversationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [],
+        "summary": "Create Conversation",
+        "tags": [
+          "Agents"
+        ]
       }
     },
     "/api/v1/data/{agent_id}/{conversation_id}": {
       "get": {
-        "description": "Get form data for a specific conversation.",
+        "description": "Return the answers collected on one conversation.\n\nSend the conversation's token as ``X-Conversation-Token``, or an API key\nthat reaches the agent.",
         "operationId": "get_data_api_v1_data__agent_id___conversation_id__get",
         "parameters": [
           {
@@ -3052,6 +3146,22 @@
             "schema": {
               "title": "Conversation Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-conversation-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Conversation-Token"
             }
           }
         ],
@@ -3077,7 +3187,11 @@
             "description": "Validation Error"
           }
         },
-        "security": [],
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Get Data",
         "tags": [
           "Agents"
