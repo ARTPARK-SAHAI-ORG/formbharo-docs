@@ -1,10 +1,15 @@
 ---
 title: "Agent skills"
 sidebarTitle: "Skills"
-description: "Give a coding agent the FormBharo skill so it can build and manage voice form agents for you."
+description: "Install the FormBharo skills so a coding agent can build and manage voice form agents for you."
 ---
 
-An [Agent Skill](https://agentskills.io) is a folder of instructions that teaches a coding agent how to do one specific job. FormBharo publishes one: `formbharo`.
+An [Agent Skill](https://agentskills.io) is a folder of instructions that teaches a coding agent how to do one specific job. FormBharo publishes two.
+
+| Skill | What it does |
+| --- | --- |
+| `formbharo-start` | Walks you through your first agent: gets your API key, builds the agent, gives you a link to call it |
+| `formbharo` | Builds and edits agents, pulls the answers people gave on calls, reads the analytics |
 
 ## Install
 
@@ -26,38 +31,49 @@ npx skills add ARTPARK-SAHAI-ORG/formbharo-skills --agent codex
 ```
 </CodeGroup>
 
-Restart your coding agent session after installing so it picks up the skill. The repo is public ([ARTPARK-SAHAI-ORG/formbharo-skills](https://github.com/ARTPARK-SAHAI-ORG/formbharo-skills)), so no credentials are needed.
+Restart your coding agent session after installing so it picks up the skills. The repo is public ([ARTPARK-SAHAI-ORG/formbharo-skills](https://github.com/ARTPARK-SAHAI-ORG/formbharo-skills)), so no credentials are needed.
+
+## Start here
+
+Call the first skill by name:
+
+```
+/formbharo-start
+```
+
+It asks what you want to find out on the call and in what language, builds and publishes the agent, and gives you a link you can ring up and try. It asks for your API key along the way and saves it, so you paste the key once.
+
+After that first agent, say what you want in your own words: "add a question about age", "show me last week's calls", "put the answers in a spreadsheet".
 
 ### Manual install
 
 ```bash
 git clone https://github.com/ARTPARK-SAHAI-ORG/formbharo-skills.git
 cp -r formbharo-skills/skills/formbharo ~/.claude/skills/formbharo
+cp -r formbharo-skills/skills/formbharo-start ~/.claude/skills/formbharo-start
 ```
 
-Copy the whole `formbharo` folder, and for other tools copy it into their skills folder instead (Cursor: `.cursor/skills/`).
+Copy both folders whole, since `formbharo-start` links across to `formbharo`. Those paths are for Claude Code. Cursor reads `.cursor/skills/`, and Windsurf and Codex each have their own skills folder.
 
-## Before you use it
+## The API key
 
-Set one environment variable, `FORMBHARO_API_KEY`. To get the key, open the web app, click your profile picture in the top right, then **API keys**. The key starts with `fb_live_` and is shown once.
+Open the web app, click your profile picture in the top right, then **API keys**. The key starts with `fb_live_` and is shown once.
 
-```bash
-export FORMBHARO_API_KEY=fb_live_...
-```
+The first time a skill needs the key it asks you for it. Paste it in and it is saved to the `env` block of `~/.claude/settings.json`, so you are asked once.
 
-Check the key works:
+To check a key yourself, put it in `FORMBHARO_API_KEY` and run:
 
 ```bash
 curl -s -H "Authorization: Bearer $FORMBHARO_API_KEY" "https://api.formbharo.artpark.ai/api/v1/agents"
 ```
 
-A list back, even an empty `[]`, means it is set up correctly.
+A list back, even an empty `[]`, means the key works.
 
-## What it can do
+## What they can do
 
-Describe your form to your coding agent in plain English, for example "collect name, age, and whether they have a fever, in Hindi", and the skill builds and publishes the agent. You can also ask it to edit an existing agent, pull the answers people gave on calls, and read back analytics.
+Describe your form in plain English, for example "collect name, age, and whether they have a fever, in Hindi", and the skill builds and publishes the agent. You can also ask it to edit an existing agent, pull the answers people gave on calls, and read back analytics.
 
-It works from a plain-English description only, not a PDF or document directly. To turn a form document into an agent, see [Create an agent from a PDF](/guides/pdf-to-form).
+They work from a plain-English description only, not a PDF or document directly. To turn a form document into an agent, see [Create an agent from a PDF](/guides/pdf-to-form).
 
 ## Next steps
 
@@ -66,6 +82,6 @@ It works from a plain-English description only, not a PDF or document directly. 
     See the full shape of an agent's JSON config
   </Card>
   <Card title="API keys" icon="key" href="/getting-started/api-keys">
-    Create the API key the skill authenticates with
+    Create the API key the skills authenticate with
   </Card>
 </CardGroup>
