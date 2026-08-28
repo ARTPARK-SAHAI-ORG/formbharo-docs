@@ -876,6 +876,16 @@
             "title": "Description",
             "type": "string"
           },
+          "extraction_script": {
+            "default": "roman",
+            "description": "Which letters saved text answers are written in. `roman` writes them in Latin letters, spelled out by sound and never translated. `agent_language` writes them in the letters of the agent's own language. Numbers and dates stay as digits either way.",
+            "enum": [
+              "roman",
+              "agent_language"
+            ],
+            "title": "Extraction Script",
+            "type": "string"
+          },
           "hearing_acknowledgement_mode": {
             "default": "fixed",
             "enum": [
@@ -1981,7 +1991,7 @@
     }
   },
   "info": {
-    "description": "Create and run form-filling voice agents, and read back the conversations they had.\n\nSend your API key on every request as `Authorization: Bearer fb_live_...`.\nA key belongs to one workspace and only reaches that workspace's agents. Create\nand revoke keys from Settings in the web app; keys cannot manage other keys.\n",
+    "description": "Create and run form-filling voice agents, and read back the conversations they had.\n\nSend your API key on every request as `Authorization: Bearer fb_live_...`.\nA key belongs to one workspace and only reaches that workspace's agents. Create\nand revoke keys under API keys in the web app; see\nhttps://docs.formbharo.artpark.ai/getting-started/api-keys.\n",
     "title": "FormBharo API",
     "version": "1.0.0"
   },
