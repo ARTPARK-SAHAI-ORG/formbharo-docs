@@ -43,8 +43,8 @@ personal token; a push made with GitHub's own token would not start anything.
    opens on `automated/spec-sync`, and an email goes out with the link if the
    mail secrets below are set.
 
-It also runs weekly and on demand, so a deploy whose push does not start a run is
-still caught within a week.
+It can also be started by hand from the Actions tab, which is the way to catch a
+deploy whose push did not start a run.
 
 ## Reruns are safe
 

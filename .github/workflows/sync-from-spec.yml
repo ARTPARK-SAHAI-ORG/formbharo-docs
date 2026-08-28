@@ -20,9 +20,6 @@ on:
   push:
     branches: [main]
     paths: ["api-reference/openapi.json"]
-  # Weekly fallback, so a deploy whose push does not start this is still caught.
-  schedule:
-    - cron: "0 6 * * 1"
   workflow_dispatch:
 
 permissions:
@@ -30,8 +27,8 @@ permissions:
   pull-requests: write
   id-token: write
 
-# A deploy and the weekly run landing together would both write the same branch
-# and one would lose. Queue them instead.
+# Two runs landing together would both write the same branch and one would lose.
+# Queue them instead.
 concurrency: sync-from-spec
 
 env:
