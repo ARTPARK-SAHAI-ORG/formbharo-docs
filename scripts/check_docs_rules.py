@@ -23,8 +23,16 @@ def fail(where, line, rule, detail):
     FAILURES.append(f"{where}:{line}\n    [{rule}] {detail}" if line else f"{where}\n    [{rule}] {detail}")
 
 
+# .claude holds Claude Code's worktrees, each a second copy of every page here.
+# Scanning those reports the same page many times over and calls each copy
+# missing from the nav.
+IGNORED_DIRS = {".git", ".claude"}
+
+
 def pages():
-    return sorted(p for p in ROOT.rglob("*.mdx") if ".git" not in p.parts)
+    return sorted(
+        p for p in ROOT.rglob("*.mdx") if not IGNORED_DIRS & set(p.parts)
+    )
 
 
 def rel(p):

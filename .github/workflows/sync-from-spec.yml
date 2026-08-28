@@ -1,0 +1,247 @@
+name: sync-from-spec
+
+# Keep the written pages matching the FormBharo API. The pages are hand-written
+# prose, not generated, so this does not rebuild them: it reads what the last
+# production deploy changed in the API and hands that to Claude, which reads the
+# pages and makes the edits the change calls for. The result opens as a pull
+# request for review. Nothing is merged automatically.
+#
+# The API reference pages are not part of this. They are drawn from
+# api-reference/openapi.json, which form-fill-agent commits here after every
+# production deploy, so they follow the API on their own. That commit is also
+# what starts this run, and it is why nothing has to be cloned or fetched: the
+# history of that one file in this repo is the record of what shipped and when.
+#
+# See .github/SYNC.md for what to configure.
+on:
+  # The commit form-fill-agent makes here after a production deploy. It is made
+  # with a personal token, which is what allows it to start this run; a push made
+  # with GitHub's own token would not.
+  push:
+    branches: [main]
+    paths: ["api-reference/openapi.json"]
+  # Weekly fallback, so a deploy whose push does not start this is still caught.
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+# A deploy and the weekly run landing together would both write the same branch
+# and one would lose. Queue them instead.
+concurrency: sync-from-spec
+
+env:
+  SCHEMA_PATH: api-reference/openapi.json
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      # The whole history, because this reads the two most recent commits that
+      # touched the schema. The default shallow checkout has only one.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Read what the last deploy changed in the API
+        id: diff
+        run: |
+          set -euo pipefail
+
+          # The two most recent commits that touched the schema. Each one is a
+          # production deploy that changed the API.
+          git log -2 --format=%H -- "$SCHEMA_PATH" > shas.txt
+          NEW=$(sed -n 1p shas.txt)
+          OLD=$(sed -n 2p shas.txt)
+          rm -f shas.txt
+
+          if [ -z "$OLD" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Fewer than two versions of the schema here; nothing to compare."
+            exit 0
+          fi
+
+          git show "$OLD:$SCHEMA_PATH" > openapi.old.raw.json
+          git show "$NEW:$SCHEMA_PATH" > openapi.new.raw.json
+
+          # Rewrite both with sorted keys and fixed indentation first, so the diff
+          # shows what actually changed in the API rather than however the schema
+          # happened to be serialised that day.
+          python3 - <<'PY'
+          import json, pathlib
+          for src, dst in (("openapi.old.raw.json", "openapi.old.json"),
+                           ("openapi.new.raw.json", "openapi.new.json")):
+              spec = json.loads(pathlib.Path(src).read_text(encoding="utf-8"))
+              pathlib.Path(dst).write_text(
+                  json.dumps(spec, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+              )
+          PY
+          rm -f openapi.old.raw.json openapi.new.raw.json
+
+          if diff -u openapi.old.json openapi.new.json > spec-diff.txt; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "The last two schema commits are identical; nothing changed."
+            exit 0
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+          # A reformatted schema could produce a diff far larger than is useful to
+          # read. Cap it; Claude can open openapi.new.json for anything cut off.
+          LINES=$(wc -l < spec-diff.txt)
+          echo "The API changed: $LINES diff lines."
+          if [ "$LINES" -gt 2000 ]; then
+            { head -2000 spec-diff.txt
+              printf '\n... diff truncated at 2000 of %s lines. Read openapi.new.json for the rest.\n' "$LINES"
+            } > spec-diff.capped.txt
+            mv spec-diff.capped.txt spec-diff.txt
+          fi
+
+      - name: Work out what the pages need
+        if: steps.diff.outputs.changed == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: >-
+            --allowed-tools "Read,Write,Edit,Glob,Grep,Bash(python3 scripts/check_docs_rules.py)"
+          prompt: |
+            The FormBharo API changed. `spec-diff.txt` is the difference between
+            the schema of the previous production deploy and the one just
+            deployed; `openapi.new.json` is the full new schema.
+
+            This repo is the public documentation for that API, read by
+            developers outside the company.
+
+            Your job:
+
+            1. Read `spec-diff.txt`. Ignore anything cosmetic: reworded
+               descriptions, reordered keys, version bumps, examples.
+            2. For each real change — an endpoint added or removed, a field
+               renamed or added, a changed set of allowed values, a field that
+               became required or stopped being required — search the written
+               pages for what documents it. Most API changes touch nothing here.
+            3. Where a page is now wrong or incomplete, edit it. Make the real
+               edit, do not write a report about what is broken. Match the file
+               you are editing: its voice, its heading style, its components.
+
+            What you may edit: `getting-started/`, `guides/`, `reference/`,
+            `use-cases/`, `agents/`, and `docs.json` when a new page has to
+            appear in the navigation.
+
+            What you must not touch: `api-reference/`. Those pages are drawn from
+            `api-reference/openapi.json`, which is the input you are reading and
+            which follows the API already. Editing it would be editing the record
+            of what shipped.
+
+            Rules for anything you write:
+
+            - Short, plain, declarative sentences. No em-dashes. No marketing
+              language. Every sentence states a fact or gives an instruction.
+            - Every page name, heading and step title names the thing it acts on
+              and reads the way a person speaks. "Create it" and "Read the
+              analytics" are both failures.
+            - No internal mechanics: storage choices, private function names,
+              performance rationale, or routes the app calls for itself.
+            - No instruction that only works if the reader already ran something
+              on another page. Assume they arrived cold from a search result.
+            - Code examples must be runnable as written, with real values. Write
+              the real address inside a code fence, never a variable.
+            - Only document what a customer can call with their own API key.
+            - Do not add a page beyond what the API change calls for. A new
+              endpoint usually belongs in a page that already covers that ground.
+            - `CLAUDE.md` in this repo has the full version of these rules. Read
+              it before you write.
+
+            Then run `python3 scripts/check_docs_rules.py` and fix anything it
+            reports.
+
+            Finally write `SYNC_SUMMARY.md`: one short section per file you
+            changed, saying what changed in the API and what you did about it, in
+            plain words. If no page needed changing, write exactly
+            `NO CHANGES NEEDED` as the whole of `SYNC_SUMMARY.md` and edit
+            nothing else.
+
+      - name: Decide whether there is anything to open
+        if: steps.diff.outputs.changed == 'true'
+        id: outcome
+        run: |
+          # What was actually edited decides this, not what the summary claims, so
+          # a run that edits a page but forgets the summary still opens a pull
+          # request rather than throwing the edits away.
+          EDITED=$(git status --porcelain -- getting-started guides reference use-cases agents docs.json)
+
+          # The summary is the pull request body, so it is written outside the
+          # repo. Committing it would leave it behind in the merge.
+          BODY="$RUNNER_TEMP/pr-body.md"
+          if [ -f SYNC_SUMMARY.md ] && ! grep -qx "NO CHANGES NEEDED" SYNC_SUMMARY.md; then
+            cp SYNC_SUMMARY.md "$BODY"
+          else
+            printf 'The API changed and the pages were edited to match, but no summary was written. Read the diff.\n' > "$BODY"
+          fi
+          rm -f SYNC_SUMMARY.md spec-diff.txt openapi.old.json openapi.new.json
+
+          if [ -z "$EDITED" ]; then
+            echo "docs=false" >> "$GITHUB_OUTPUT"
+            echo "The API changed but nothing the pages say depends on it."
+            exit 0
+          fi
+          echo "docs=true" >> "$GITHUB_OUTPUT"
+
+          # Say in the pull request whether the edits pass the mechanical rules,
+          # so a bad one is visible before anyone opens the diff.
+          if python3 scripts/check_docs_rules.py; then
+            echo "check=passed" >> "$GITHUB_OUTPUT"
+          else
+            echo "check=FAILED" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open the pull request
+        if: steps.outcome.outputs.docs == 'true'
+        id: pr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          # A PAT so style-rules-check runs on this pull request; one opened with
+          # the default GITHUB_TOKEN does not start further CI.
+          token: ${{ secrets.DOCS_SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+          commit-message: "Update the pages for the latest FormBharo API"
+          title: "Update the pages for the latest FormBharo API"
+          body-path: ${{ runner.temp }}/pr-body.md
+          # A fixed branch. A rerun over the same API change updates this pull
+          # request instead of opening a second one.
+          branch: automated/spec-sync
+          delete-branch: true
+          # Assignee only. Asking for a review from the account whose token opened
+          # the pull request is rejected by GitHub.
+          assignees: dalmia
+
+      # GitHub already emails the assignee, so this is the extra nudge and not the
+      # notification that matters. A missing mail secret must not fail a run that
+      # has already opened the pull request.
+      - name: Email the pull request link
+        if: steps.pr.outputs.pull-request-number
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: ${{ secrets.MAIL_USERNAME }}
+          to: aman.dalmia@artpark.in
+          subject: "[formbharo-docs] The API changed and the pages need a look"
+          body: |
+            The FormBharo API changed, and the written pages that depend on it
+            have been updated on a branch for you to review. Nothing has been
+            merged.
+
+            Pull request: ${{ steps.pr.outputs.pull-request-url }}
+            Mechanical rules: ${{ steps.outcome.outputs.check }}
+
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
