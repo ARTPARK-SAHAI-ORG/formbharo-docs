@@ -1,20 +1,6 @@
 {
   "components": {
     "schemas": {
-      "AddWorkspaceMemberRequest": {
-        "description": "Email of a user to add as a workspace member (admin).",
-        "properties": {
-          "email": {
-            "title": "Email",
-            "type": "string"
-          }
-        },
-        "required": [
-          "email"
-        ],
-        "title": "AddWorkspaceMemberRequest",
-        "type": "object"
-      },
       "AgentAccess": {
         "properties": {
           "access_emails": {
@@ -194,117 +180,6 @@
           "data"
         ],
         "title": "AgentListPage",
-        "type": "object"
-      },
-      "AgentVersionDiff": {
-        "description": "``from_version`` is ``None`` when the target is diffed against nothing.",
-        "properties": {
-          "from_version": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "From Version"
-          },
-          "lines": {
-            "items": {
-              "$ref": "#/components/schemas/DiffLine"
-            },
-            "title": "Lines",
-            "type": "array"
-          },
-          "to_version": {
-            "title": "To Version",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "to_version",
-          "lines"
-        ],
-        "title": "AgentVersionDiff",
-        "type": "object"
-      },
-      "AgentVersionSnapshot": {
-        "description": "A saved version including the full config it captured.",
-        "properties": {
-          "author": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Author"
-          },
-          "config": {
-            "additionalProperties": true,
-            "title": "Config",
-            "type": "object"
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
-          },
-          "version": {
-            "title": "Version",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "version",
-          "config"
-        ],
-        "title": "AgentVersionSnapshot",
-        "type": "object"
-      },
-      "AgentVersionSummary": {
-        "description": "Version metadata without the config body.",
-        "properties": {
-          "author": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Author"
-          },
-          "created_at": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Created At"
-          },
-          "version": {
-            "title": "Version",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "version"
-        ],
-        "title": "AgentVersionSummary",
         "type": "object"
       },
       "AnalyticsStats": {
@@ -508,29 +383,6 @@
         "title": "BranchCondition",
         "type": "object"
       },
-      "ConfigDiffPreview": {
-        "properties": {
-          "lines": {
-            "items": {
-              "$ref": "#/components/schemas/DiffLine"
-            },
-            "title": "Lines",
-            "type": "array"
-          }
-        },
-        "required": [
-          "lines"
-        ],
-        "title": "ConfigDiffPreview",
-        "type": "object"
-      },
-      "ConversationEvent": {
-        "additionalProperties": true,
-        "description": "One entry of ``events.json``. Shape varies by event type.",
-        "properties": {},
-        "title": "ConversationEvent",
-        "type": "object"
-      },
       "ConversationFormData": {
         "additionalProperties": true,
         "description": "``data.json`` for one conversation, as stored (``GET /data/{a}/{c}``).\n\nEmpty ``{}`` when the conversation has no ``data.json`` yet.",
@@ -561,53 +413,6 @@
           }
         },
         "title": "ConversationFormData",
-        "type": "object"
-      },
-      "ConversationMetrics": {
-        "additionalProperties": true,
-        "description": "``metrics.json`` for a conversation: per-turn latency, usage and cost.",
-        "properties": {
-          "cost_summary": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cost Summary"
-          },
-          "summary": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Summary"
-          },
-          "turns": {
-            "anyOf": [
-              {
-                "items": {
-                  "additionalProperties": true,
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Turns"
-          }
-        },
-        "title": "ConversationMetrics",
         "type": "object"
       },
       "ConversationSummary": {
@@ -838,7 +643,7 @@
             "title": "Branches",
             "type": "array"
           },
-          "calibrate_base_url": {
+          "calibrate_api_key": {
             "anyOf": [
               {
                 "type": "string"
@@ -847,7 +652,18 @@
                 "type": "null"
               }
             ],
-            "title": "Calibrate Base Url"
+            "title": "Calibrate Api Key"
+          },
+          "calibrate_api_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calibrate Api Url"
           },
           "calibrate_extract_agent_id": {
             "anyOf": [
@@ -1059,45 +875,6 @@
         "title": "DeleteAgentResponse",
         "type": "object"
       },
-      "DiffLine": {
-        "description": "One rendered line of a unified diff.",
-        "properties": {
-          "text": {
-            "title": "Text",
-            "type": "string"
-          },
-          "type": {
-            "enum": [
-              "add",
-              "remove",
-              "hunk",
-              "meta",
-              "context"
-            ],
-            "title": "Type",
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "text"
-        ],
-        "title": "DiffLine",
-        "type": "object"
-      },
-      "DuplicateAgentResponse": {
-        "properties": {
-          "id": {
-            "title": "Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id"
-        ],
-        "title": "DuplicateAgentResponse",
-        "type": "object"
-      },
       "ErrorResponse": {
         "description": "Body of the 4xx/5xx responses these routes return.",
         "properties": {
@@ -1123,38 +900,6 @@
           }
         },
         "title": "HTTPValidationError",
-        "type": "object"
-      },
-      "MoveAgentWorkspaceRequest": {
-        "description": "Destination workspace an agent should be moved to.",
-        "properties": {
-          "workspace_id": {
-            "title": "Workspace Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "workspace_id"
-        ],
-        "title": "MoveAgentWorkspaceRequest",
-        "type": "object"
-      },
-      "MoveAgentWorkspaceResponse": {
-        "properties": {
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "workspace_id": {
-            "title": "Workspace Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "workspace_id"
-        ],
-        "title": "MoveAgentWorkspaceResponse",
         "type": "object"
       },
       "PublicAgent": {
@@ -1369,42 +1114,6 @@
         "title": "RenameWorkspaceRequest",
         "type": "object"
       },
-      "RestoreAgentVersionResponse": {
-        "description": "``version`` is ``None`` when the restored config matched the current one.",
-        "properties": {
-          "config": {
-            "additionalProperties": true,
-            "title": "Config",
-            "type": "object"
-          },
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "restored_from": {
-            "title": "Restored From",
-            "type": "integer"
-          },
-          "version": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Version"
-          }
-        },
-        "required": [
-          "id",
-          "restored_from",
-          "config"
-        ],
-        "title": "RestoreAgentVersionResponse",
-        "type": "object"
-      },
       "RetryConfig": {
         "description": "Per-question retry behaviour driven deterministically by the backend.\n\n- ``allow_retries``: when False, the question is never re-asked; the first failed\n  attempt immediately exhausts retries.\n- ``until_answered``: when True, the question is re-asked indefinitely until a valid\n  answer is captured (``max_retries`` is ignored).\n- ``max_retries``: number of re-asks allowed after the initial ask (e.g. 2 = ask once,\n  then two retries, then exhausted).\n- ``retry_messages``: exact text to speak on each retry. ``retry_messages[0]`` is the\n  first retry, ``[1]`` the second, and so on. An empty/missing entry re-asks the\n  question's Script verbatim.\n\nThe action taken once retries are exhausted: required questions always end the call.\nOptional questions follow ``exhausted_action`` — ``\"skip\"`` (default) moves on to the\nnext question (speaking ``skip_message``), ``\"end_call\"`` ends the call instead.",
         "properties": {
@@ -1532,45 +1241,6 @@
           }
         },
         "title": "TranscriptEntry",
-        "type": "object"
-      },
-      "TurnAudioClip": {
-        "description": "One per-turn audio clip recorded under ``<conversation>/turns``.",
-        "properties": {
-          "duration_secs": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Duration Secs"
-          },
-          "filename": {
-            "title": "Filename",
-            "type": "string"
-          },
-          "index": {
-            "title": "Index",
-            "type": "integer"
-          },
-          "speaker": {
-            "enum": [
-              "user",
-              "bot"
-            ],
-            "title": "Speaker",
-            "type": "string"
-          }
-        },
-        "required": [
-          "index",
-          "speaker",
-          "filename"
-        ],
-        "title": "TurnAudioClip",
         "type": "object"
       },
       "UpdateAgentAccessRequest": {
@@ -1882,46 +1552,6 @@
           "data"
         ],
         "title": "WorkspaceListPage",
-        "type": "object"
-      },
-      "WorkspaceS3ConfigRequest": {
-        "description": "S3 signed-URL endpoints and API key for a workspace.",
-        "properties": {
-          "s3_api_key": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "S3 Api Key"
-          },
-          "s3_download_url_endpoint": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "S3 Download Url Endpoint"
-          },
-          "s3_upload_url_endpoint": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "S3 Upload Url Endpoint"
-          }
-        },
-        "title": "WorkspaceS3ConfigRequest",
         "type": "object"
       },
       "models__ConversationPage": {
