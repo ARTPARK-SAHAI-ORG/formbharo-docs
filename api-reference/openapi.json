@@ -999,7 +999,8 @@
               {
                 "enum": [
                   "integer",
-                  "decimal"
+                  "decimal",
+                  "numeric_code"
                 ],
                 "type": "string"
               },
