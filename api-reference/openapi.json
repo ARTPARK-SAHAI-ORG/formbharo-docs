@@ -415,8 +415,205 @@
         "title": "ConversationFormData",
         "type": "object"
       },
+      "ConversationPage": {
+        "description": "Paged conversation list, returned only when ``limit`` or ``cursor`` is sent.",
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ConversationSummary"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ConversationPage",
+        "type": "object"
+      },
+      "ConversationRow": {
+        "description": "One row of the cross-agent ``GET /conversations`` list.\n\n``transcript`` and ``has_transcript`` are never included here.",
+        "properties": {
+          "agent_id": {
+            "title": "Agent Id",
+            "type": "string"
+          },
+          "agent_title": {
+            "title": "Agent Title",
+            "type": "string"
+          },
+          "caller_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caller Number"
+          },
+          "conversation_id": {
+            "title": "Conversation Id",
+            "type": "string"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "filled_fields": {
+            "title": "Filled Fields",
+            "type": "integer"
+          },
+          "form_data": {
+            "additionalProperties": true,
+            "title": "Form Data",
+            "type": "object"
+          },
+          "form_status": {
+            "additionalProperties": true,
+            "title": "Form Status",
+            "type": "object"
+          },
+          "has_events": {
+            "title": "Has Events",
+            "type": "boolean"
+          },
+          "has_log": {
+            "title": "Has Log",
+            "type": "boolean"
+          },
+          "has_metrics": {
+            "title": "Has Metrics",
+            "type": "boolean"
+          },
+          "has_recording": {
+            "title": "Has Recording",
+            "type": "boolean"
+          },
+          "has_transcript": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Has Transcript"
+          },
+          "is_ended": {
+            "title": "Is Ended",
+            "type": "boolean"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "status": {
+            "enum": [
+              "complete",
+              "screened_out",
+              "failed",
+              "in_progress"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "total_fields": {
+            "title": "Total Fields",
+            "type": "integer"
+          },
+          "transcript": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transcript"
+          }
+        },
+        "required": [
+          "conversation_id",
+          "form_data",
+          "form_status",
+          "has_recording",
+          "has_events",
+          "is_ended",
+          "has_log",
+          "has_metrics",
+          "filled_fields",
+          "total_fields",
+          "status",
+          "agent_id",
+          "agent_title"
+        ],
+        "title": "ConversationRow",
+        "type": "object"
+      },
+      "ConversationRowPage": {
+        "description": "One page of the cross-agent conversation list.",
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ConversationRow"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ConversationRowPage",
+        "type": "object"
+      },
       "ConversationSummary": {
-        "description": "One row of the per-agent conversation list.\n\n``transcript`` and ``has_transcript`` are both absent unless the request\npassed ``include_transcript=true``.\n\n``has_recording``, ``has_events``, ``has_log`` and ``has_metrics`` say\nwhether the call has ended rather than checking for each file: those files\nare only finalized at the end of a call, and checking every one of them for\nevery call is what made this list slow. The per-conversation routes still\nanswer 404 when a specific file genuinely is not there.\n\nThe cost, duration and latency figures are deliberately not here for the\nsame reason. They are on the cross-agent ``GET /conversations`` listing and\nin the analytics numbers.",
+        "description": "One row of a conversation list.\n\n``transcript`` and ``has_transcript`` are both absent unless the request\npassed ``include_transcript=true``.\n\n``has_recording``, ``has_events``, ``has_log`` and ``has_metrics`` say\nwhether the call has ended, not whether each file is there. The\nper-conversation routes answer 404 when a specific file is not there.\n\nCost, duration and latency figures are in the analytics numbers, not here.",
         "properties": {
           "caller_number": {
             "anyOf": [
@@ -1554,63 +1751,6 @@
         ],
         "title": "WorkspaceListPage",
         "type": "object"
-      },
-      "models__ConversationPage": {
-        "description": "Paged conversation list, returned only when ``limit`` or ``cursor`` is sent.",
-        "properties": {
-          "data": {
-            "items": {
-              "$ref": "#/components/schemas/ConversationSummary"
-            },
-            "title": "Data",
-            "type": "array"
-          },
-          "next_cursor": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Next Cursor"
-          }
-        },
-        "required": [
-          "data"
-        ],
-        "title": "ConversationPage",
-        "type": "object"
-      },
-      "routes_analytics__ConversationPage": {
-        "properties": {
-          "data": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "title": "Data",
-            "type": "array"
-          },
-          "next_cursor": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Next Cursor"
-          }
-        },
-        "required": [
-          "data",
-          "next_cursor"
-        ],
-        "title": "ConversationPage",
-        "type": "object"
       }
     },
     "securitySchemes": {
@@ -2379,6 +2519,7 @@
             "schema": {
               "anyOf": [
                 {
+                  "maximum": 200,
                   "minimum": 1,
                   "type": "integer"
                 },
@@ -2446,20 +2587,26 @@
             }
           },
           {
-            "description": "Only conversations with this status: complete, screened_out, failed, or in_progress.",
+            "description": "Only conversations with this status.",
             "in": "query",
             "name": "status",
             "required": false,
             "schema": {
               "anyOf": [
                 {
+                  "enum": [
+                    "complete",
+                    "screened_out",
+                    "failed",
+                    "in_progress"
+                  ],
                   "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Only conversations with this status: complete, screened_out, failed, or in_progress.",
+              "description": "Only conversations with this status.",
               "title": "Status"
             }
           },
@@ -2507,7 +2654,7 @@
                       "type": "array"
                     },
                     {
-                      "$ref": "#/components/schemas/models__ConversationPage"
+                      "$ref": "#/components/schemas/ConversationPage"
                     }
                   ],
                   "title": "Response 200 List Conversations Api V1 Agents  Agent Id  Conversations Get"
@@ -2931,7 +3078,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/routes_analytics__ConversationPage"
+                  "$ref": "#/components/schemas/ConversationRowPage"
                 }
               }
             },
