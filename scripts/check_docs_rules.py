@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 FAILURES: list[str] = []
 
 # Words that stay capitalised inside a sentence-case title.
-PROPER = {"FormBharo", "Claude", "ARMMAN", "PDF", "API", "URL", "JSON", "S3", "AI"}
+PROPER = {"FormBharo", "Claude", "ARMMAN", "PDF", "API", "URL", "JSON", "S3", "AI", "WhatsApp"}
 
 
 def fail(where, line, rule, detail):

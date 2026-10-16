@@ -1,0 +1,94 @@
+---
+title: "Connect a WhatsApp number"
+description: "Let people fill a form by sending voice notes to your WhatsApp number."
+---
+
+A person sends a voice note, or any message, to your WhatsApp number. The agent sends its first question back as a voice note. The person answers with a voice note, the agent asks the next question, and so on until the agent's closing message.
+
+Each reply the agent sends is free for you when it goes out within 24 hours of the person's last message.
+
+## Before you start
+
+| You need | Where to get it |
+|---|---|
+| A WhatsApp Business number on the Cloud API | [Meta's Cloud API guide](https://developers.facebook.com/docs/whatsapp/cloud-api/get-started). A number used in the WhatsApp Business phone app does not work. |
+| A Meta developer app with the WhatsApp product attached to that account | [Meta for Developers](https://developers.facebook.com/apps) |
+
+## Connect the number
+
+<Steps>
+
+  <Step title="Copy the details from the Meta developer console">
+    Open your app at [developers.facebook.com/apps](https://developers.facebook.com/apps).
+
+    | Where | What to copy |
+    |---|---|
+    | WhatsApp, API Setup | The phone number ID |
+    | Business settings, System users | An access token for a system user, with the `whatsapp_business_messaging` and `whatsapp_business_management` permissions |
+    | App settings, Basic | The app secret |
+
+    The "Generate access token" button on the API Setup page gives a temporary token that expires in 24 hours. Use it for a first test only.
+  </Step>
+
+  <Step title="Save the details in FormBharo">
+    Open your workspace settings page and open the WhatsApp tab.
+
+    1. Paste the access token.
+    2. Paste the app secret.
+    3. Type a verify token. Any text you make up works. You paste the same text into Meta in the next step.
+    4. Save.
+
+    Copy the webhook address shown on the same tab:
+
+    ```
+    https://api.formbharo.artpark.ai/whatsapp/webhook/WORKSPACE_ID
+    ```
+  </Step>
+
+  <Step title="Point Meta at the webhook address">
+    Back in the Meta developer console, open WhatsApp, Configuration, Webhooks.
+
+    1. Paste the webhook address as the callback URL.
+    2. Paste the same verify token you typed in FormBharo.
+    3. Click "Verify and save".
+    4. Under Webhook fields, subscribe to `messages`.
+  </Step>
+
+  <Step title="Set the phone number ID on the agent">
+    In FormBharo, open the agent and click Edit.
+
+    1. Set "WhatsApp phone number ID" to the ID you copied from the API Setup page.
+    2. Tick "Also send each WhatsApp reply as a text message" if you want the agent's words as text alongside each voice note.
+    3. Save.
+  </Step>
+
+  <Step title="Send a test message">
+    From a WhatsApp phone, send any message to the number. The agent's first question arrives as a voice note.
+
+    If the number is a Meta test number, add the phone as a recipient on the API Setup page first.
+  </Step>
+
+</Steps>
+
+## After a conversation
+
+The conversation appears on the agent's Calls page with source WhatsApp. It shows the caller's number, the transcript, the form answers, and the recording.
+
+## If it does not work
+
+| What you see | Cause |
+|---|---|
+| "Verify and save" in Meta fails | The verify token in Meta and the one in FormBharo differ |
+| No reply arrives | The "WhatsApp phone number ID" on the agent does not match the number, the `messages` field is not subscribed, or the access token has expired |
+| The reply is a text message saying the agent could not hear | The voice note was empty, or transcription failed |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Poll for calls" icon="clock" href="/guides/poll-for-finished-calls">
+    Read `form_data` and `form_status` after a conversation ends
+  </Card>
+  <Card title="Analyze the calls" icon="chart-bar" href="/guides/read-the-analytics">
+    Completion rates, latency, cost
+  </Card>
+</CardGroup>

@@ -46,6 +46,7 @@
             "pages": [
               "guides/build-an-agent",
               "guides/run-a-call",
+              "guides/connect-a-whatsapp-number",
               "guides/poll-for-finished-calls",
               "guides/read-the-analytics",
               "guides/pdf-to-form"
