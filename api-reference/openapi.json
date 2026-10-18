@@ -541,7 +541,8 @@
               "complete",
               "screened_out",
               "failed",
-              "in_progress"
+              "in_progress",
+              "not_connected"
             ],
             "title": "Status",
             "type": "string"
@@ -702,7 +703,8 @@
               "complete",
               "screened_out",
               "failed",
-              "in_progress"
+              "in_progress",
+              "not_connected"
             ],
             "title": "Status",
             "type": "string"
@@ -2300,7 +2302,8 @@
                     "complete",
                     "screened_out",
                     "failed",
-                    "in_progress"
+                    "in_progress",
+                    "not_connected"
                   ],
                   "type": "string"
                 },
@@ -2598,7 +2601,8 @@
                     "complete",
                     "screened_out",
                     "failed",
-                    "in_progress"
+                    "in_progress",
+                    "not_connected"
                   ],
                   "type": "string"
                 },
@@ -2981,7 +2985,8 @@
                     "complete",
                     "screened_out",
                     "failed",
-                    "in_progress"
+                    "in_progress",
+                    "not_connected"
                   ],
                   "type": "string"
                 },
@@ -3106,7 +3111,7 @@
         ]
       },
       "post": {
-        "description": "Start a conversation and return the token that authorizes its answers.\n\nOpen on purpose: anyone who can open an agent's call page can start a call.\nThe id is generated here rather than accepted from the caller, so one caller\ncannot name another caller's conversation and read or overwrite it.",
+        "description": "Start a conversation and return the token that authorizes its answers.\n\nRefused with 403 when the workspace has used its calling minutes for this month.\n\nOpen on purpose: anyone who can open an agent's call page can start a call.\nThe id is generated here rather than accepted from the caller, so one caller\ncannot name another caller's conversation and read or overwrite it.",
         "operationId": "create_conversation_api_v1_conversations_post",
         "requestBody": {
           "content": {
@@ -3128,6 +3133,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The workspace has used its calling minutes for this month."
           },
           "404": {
             "content": {
@@ -3542,7 +3557,8 @@
                     "complete",
                     "screened_out",
                     "failed",
-                    "in_progress"
+                    "in_progress",
+                    "not_connected"
                   ],
                   "type": "string"
                 },
