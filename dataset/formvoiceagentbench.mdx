@@ -51,11 +51,15 @@ Each case checks that the model calls the `process_user_turn` tool with the righ
 
 A reply has many correct phrasings, so LLM judges grade it instead of an exact match. A reply passes only if every judge listed for it passes.
 
-| Judge           | Applies to        | Checks                                                                                        |
-| --------------- | ----------------- | --------------------------------------------------------------------------------------------- |
-| Correctness     | Every reply       | The reply asks the question the form selected next                                            |
-| Script Fidelity | Every reply       | The question is spoken word for word, with the same spelling and punctuation                  |
-| Info Script     | Some replies      | The required informational line is spoken word for word, once, right before the question      |
+| Judge                    | Applies to             | Checks                                                                                   |
+| ------------------------ | ---------------------- | ---------------------------------------------------------------------------------------- |
+| Correctness              | Every reply            | The reply asks the question the form selected next                                       |
+| Script Fidelity          | Every reply            | The question is spoken word for word, as written in the form                             |
+| No Acknowledgement       | Every reply            | The reply does not acknowledge the caller's previous answer                              |
+| No Value Echo            | Every reply            | The reply does not read back the value the caller just gave                              |
+| Hindi Language adherence | Every reply            | The reply is in Hindi, written in Devanagari                                             |
+| Reply Conciseness        | Every reply            | The reply is exactly one question, with no bundled questions, summaries, or small talk   |
+| Info Script              | 520 of the 920 replies | The required informational line is spoken word for word, once, right before the question |
 
 ## Reproduce the results
 
