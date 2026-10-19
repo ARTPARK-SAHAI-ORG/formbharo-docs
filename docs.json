@@ -96,6 +96,17 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "Dataset",
+        "groups": [
+          {
+            "group": "Benchmarks",
+            "pages": [
+              "dataset/formvoiceagentbench"
+            ]
+          }
+        ]
       }
     ]
   },

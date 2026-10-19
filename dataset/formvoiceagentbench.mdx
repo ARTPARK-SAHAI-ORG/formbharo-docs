@@ -1,0 +1,167 @@
+---
+title: "FormVoiceAgentBench"
+description: "The Hindi voice agent benchmark from the FormBharo paper, and how to reproduce its results."
+---
+
+FormVoiceAgentBench is a Hindi benchmark built on a maternal and child health enrollment form. It pairs 380 audio recordings with multi-turn conversation tests drawn from 960 simulated calls. It was released with the paper [FormBharo: Designing and Evaluating a Voice Agent for Conversational Form Filling in Rural India](https://arxiv.org/abs/2608.06027).
+
+<iframe
+  className="w-full aspect-video rounded-xl"
+  src="https://www.youtube-nocookie.com/embed/F1oR8QlCnmI"
+  title="Walkthrough of the FormBharo evaluations"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowFullScreen
+></iframe>
+
+The video walks through the paper's evaluations. It is also on the [Calibrate learn page](https://calibrate.artpark.ai/learn#calibrate-demo).
+
+## What it tests
+
+The benchmark tests the speech-to-text model and the two LLMs inside the agent.
+
+| Benchmark      | What it tests                                                                            |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| Speech-to-text | Transcribing the caller's speech                                                         |
+| EXTRACT        | Pulling the form values out of the transcribed text, and writing a short acknowledgement |
+| REPLY          | Asking the next question, or ending the call once the form is complete                   |
+
+## Download the dataset
+
+Each benchmark is published on Calibrate with its results. Open a benchmark and click **Export results** to download its data.
+
+| Benchmark      | Link                                                                                                           |
+| -------------- | -------------------------------------------------------------------------------------------------------------- |
+| Speech-to-text | [Speech-to-text benchmark](https://calibrate.artpark.ai/public/stt/9d25da9f-2727-42ee-931d-422858017383)        |
+| EXTRACT        | [Data extraction accuracy benchmark](https://calibrate.artpark.ai/public/benchmark/4431ba9d-0ca2-457b-b924-e194d5414b1c) |
+| REPLY          | [Response quality benchmark](https://calibrate.artpark.ai/public/benchmark/a508373f-1ee9-486c-90e3-214abd567d8f) |
+
+### Speech-to-text
+
+380 recordings, each with a reference transcript. Each model's transcripts are scored against the reference on word error rate, character error rate, and three LLM judges.
+
+### EXTRACT
+
+1880 test cases. Each one is a single turn of a call, with the conversation so far. The caller's messages are ElevenLabs Scribe v2 transcripts, recorded under four acoustic conditions.
+
+Each case checks that the model calls the `process_user_turn` tool with the right values. An LLM judge grades the values, since a spoken name or place has many valid spellings.
+
+### REPLY
+
+1880 test cases. 920 check a spoken reply. 960 check that the model calls the `end_call` tool once the form is complete.
+
+A reply has many correct phrasings, so LLM judges grade it instead of an exact match. A reply passes only if every judge listed for it passes.
+
+| Judge           | Applies to        | Checks                                                                                        |
+| --------------- | ----------------- | --------------------------------------------------------------------------------------------- |
+| Correctness     | Every reply       | The reply asks the question the form selected next                                            |
+| Script Fidelity | Every reply       | The question is spoken word for word, with the same spelling and punctuation                  |
+| Info Script     | Some replies      | The required informational line is spoken word for word, once, right before the question      |
+
+## Reproduce the results
+
+All three benchmarks run with [Calibrate](https://docs.calibrate.artpark.ai/cli/overview), an open-source evaluation package for voice agents.
+
+```bash
+pip install calibrate-agent
+export OPENROUTER_API_KEY=your-openrouter-key
+```
+
+The LLM judges run through OpenRouter, so every benchmark needs `OPENROUTER_API_KEY`.
+
+### Run the speech-to-text benchmark
+
+Put the exported files in a folder named `stt`, with the transcripts in `stt/stt.csv` and the recordings in `stt/audios/`. Set an API key for each provider you evaluate, then run:
+
+```bash
+calibrate-agent stt \
+  -p sarvam elevenlabs deepgram openai google \
+  -l hindi \
+  -i ./stt \
+  -o ./out \
+  --engine direct
+```
+
+The paper compares Sarvam Saaras v3, ElevenLabs Scribe v2, Deepgram Nova-3, OpenAI GPT-4o-transcribe, and Google Chirp 3. See [Speech to Text](https://docs.calibrate.artpark.ai/cli/speech-to-text) for each provider's key.
+
+### Connect your agent
+
+EXTRACT and REPLY test a running agent, so you need your own agent endpoint. It receives a POST with the conversation so far and the model to use:
+
+```json
+{
+  "messages": [
+    { "role": "assistant", "content": "आपका नाम क्या है?" },
+    { "role": "user", "content": "मेरा नाम सुनीता है" }
+  ],
+  "model": "google/gemini-3.5-flash"
+}
+```
+
+`model` is the OpenRouter model id passed to `-m`. Your agent must send the request to that model. This is how each row of the paper's tables was produced.
+
+It must return JSON with `response`, `tool_calls`, or both:
+
+```json
+{
+  "response": "",
+  "tool_calls": [{ "tool": "process_user_turn", "arguments": {} }]
+}
+```
+
+For EXTRACT, the agent calls `process_user_turn`. For REPLY, it either replies in `response` or calls `end_call`. These are usually two separate endpoints.
+
+Check that your endpoint returns the right shape:
+
+```bash
+calibrate-agent llm --verify \
+  -m google/gemini-3.5-flash \
+  --agent-url https://your-agent.example.com/form_fill \
+  --agent-headers '{"Authorization": "Bearer your-agent-token"}'
+```
+
+Then add your endpoint to the top level of each exported test file:
+
+```json
+{
+  "agent_url": "https://your-agent.example.com/form_fill",
+  "agent_headers": { "Authorization": "Bearer your-agent-token" }
+}
+```
+
+### Run the EXTRACT benchmark
+
+```bash
+calibrate-agent llm \
+  -c extract.json \
+  -m google/gemini-3.5-flash \
+  -o ./out
+```
+
+`extract.json` is the exported EXTRACT test file. Pass several model ids to `-m` to compare models in one run.
+
+### Run the REPLY benchmark
+
+```bash
+calibrate-agent llm \
+  -c reply.json \
+  -m google/gemini-3.5-flash \
+  -o ./out
+```
+
+`reply.json` is the exported REPLY test file, with `agent_url` set to your REPLY endpoint.
+
+## License
+
+CC BY-SA 4.0.
+
+## Citation
+
+```bibtex
+@article{dalmia2026formbharo,
+  title   = {FormBharo: Designing and Evaluating a Voice Agent for Conversational Form Filling in Rural India},
+  author  = {Dalmia, Aman and Midha, Sanskriti and Doshi, Jigar},
+  journal = {arXiv preprint arXiv:2608.06027},
+  year    = {2026},
+  url     = {https://arxiv.org/abs/2608.06027}
+}
+```
