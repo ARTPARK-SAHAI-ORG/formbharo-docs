@@ -52,8 +52,14 @@
       },
       "AgentConfig": {
         "additionalProperties": true,
-        "description": "A stored agent config as returned by ``sanitize_agent_config``.\n\nOpen on purpose: config keys are added over time and the endpoint returns the\nfile as saved.",
+        "description": "A stored agent config. The Calibrate API key is never returned.\n\nOpen on purpose: config keys are added over time and the endpoint returns the\nfile as saved.",
         "properties": {
+          "calibrate_api_key_set": {
+            "default": false,
+            "description": "True when a Calibrate API key is saved. Leave the key blank on save to keep it.",
+            "title": "Calibrate Api Key Set",
+            "type": "boolean"
+          },
           "questions": {
             "anyOf": [
               {
@@ -1395,6 +1401,17 @@
         "additionalProperties": true,
         "description": "One line of ``transcript.json``.",
         "properties": {
+          "audio_clip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio Clip"
+          },
           "content": {
             "anyOf": [
               {
@@ -1460,9 +1477,7 @@
       "UpdateAgentConfigResponse": {
         "properties": {
           "config": {
-            "additionalProperties": true,
-            "title": "Config",
-            "type": "object"
+            "$ref": "#/components/schemas/AgentConfig"
           },
           "id": {
             "title": "Id",
